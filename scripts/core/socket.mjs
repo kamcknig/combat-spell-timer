@@ -28,6 +28,7 @@ async function handle(msg) {
       for (const t of expired) getAdapter().onTimerExpired(t);
       return;
     }
+    case "deleteEffect": return getAdapter().removeAppliedEffect(msg.effectUuid);
   }
 }
 
@@ -46,3 +47,7 @@ export const setInitiative = (combatId, combatantId, initiative) =>
   requestWrite({ action: "initiative", combatId, combatantId, initiative });
 export const setTimerInitiative = (combatId, timerId, initiative) =>
   requestWrite({ action: "timer-initiative", combatId, timerId, initiative });
+/** Delete a (non-timer) ActiveEffect by uuid; routed to the GM when the caller
+ *  can't delete it themselves (e.g. a spellcaster removing an effect they placed
+ *  on an actor they don't own). */
+export const removeEffect = (effectUuid) => requestWrite({ action: "deleteEffect", effectUuid });

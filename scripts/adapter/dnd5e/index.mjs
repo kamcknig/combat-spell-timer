@@ -247,6 +247,105 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
+   * Remove an applied effect from the combatant panel. If the effect was placed
+   * by a concentration spell, end the caster's concentration instead of just
+   * deleting the effect — that clears the caster's concentration status and
+   * cascades to remove this (and any sibling target) effects, matching how a
+   * concentration spell timer's removal behaves.
+   * @param {string} effectUuid
+   */
+  async removeAppliedEffect(effectUuid) {
+    const effect = await fromUuid(effectUuid).catch(() => null);
+    if (!effect) return;
+    const conc = this.#concentrationFor(effect);
+    if (conc?.parent?.endConcentration) {
+      // Ending concentration deletes the concentration effect and cascades to its
+      // dependent target effects (including this one) — don't also delete it here,
+      // or we race that cascade and hit "ActiveEffect does not exist".
+      await conc.parent.endConcentration(conc);
+      return;
+    }
+    await effect.delete();
+  }
+
+  /**
+   * The module spell timer whose countdown a spell-applied effect should mirror.
+   * A concentration spell's timer records the caster's concentration-effect uuid
+   * in `concentrationEffectUuid`. dnd5e tags both that concentration effect (its
+   * own uuid) and every target effect it applies (`flags.dnd5e.dependentOn`) with
+   * that uuid — so a single equality check links the icon to the spell row's
+   * clock for the caster and all targets. Non-concentration applied effects fall
+   * back to matching their spell item via `origin` (Item uuid, or `<itemUuid>.Activity.<id>`).
+   * @param {ActiveEffect} effect
+   * @param {object[]} timers
+   * @returns {object|null}
+   */
+  getEffectTimer(effect, timers) {
+    const concKey = effect?.flags?.dnd5e?.dependentOn ?? effect?.uuid ?? null;
+    if (concKey) {
+      const byConc = timers.find(t => t.concentrationEffectUuid && t.concentrationEffectUuid === concKey);
+      if (byConc) return byConc;
+    }
+    const origin = effect?.origin;
+    if (origin) {
+      const bySpell = timers.find(t => t.spellUuid && (origin === t.spellUuid || origin.startsWith(`${t.spellUuid}.`)));
+      if (bySpell) return bySpell;
+    }
+    return null;
+  }
+
+  /**
+   * The caster's concentration effect that applied `effect`, or null when the
+   * effect isn't concentration-applied. Matches by the concentrated item (a
+   * concentration effect always records its item) and, as a fallback, by the
+   * dependents the concentration effect lists. Deliberately does NOT guess from a
+   * lone concentration — an unrelated effect must not end the caster's spell.
+   * @param {ActiveEffect} effect
+   * @returns {ActiveEffect|null}
+   */
+  #concentrationFor(effect) {
+    const caster = this.#casterOf(effect);
+    const effects = caster?.concentration?.effects;
+    if (!effects?.size) return null;
+    const itemId = this.#originItemId(effect);
+    const concItemId = (ce) => { const i = ce.getFlag("dnd5e", "item"); return i?.id ?? i?.data?._id ?? null; };
+    return (itemId ? [...effects].find(ce => concItemId(ce) === itemId) : null)
+      ?? [...effects].find(ce => ce.getDependents?.().some(d => d?.uuid === effect.uuid))
+      ?? null;
+  }
+
+  /**
+   * Resolve the Actor an effect originates from, via its origin (Item/Activity/Actor).
+   * @param {ActiveEffect} effect
+   * @returns {Actor|null}
+   */
+  #casterOf(effect) {
+    const doc = this.#originDoc(effect);
+    if (!doc) return null;
+    if (doc.documentName === "Actor") return doc;
+    return doc.actor ?? (doc.parent?.documentName === "Actor" ? doc.parent : null);
+  }
+
+  /**
+   * The Item id behind an effect's origin (the spell/feature item), via an Item
+   * or Activity origin, or null.
+   * @param {ActiveEffect} effect
+   * @returns {string|null}
+   */
+  #originItemId(effect) {
+    const doc = this.#originDoc(effect);
+    if (!doc) return null;
+    if (doc.documentName === "Item") return doc.id;
+    return doc.item?.id ?? null; // Activity → its parent item
+  }
+
+  /** Resolve an effect's origin document, or null. */
+  #originDoc(effect) {
+    if (!effect?.origin) return null;
+    try { return fromUuidSync(effect.origin) ?? null; } catch { return null; }
+  }
+
+  /**
    * Every registered feature the actor currently has an active module-owned AE
    * for. Returns { featureId, name, img, effectUuid } records (empty if none).
    * @param {Actor} actor

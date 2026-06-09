@@ -6,9 +6,10 @@ import { registerSocket } from "./core/socket.mjs";
 import { onSpellCast, onEarlyRemove } from "./core/timers.mjs";
 import { onFeatureStart, onFeatureEarlyEnd, onFeatureTurnEnd, reconcileTurnEndDialogs } from "./core/features.mjs";
 import { onRenderTracker } from "./core/tracker.mjs";
+import { onRenderActorSheetEffects } from "./core/effect-sheet.mjs";
 import { onUpdateCombat } from "./core/combat.mjs";
 import { onCreateCombatant, onUpdateCombatant, onDeleteCombatant } from "./core/combatant.mjs";
-import { registerBeyond20Integration, SETTING as BEYOND20_SETTING, AUTOCAST_SETTING as BEYOND20_AUTOCAST_SETTING, RAGE_AUTOSTART_SETTING as BEYOND20_RAGE_AUTOSTART_SETTING } from "./core/beyond20.mjs";
+import { registerBeyond20Integration, SETTING as BEYOND20_SETTING, AUTOCAST_SETTING as BEYOND20_AUTOCAST_SETTING } from "./core/beyond20.mjs";
 import { SPELL_MAP_SETTING, spellMapField } from "./core/spell-map.mjs";
 import SpellMapConfig from "./apps/spell-map-config.mjs";
 
@@ -33,17 +34,10 @@ Hooks.once("init", () => {
   });
   game.settings.register(MODULE_ID, BEYOND20_AUTOCAST_SETTING, {
     // Raw i18n keys: the settings UI localizes name/hint at render time, and
-    // translations aren't loaded yet during the init hook.
+    // translations aren't loaded yet during the init hook. One switch for both
+    // auto-casting spells and auto-applying feature effects (e.g. Rage).
     name: "COMBAT_SPELL_TIMER.Beyond20.AutoCastName",
     hint: "COMBAT_SPELL_TIMER.Beyond20.AutoCastHint",
-    scope: "client",
-    config: true,
-    type: Boolean,
-    default: false
-  });
-  game.settings.register(MODULE_ID, BEYOND20_RAGE_AUTOSTART_SETTING, {
-    name: "COMBAT_SPELL_TIMER.Beyond20.AutoRageName",
-    hint: "COMBAT_SPELL_TIMER.Beyond20.AutoRageHint",
     scope: "client",
     config: true,
     type: Boolean,
@@ -106,6 +100,7 @@ Hooks.once("ready", async () => {
   adapter.registerFeatureEarlyEnd(onFeatureEarlyEnd);
   Hooks.on("combatTurnChange", (combat, previous, _current) => onFeatureTurnEnd(combat, previous));
   Hooks.on("renderCombatTracker", onRenderTracker);
+  Hooks.on("renderActorSheetV2", onRenderActorSheetEffects);
   Hooks.on("updateCombat", onUpdateCombat);
   // Close a feature's turn-end dialog when its timer is removed by any path.
   Hooks.on("updateCombat", reconcileTurnEndDialogs);

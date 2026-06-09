@@ -2,13 +2,45 @@
 
 /* Timer rows reuse .combatant layout but read as non-interactive markers. */
 .combat-tracker .cst-timer-row { opacity: 0.95; font-style: italic; }
-.combat-tracker .cst-timer-row .token-image { border-radius: 4px; }
+.combat-tracker .cst-timer-row .token-image { border-radius: 4px; width: 28px; height: 28px; object-fit: cover; flex: 0 0 28px; }
 .combat-tracker .cst-timer-row .cst-sub { font-size: var(--font-size-10, 10px); opacity: 0.8; }
 .combat-tracker .cst-timer-row .cst-remaining { font-weight: bold; font-style: normal; opacity: 1; white-space: nowrap; }
 /* Initiative input matches a real combatant's; keep it upright despite the italic row. */
 .combat-tracker .cst-timer-row .initiative-input { font-style: normal; }
-/* Rage rows get a warm tint to distinguish them from spell rows. */
-.combat-tracker .cst-timer-row[data-cst-type="rage"] { background: rgba(200, 60, 0, 0.12); }
+
+/* In-row combatant effects block: divider + icon strip + chevron + detail panel.
+   Appended as a full-width child of the combatant <li>, which we let wrap. */
+.combat-tracker .combatant.cst-has-effects { flex-wrap: wrap; }
+/* The relocated effects live in our block; hide the core icon strip on these rows. */
+.combat-tracker .combatant.cst-has-effects .token-effects { display: none; }
+
+.combat-tracker .cst-effects-block { flex: 0 0 100%; width: 100%; font-style: normal; }
+.combat-tracker .cst-effects-divider {
+  margin: 4px 0; border: none; border-top: 1px solid var(--color-border-light-2, rgba(255, 255, 255, 0.15));
+}
+.combat-tracker .cst-effects-row { display: flex; align-items: center; gap: 6px; }
+.combat-tracker .cst-effects-row.cst-clickable { cursor: pointer; }
+.combat-tracker .cst-effects-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.combat-tracker .cst-effects-icon { display: inline-flex; align-items: center; gap: 2px; }
+.combat-tracker .cst-effects-icon img { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; }
+.combat-tracker .cst-effects-count { font-size: var(--font-size-10, 10px); opacity: 0.8; white-space: nowrap; }
+
+.combat-tracker .cst-effects-toggle {
+  flex: 0 0 auto; margin-left: auto; width: 1.5rem; height: 1.5rem; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; opacity: 0.75;
+}
+.combat-tracker .cst-effects-toggle:hover { opacity: 1; }
+
+.combat-tracker .cst-effects-panel { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.combat-tracker .cst-effects-panel[hidden] { display: none; }
+.combat-tracker .cst-effect-card { display: flex; align-items: center; gap: 8px; padding: 2px 4px; border-radius: 4px; transition: background-color 0.1s ease; }
+.combat-tracker .cst-effect-card:hover { background: rgba(255, 255, 255, 0.1); }
+.combat-tracker .cst-effect-card .cst-effect-img { width: 28px; height: 28px; border-radius: 3px; object-fit: cover; flex-shrink: 0; }
+.combat-tracker .cst-effect-card .cst-effect-info { display: flex; flex-direction: column; min-width: 0; }
+.combat-tracker .cst-effect-card .name { font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.combat-tracker .cst-effect-card .cst-sub { font-size: var(--font-size-10, 10px); opacity: 0.8; }
+.combat-tracker .cst-effect-card .cst-remaining { font-weight: bold; opacity: 1; white-space: nowrap; }
 
 /* Our right-click menu reuses Foundry's #context-menu styling (border, font,
    themed colors, hover) for a native look; we only override positioning so it

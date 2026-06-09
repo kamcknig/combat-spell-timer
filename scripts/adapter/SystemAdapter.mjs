@@ -109,6 +109,27 @@ export default class SystemAdapter {
   async removeFeatureEffect(query) { /* optional */ }
 
   /**
+   * Remove an applied (non-timer) ActiveEffect chosen from the combatant effect
+   * panel, by uuid. Systems may override to also unwind linked state (e.g. end a
+   * concentration spell). Default: just delete the effect.
+   * @param {string} effectUuid
+   */
+  async removeAppliedEffect(effectUuid) {
+    const e = await fromUuid(effectUuid).catch(() => null);
+    await e?.delete();
+  }
+
+  /**
+   * The module spell timer whose countdown an applied effect should mirror, so a
+   * spell-applied effect's icon counts down in lockstep with its spell row rather
+   * than on its own per-target expiry clock. Default: no link.
+   * @param {ActiveEffect} effect
+   * @param {object[]} timers  This combat's timer records.
+   * @returns {object|null}
+   */
+  getEffectTimer(effect, timers) { return null; }
+
+  /**
    * Every registered feature the actor currently has an active module-owned AE
    * for, as { featureId, name, img, effectUuid } records. Default: none.
    * @param {Actor} actor

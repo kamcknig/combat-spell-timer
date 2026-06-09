@@ -13,14 +13,15 @@ export const FLAG = "beyond20";
 /** Setting key (registered in the entry point) gating the whole integration. */
 export const SETTING = "beyond20Integration";
 
-/** Setting key for the per-player "cast automatically instead of clicking" option. */
+/**
+ * Setting key for the per-player "do it automatically instead of clicking"
+ * option. Governs both auto-casting spells and auto-applying feature effects
+ * (e.g. Rage) — one switch for every Beyond20 card.
+ */
 export const AUTOCAST_SETTING = "beyond20AutoCast";
 
 /** Module flag key under which a captured Rage context is stored on a message. */
 export const RAGE_FLAG = "beyond20-rage";
-
-/** Setting key for the per-player "start rage automatically" option. */
-export const RAGE_AUTOSTART_SETTING = "beyond20AutoRage";
 
 /** True when the Beyond20 integration setting is enabled for this client. */
 function enabled() {
@@ -28,18 +29,14 @@ function enabled() {
     && game.settings.get(MODULE_ID, SETTING);
 }
 
-/** True when this client wants Beyond20 spells cast automatically on render. */
-function autoCastEnabled() {
+/**
+ * True when this client wants Beyond20 cards resolved automatically on render —
+ * casting spells and applying feature effects alike, instead of clicking.
+ */
+function autoEnabled() {
   return enabled()
     && game.settings.settings.has(`${MODULE_ID}.${AUTOCAST_SETTING}`)
     && game.settings.get(MODULE_ID, AUTOCAST_SETTING);
-}
-
-/** True when this client wants rage started automatically on Beyond20 Rage cards. */
-function autoRageEnabled() {
-  return enabled()
-    && game.settings.settings.has(`${MODULE_ID}.${RAGE_AUTOSTART_SETTING}`)
-    && game.settings.get(MODULE_ID, RAGE_AUTOSTART_SETTING);
 }
 
 /** True if the Beyond20 request is a Rage trait use. */
@@ -249,7 +246,7 @@ export function onRenderBeyond20Message(message, html) {
   if (ctx && !container.querySelector(`.${BTN_CLASS}`)) {
     const actor = message.speakerActor ?? null;
     if (canCast(message, actor)) {
-      const auto = autoCastEnabled();
+      const auto = autoEnabled();
       const wrap = document.createElement("div");
       wrap.className = "cst-beyond20-controls";
       const btn = document.createElement("button");
@@ -283,7 +280,7 @@ export function onRenderBeyond20Message(message, html) {
   if (isRage && !container.querySelector(`.${RAGE_BTN_CLASS}`)) {
     const actor = message.speakerActor ?? null;
     if (canCast(message, actor)) {
-      const autoRage = autoRageEnabled();
+      const autoRage = autoEnabled();
       const wrap = document.createElement("div");
       wrap.className = "cst-beyond20-controls";
       const btn = document.createElement("button");

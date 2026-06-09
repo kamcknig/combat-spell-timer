@@ -1,4 +1,4 @@
-import { addTimer, removeTimers } from "./socket.mjs";
+import { addTimer, removeTimers, isWriter } from "./socket.mjs";
 import { getTimers } from "./store.mjs";
 import { getAdapter } from "../adapter/index.mjs";
 import { dbg } from "../utils/debug.mjs";
@@ -23,7 +23,16 @@ export async function onFeatureStart(record, applyEffect) {
   const view = getAdapter().getFeatureView(record.featureId) ?? {};
   dbg("feature:start", record.featureId, `${record.durationRounds}r`);
 
-  const effectUuid = await applyEffect(actor, record.featureId, { img: record.img, itemUuid: record.itemUuid });
+  // Refresh semantics: starting a feature that's already running replaces the
+  // prior instance. Drop any stale timers and the old AE first so we never stack
+  // duplicate timers for the same feature — each would otherwise fire its own
+  // turn-end dialog (e.g. two "Extend Rage?" prompts per turn).
+  for (const combat of game.combats) {
+    removeTimers(combat.id, { type: record.featureId, casterActorUuid: record.casterActorUuid });
+  }
+  await getAdapter().removeFeatureEffect?.({ featureId: record.featureId, casterActorUuid: record.casterActorUuid });
+
+  const effectUuid = await applyEffect(actor, record.featureId, { img: record.img, itemUuid: record.itemUuid, durationRounds: record.durationRounds });
 
   for (const combat of game.combats) {
     const [combatant] = combat.getCombatantsByActor(actor);
@@ -67,8 +76,11 @@ export async function onFeatureEarlyEnd(query) {
 
 /**
  * A combatant's turn ended → run any "confirm" turn-end dialog for its feature
- * timers. Audience: the owner of the feature's actor, falling back to the active
- * GM when no active non-GM player owns them.
+ * timers. Audience rules:
+ *  - Player character (any non-GM owner): ONLY the owner is prompted, never the
+ *    GM. If no owner is logged in, the feature auto-extends (the timer simply
+ *    keeps counting) and every GM is notified.
+ *  - NPC (no player owner): the active GM is prompted, as before.
  * @param {Combat} combat
  * @param {{round:number, turn:number}} previous  The turn that just ended.
  */
@@ -84,11 +96,39 @@ export async function onFeatureTurnEnd(combat, previous) {
   if (!timers.length) return;
 
   const actor = fromUuidSync(timers[0].casterActorUuid);
-  const hasActivePlayerOwner = game.users.some(u => !u.isGM && u.active && actor?.testUserPermission(u, "OWNER"));
-  const shouldShow = actor?.isOwner && (!game.user.isGM || !hasActivePlayerOwner);
-  if (!shouldShow) return;
+  if (!actor) return;
 
-  for (const t of timers) await showTurnEndDialog(t, combat, actor);
+  // Only timers that would actually prompt — a feature may auto-extend by policy
+  // (e.g. Persistent Rage at L15+), in which case there's nothing to confirm.
+  const prompts = timers.filter(t => {
+    const te = getAdapter().getFeatureView(t.type)?.turnEnd;
+    return te && !te.skip?.(actor);
+  });
+  if (!prompts.length) return;
+
+  const isPC = actor.hasPlayerOwner;
+  const hasActiveOwner = game.users.some(u => !u.isGM && u.active && actor.testUserPermission(u, "OWNER"));
+
+  if (isPC) {
+    if (hasActiveOwner) {
+      // Only the player owner is prompted — not the GM, even though the GM owns it.
+      if (game.user.isGM || !actor.isOwner) return;
+    } else {
+      // Owner offline → auto-extend (no-op; the timer keeps counting) and tell
+      // every GM it happened. Each GM client emits its own notification.
+      if (game.user.isGM) {
+        const name = combat.combatants.get(prompts[0].casterCombatantId)?.name ?? actor.name;
+        for (const t of prompts) {
+          ui.notifications?.info(game.i18n.format("COMBAT_SPELL_TIMER.FeatureAutoExtended", { feature: t.name, actor: name }));
+        }
+      }
+      return;
+    }
+  } else if (!isWriter()) {
+    return; // NPC → only the active GM prompts.
+  }
+
+  for (const t of prompts) await showTurnEndDialog(t, combat, actor);
 }
 
 /**
