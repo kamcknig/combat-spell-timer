@@ -12,16 +12,21 @@ effect ends.
 ## What it does
 
 Cast a spell or activate a tracked ability while you're a combatant in an active
-encounter, and a timer row is added to the combat tracker. Each timer row shows:
-
-- the spell or ability's icon and name
-- the caster's name
-- the round it was cast or activated on
-- the rounds remaining
-- an editable initiative box (just like a real combatant)
+encounter, and a timer row is added to the combat tracker.
 
 Timers count down automatically as the encounter advances and disappear when they
 reach zero.
+
+Effects active on a combatant (e.g., Bless) are displayed as expandable content
+beneath the combatant entry in the tracker.
+
+_Collapsed_ 
+
+![collapsed.png](docs/images/collapsed.png)
+
+_Expanded_
+
+![expanded.png](docs/images/expanded.png)
 
 ## How timers behave
 
