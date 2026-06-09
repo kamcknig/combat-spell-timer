@@ -1,5 +1,5 @@
 import { getTimers, remainingRounds, effInit } from "./store.mjs";
-import { isWriter, removeTimers, setTimerInitiative, removeEffect } from "./socket.mjs";
+import { isWriter, removeTimers, setTimerInitiative, removeEffect, setTimerRounds, setEffectRounds } from "./socket.mjs";
 import { getAdapter } from "../adapter/index.mjs";
 import { collectEffects } from "./effects.mjs";
 
@@ -267,25 +267,25 @@ function closeTimerMenu() {
 }
 
 /**
- * Build and show our single-item right-click remove menu at the cursor. Reuses
- * Foundry's #context-menu markup so its native styling applies verbatim.
+ * Build and show our right-click menu at the cursor. Reuses Foundry's
+ * #context-menu markup so its native styling applies verbatim.
  * @param {MouseEvent} event   The triggering contextmenu event.
- * @param {string} label       The localized menu label.
- * @param {() => void} onRemove Invoked when the item is clicked.
+ * @param {Array<{icon:string, label:string, onClick:() => void}>} items
  */
-function showRemoveMenu(event, label, onRemove) {
+function showContextMenu(event, items) {
+  if (!items.length) return;
   const nav = document.createElement("nav");
   nav.id = "context-menu";
   nav.className = "cst-timer-menu";
   nav.innerHTML = `
     <ol class="context-items">
-      <li class="context-item">
-        <i class="fa-solid fa-trash fa-fw"></i><span>${esc(label)}</span>
-      </li>
+      ${items.map(i => `<li class="context-item"><i class="fa-solid ${i.icon} fa-fw"></i><span>${esc(i.label)}</span></li>`).join("")}
     </ol>`;
-  nav.querySelector(".context-item").addEventListener("click", () => {
-    onRemove();
-    closeTimerMenu();
+  nav.querySelectorAll(".context-item").forEach((li, idx) => {
+    li.addEventListener("click", () => {
+      items[idx].onClick();
+      closeTimerMenu();
+    });
   });
   document.body.append(nav);
 
@@ -308,19 +308,45 @@ function showRemoveMenu(event, label, onRemove) {
 }
 
 /**
- * Suppress the core combatant menu for one of our entries, returning true if the
- * caller may proceed to show our own menu. Always prevents the native menu (so a
- * user who can't act gets no menu at all), then reports controllability.
+ * Suppress the core combatant menu for one of our entries — always, so a user
+ * with no available actions gets no menu at all (rather than the combatant one).
  * @param {MouseEvent} event
- * @param {boolean} controllable
- * @returns {boolean}
  */
-function claimContextMenu(event, controllable) {
+function claimContextMenu(event) {
   event.preventDefault();
   event.stopPropagation();   // keep the core combatant menu off our entries
   ui.context?.close?.();     // dismiss any native combatant menu still open
   closeTimerMenu();          // only one of ours open at a time
-  return controllable;
+}
+
+/**
+ * Open the GM "Update Effect" dialog for an entry: a single rounds-left number
+ * input with Cancel / Update. On Update, `apply(rounds)` performs the write.
+ * @param {string} name           Effect/spell name (for the title).
+ * @param {number} currentRounds  Pre-filled current rounds remaining.
+ * @param {(rounds:number) => void} apply
+ */
+function openUpdateDialog(name, currentRounds, apply) {
+  new foundry.applications.api.DialogV2({
+    window: { title: game.i18n.format("COMBAT_SPELL_TIMER.UpdateTitle", { name }), icon: "fa-solid fa-pen-to-square" },
+    content: `
+      <label class="cst-existing-rounds">
+        ${game.i18n.localize("COMBAT_SPELL_TIMER.RoundsRemaining")}
+        <input type="number" name="rounds" value="${Number(currentRounds) || 1}" min="1" step="1" autofocus>
+      </label>`,
+    buttons: [
+      {
+        action: "update",
+        icon: "fa-solid fa-check",
+        label: game.i18n.localize("COMBAT_SPELL_TIMER.Update"),
+        default: true,
+        callback: (_event, button) => {
+          const n = parseInt(button.form.elements.rounds.value, 10);
+          if (Number.isInteger(n) && n >= 1) apply(n);
+        },
+      },
+    ],
+  }).render({ force: true });
 }
 
 /**
@@ -330,16 +356,32 @@ function claimContextMenu(event, controllable) {
  * @param {string} combatId    Id of the combat this row belongs to.
  */
 function openTimerMenu(event, t, combatId) {
-  if (!claimContextMenu(event, canControl(t))) return;
-  const view = getAdapter().getFeatureView(t.type);
-  // Uniform with features ("End Rage"): spells read "End <spell>".
-  const label = view?.removeLabelKey
-    ? game.i18n.localize(view.removeLabelKey)
-    : game.i18n.format("COMBAT_SPELL_TIMER.EndSpell", { name: t.name });
-  showRemoveMenu(event, label, () => {
-    removeTimers(combatId, { id: t.id });
-    getAdapter().onManualRemove(t); // ends concentration on the caster
-  });
+  claimContextMenu(event);
+  const items = [];
+  if (game.user.isGM) {
+    items.push({
+      icon: "fa-pen-to-square",
+      label: game.i18n.localize("COMBAT_SPELL_TIMER.UpdateEffect"),
+      onClick: () => openUpdateDialog(t.name, remainingRounds(t, game.combats.get(combatId)),
+        n => setTimerRounds(combatId, t.id, n)),
+    });
+  }
+  if (canControl(t)) {
+    const view = getAdapter().getFeatureView(t.type);
+    // Uniform with features ("End Rage"): spells read "End <spell>".
+    const label = view?.removeLabelKey
+      ? game.i18n.localize(view.removeLabelKey)
+      : game.i18n.format("COMBAT_SPELL_TIMER.EndSpell", { name: t.name });
+    items.push({
+      icon: "fa-trash",
+      label,
+      onClick: () => {
+        removeTimers(combatId, { id: t.id });
+        getAdapter().onManualRemove(t); // ends concentration on the caster
+      },
+    });
+  }
+  showContextMenu(event, items);
 }
 
 /**
@@ -352,16 +394,35 @@ function openTimerMenu(event, t, combatId) {
  * @param {string} combatId    Id of the combat this row belongs to.
  */
 function openEffectMenu(event, e, combatId) {
-  if (!claimContextMenu(event, e.controllable)) return;
-  if (e.timer) {
-    const view = getAdapter().getFeatureView(e.timer.type);
-    const label = game.i18n.localize(view?.removeLabelKey ?? "COMBAT_SPELL_TIMER.RemoveSpellTimer");
-    showRemoveMenu(event, label, () => {
-      removeTimers(combatId, { id: e.timer.id });
-      getAdapter().onManualRemove(e.timer);
+  claimContextMenu(event);
+  const items = [];
+  if (game.user.isGM) {
+    // Update the source that drives the count: the linked timer if any, else the AE.
+    const apply = e.countdownTimerId
+      ? (n) => setTimerRounds(combatId, e.countdownTimerId, n)
+      : (n) => setEffectRounds(e.effectUuid, n);
+    items.push({
+      icon: "fa-pen-to-square",
+      label: game.i18n.localize("COMBAT_SPELL_TIMER.UpdateEffect"),
+      onClick: () => openUpdateDialog(e.name, e.remaining, apply),
     });
-  } else {
-    const label = game.i18n.format("COMBAT_SPELL_TIMER.RemoveEffect", { name: e.name });
-    showRemoveMenu(event, label, () => removeEffect(e.effectUuid));
   }
+  if (e.controllable) {
+    if (e.timer) {
+      const view = getAdapter().getFeatureView(e.timer.type);
+      const label = game.i18n.localize(view?.removeLabelKey ?? "COMBAT_SPELL_TIMER.RemoveSpellTimer");
+      items.push({
+        icon: "fa-trash",
+        label,
+        onClick: () => { removeTimers(combatId, { id: e.timer.id }); getAdapter().onManualRemove(e.timer); },
+      });
+    } else {
+      items.push({
+        icon: "fa-trash",
+        label: game.i18n.format("COMBAT_SPELL_TIMER.RemoveEffect", { name: e.name }),
+        onClick: () => removeEffect(e.effectUuid),
+      });
+    }
+  }
+  showContextMenu(event, items);
 }

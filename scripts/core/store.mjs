@@ -129,6 +129,31 @@ export async function gmSetTimerInitiative(combatId, timerId, initiative) {
   }
 }
 
+/**
+ * GM-side: set a single timer's remaining rounds (by id) to `rounds`. Adjusts
+ * `durationRounds` by the delta between the desired and current remaining so
+ * `remainingRounds` returns exactly `rounds` next render. No-op if unchanged.
+ * @returns {object|null} The updated timer record, or null if nothing changed.
+ */
+export async function gmSetTimerRounds(combatId, timerId, rounds) {
+  const combat = game.combats.get(combatId);
+  if (!combat) return null;
+  const timers = getTimers(combat);
+  let updated = null;
+  const next = timers.map(t => {
+    if (t.id !== timerId) return t;
+    const durationRounds = t.durationRounds + (rounds - remainingRounds(t, combat));
+    if (durationRounds === t.durationRounds) return t;
+    updated = { ...t, durationRounds };
+    return updated;
+  });
+  if (updated) {
+    dbg("store:timer-rounds", timerId, rounds, combatId);
+    await writeTimers(combat, next);
+  }
+  return updated;
+}
+
 /** GM-side: remove records matching every key/value in `query`. */
 export async function gmRemoveTimers(combatId, query) {
   const combat = game.combats.get(combatId);

@@ -1,5 +1,5 @@
 import { SOCKET, MODULE_ID } from "../module.mjs";
-import { gmAddTimer, gmRemoveTimers, gmPruneExpired, gmSetInitiative, gmSetTimerInitiative } from "./store.mjs";
+import { gmAddTimer, gmRemoveTimers, gmPruneExpired, gmSetInitiative, gmSetTimerInitiative, gmSetTimerRounds } from "./store.mjs";
 import { getAdapter } from "../adapter/index.mjs";
 import { dbg } from "../utils/debug.mjs";
 
@@ -29,6 +29,13 @@ async function handle(msg) {
       return;
     }
     case "deleteEffect": return getAdapter().removeAppliedEffect(msg.effectUuid);
+    case "timer-rounds": {
+      const timer = await gmSetTimerRounds(msg.combatId, msg.timerId, msg.rounds);
+      // Keep the linked system effect(s) from expiring before the new duration.
+      if (timer) await getAdapter().setTimerEffectRounds?.(timer, msg.rounds);
+      return;
+    }
+    case "effect-rounds": return getAdapter().setAppliedEffectRounds?.(msg.effectUuid, msg.rounds);
   }
 }
 
@@ -51,3 +58,9 @@ export const setTimerInitiative = (combatId, timerId, initiative) =>
  *  can't delete it themselves (e.g. a spellcaster removing an effect they placed
  *  on an actor they don't own). */
 export const removeEffect = (effectUuid) => requestWrite({ action: "deleteEffect", effectUuid });
+/** GM-routed: set a timer's remaining rounds (updates its row + every linked icon). */
+export const setTimerRounds = (combatId, timerId, rounds) =>
+  requestWrite({ action: "timer-rounds", combatId, timerId, rounds });
+/** GM-routed: set a standalone applied effect's remaining rounds (no module timer). */
+export const setEffectRounds = (effectUuid, rounds) =>
+  requestWrite({ action: "effect-rounds", effectUuid, rounds });
