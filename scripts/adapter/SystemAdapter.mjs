@@ -130,6 +130,35 @@ export default class SystemAdapter {
   getEffectTimer(effect, timers) { return null; }
 
   /**
+   * Set a standalone applied effect's remaining duration to `rounds` whole combat
+   * rounds (no module timer drives it). Default: anchor a rounds-based duration to
+   * the current combat round, then refresh the tracker.
+   * @param {string} effectUuid
+   * @param {number} rounds
+   */
+  async setAppliedEffectRounds(effectUuid, rounds) {
+    const effect = await fromUuid(effectUuid).catch(() => null);
+    if (!effect) return;
+    const combat = game.combat;
+    await effect.update({
+      "duration.startRound": combat?.round ?? null,
+      "duration.startTurn": combat?.turn ?? 0,
+      "duration.rounds": rounds,
+      "duration.seconds": null,
+    });
+    ui.combat?.render(); // updateActiveEffect doesn't re-render the tracker on its own
+  }
+
+  /**
+   * After a timer's remaining rounds were changed, bring any linked system
+   * effect(s) into line so they don't expire before the new duration. Default:
+   * no-op (the module timer alone drives the display).
+   * @param {object} timer  The updated timer record.
+   * @param {number} rounds
+   */
+  async setTimerEffectRounds(timer, rounds) { /* optional */ }
+
+  /**
    * Every registered feature the actor currently has an active module-owned AE
    * for, as { featureId, name, img, effectUuid } records. Default: none.
    * @param {Actor} actor

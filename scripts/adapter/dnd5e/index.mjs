@@ -295,6 +295,30 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
+   * Bring a spell's applied effects into line after its timer's rounds changed:
+   * set the caster's concentration effect AND each of its dependent target effects
+   * to `rounds` remaining, so an extended spell's icons don't self-expire at the
+   * original duration. Feature timers keep their sentinel-duration AE (it never
+   * self-expires — the timer alone drives the count), so this is a no-op for them.
+   * @param {object} timer
+   * @param {number} rounds
+   */
+  async setTimerEffectRounds(timer, rounds) {
+    if (timer.type || !timer.concentrationEffectUuid) return; // feature, or non-concentration spell
+    const conc = await fromUuid(timer.concentrationEffectUuid).catch(() => null);
+    if (!conc) return;
+    const effects = [conc, ...(conc.getDependents?.() ?? [])].filter(e => e?.documentName === "ActiveEffect");
+    const combat = game.combat;
+    const update = {
+      "duration.startRound": combat?.round ?? null,
+      "duration.startTurn": combat?.turn ?? 0,
+      "duration.rounds": rounds,
+      "duration.seconds": null,
+    };
+    for (const e of effects) await e.update(update).catch(() => {});
+  }
+
+  /**
    * The caster's concentration effect that applied `effect`, or null when the
    * effect isn't concentration-applied. Matches by the concentrated item (a
    * concentration effect always records its item) and, as a fallback, by the

@@ -142,6 +142,10 @@ export function collectEffects(combatant, combat) {
       // The module timer record for feature effects (Rage, …); null otherwise.
       // Feature cards remove via the timer; other effects delete the AE directly.
       timer,
+      // Id of the timer whose countdown this entry mirrors (feature or linked
+      // spell timer), or null for a standalone AE — lets "Update Effect" target
+      // the source that drives every representation of this count.
+      countdownTimerId: countdown?.id ?? null,
       effectUuid: effect.uuid,
       controllable,
       // Only effects with a real countdown get a detail card in the panel.
