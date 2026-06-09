@@ -1,0 +1,61 @@
+<div class="cst-spell-map-body">
+<p class="hint">{{localize "COMBAT_SPELL_TIMER.Beyond20.SpellMap.Help"}}</p>
+
+<div class="cst-map-rows">
+  {{#each entries}}
+  <div class="cst-map-row">
+    <input type="text" class="cst-map-from" value="{{this.from}}"
+           placeholder="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.FromPlaceholder'}}"
+           aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.From'}}">
+    <i class="fa-solid fa-arrow-right cst-map-arrow"></i>
+    <div class="cst-map-combo">
+      <input type="text" class="cst-map-to" value="{{this.to}}" autocomplete="off"
+             placeholder="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.ToPlaceholder'}}"
+             aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.To'}}">
+      <button type="button" class="cst-map-toggle" data-action="toggleSuggest" tabindex="-1"
+              aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.ShowSuggestions'}}">
+        <i class="fa-solid fa-caret-down"></i>
+      </button>
+    </div>
+    <button type="button" class="cst-map-remove" data-action="removeEntry"
+            aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.Remove'}}">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  </div>
+  {{/each}}
+</div>
+
+<template id="cst-map-row-template">
+  <div class="cst-map-row">
+    <input type="text" class="cst-map-from"
+           placeholder="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.FromPlaceholder'}}"
+           aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.From'}}">
+    <i class="fa-solid fa-arrow-right cst-map-arrow"></i>
+    <div class="cst-map-combo">
+      <input type="text" class="cst-map-to" autocomplete="off"
+             placeholder="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.ToPlaceholder'}}"
+             aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.To'}}">
+      <button type="button" class="cst-map-toggle" data-action="toggleSuggest" tabindex="-1"
+              aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.ShowSuggestions'}}">
+        <i class="fa-solid fa-caret-down"></i>
+      </button>
+    </div>
+    <button type="button" class="cst-map-remove" data-action="removeEntry"
+            aria-label="{{localize 'COMBAT_SPELL_TIMER.Beyond20.SpellMap.Remove'}}">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  </div>
+</template>
+
+<footer class="cst-map-footer">
+  <button type="button" data-action="addEntry">
+    <i class="fa-solid fa-plus"></i> {{localize "COMBAT_SPELL_TIMER.Beyond20.SpellMap.Add"}}
+  </button>
+  <button type="button" data-action="clearAll">
+    <i class="fa-solid fa-xmark"></i> {{localize "COMBAT_SPELL_TIMER.Beyond20.SpellMap.ClearAll"}}
+  </button>
+  <button type="submit">
+    <i class="fa-solid fa-floppy-disk"></i> {{localize "COMBAT_SPELL_TIMER.Beyond20.SpellMap.Save"}}
+  </button>
+</footer>
+</div>

@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and attach zip to (e.g. v0.2.0)'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Resolve tag and version
+        run: |
+          TAG=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+
+      - name: Update module.json
+        run: |
+          jq --arg version "$VERSION" \
+             --arg download "https://github.com/kamcknig/combat-spell-timer/releases/download/$TAG/module.zip" \
+             '.version = $version | .download = $download' \
+             module.json > module.tmp.json && mv module.tmp.json module.json
+
+      - name: Build module zip
+        run: zip -r module.zip module.json lang/ scripts/ styles/
+
+      - name: Attach zip to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" &>/dev/null; then
+            gh release upload "$TAG" module.zip --clobber
+          else
+            gh release create "$TAG" module.zip \
+              --title "$TAG" \
+              --generate-notes
+          fi
+
+      - name: Commit updated module.json to source branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Prefer release/* branches; fall back to any non-mainline branch; then master.
+          BRANCHES=$(git branch -r --contains "$TAG" | grep -v HEAD | sed 's|[[:space:]]*origin/||')
+          SOURCE_BRANCH=$(echo "$BRANCHES" | grep '^release/' | head -1)
+          if [ -z "$SOURCE_BRANCH" ]; then
+            SOURCE_BRANCH=$(echo "$BRANCHES" | grep -v '^develop$\|^main$\|^master$' | head -1)
+          fi
+          if [ -z "$SOURCE_BRANCH" ]; then
+            SOURCE_BRANCH=$(echo "$BRANCHES" | head -1)
+          fi
+          if [ -z "$SOURCE_BRANCH" ]; then
+            SOURCE_BRANCH="master"
+          fi
+          cp module.json /tmp/module.json
+          git checkout "$SOURCE_BRANCH"
+          cp /tmp/module.json module.json
+          git add module.json
+          git diff --cached --quiet || git commit -m "chore: update module.json to $VERSION"
+          git push origin "$SOURCE_BRANCH"
+          git tag -f "$TAG" HEAD
+          git push origin "refs/tags/$TAG" --force
+
+      - name: Publish to Foundry VTT (dry-run, then release)
+        env:
+          FOUNDRY_TOKEN: ${{ secrets.FOUNDRY_PACKAGE_RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FOUNDRY_TOKEN:-}" ]; then
+            echo "::error::FOUNDRY_PACKAGE_RELEASE_TOKEN secret is not set"
+            exit 1
+          fi
+
+          API="https://foundryvtt.com/_api/packages/release_version/"
+          PKG_ID=$(jq -r '.id' module.json)
+          MIN=$(jq -r '.compatibility.minimum // ""' module.json)
+          VERIFIED=$(jq -r '.compatibility.verified // ""' module.json)
+          MAX=$(jq -r '.compatibility.maximum // ""' module.json)
+          # Per-release manifest = module.json at the tag (now points to the commit
+          # with the bumped version/download, after the retag step above).
+          MANIFEST_URL="https://raw.githubusercontent.com/kamcknig/combat-spell-timer/refs/tags/$TAG/module.json"
+          NOTES_URL="https://github.com/kamcknig/combat-spell-timer/releases/tag/$TAG"
+
+          # raw.githubusercontent.com may briefly serve a stale ref; wait until the
+          # tagged manifest reports the version we're releasing before submitting.
+          echo "Waiting for $MANIFEST_URL to report version $VERSION..."
+          for i in $(seq 1 12); do
+            remote_version=$(curl -fsSL "$MANIFEST_URL" 2>/dev/null | jq -r '.version // ""' 2>/dev/null || echo "")
+            [ "$remote_version" = "$VERSION" ] && { echo "Manifest is live (version $remote_version)."; break; }
+            echo "Attempt $i: got '${remote_version:-<none>}', expected '$VERSION'; retrying in 10s..."
+            sleep 10
+            [ "$i" = "12" ] && { echo "::error::Tagged manifest never reported version $VERSION."; exit 1; }
+          done
+
+          # Build the request body; $1 is the boolean value for "dry-run".
+          build_payload() {
+            jq -n \
+              --arg id "$PKG_ID" \
+              --argjson dryrun "$1" \
+              --arg version "$VERSION" \
+              --arg manifest "$MANIFEST_URL" \
+              --arg notes "$NOTES_URL" \
+              --arg min "$MIN" --arg verified "$VERIFIED" --arg max "$MAX" \
+              '{id: $id, "dry-run": $dryrun, release: {version: $version, manifest: $manifest, notes: $notes, compatibility: {minimum: $min, verified: $verified, maximum: $max}}}'
+          }
+
+          # POST a release request; $1 is the "dry-run" boolean. Returns non-zero
+          # unless the API responds 200 with status "success".
+          post_release() {
+            local body http status
+            body=$(build_payload "$1")
+            http=$(curl -sS -o /tmp/fvtt-resp.json -w '%{http_code}' -X POST "$API" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: $FOUNDRY_TOKEN" \
+              -d "$body")
+            echo "HTTP $http"
+            cat /tmp/fvtt-resp.json; echo
+            status=$(jq -r '.status // ""' /tmp/fvtt-resp.json)
+            [ "$http" = "200" ] && [ "$status" = "success" ]
+          }
+
+          echo "Validating release $VERSION via dry-run..."
+          if ! post_release true; then
+            echo "::error::Foundry dry-run failed; not publishing."
+            exit 1
+          fi
+
+          echo "Dry-run succeeded. Publishing release $VERSION to Foundry..."
+          if ! post_release false; then
+            echo "::error::Foundry release failed."
+            exit 1
+          fi
+          echo "Foundry release published."

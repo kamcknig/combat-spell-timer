@@ -1,0 +1,82 @@
+/* Combat Spell Timer styles */
+
+/* Timer rows reuse .combatant layout but read as non-interactive markers. */
+.combat-tracker .cst-timer-row { opacity: 0.95; font-style: italic; }
+.combat-tracker .cst-timer-row .token-image { border-radius: 4px; }
+.combat-tracker .cst-timer-row .cst-sub { font-size: var(--font-size-10, 10px); opacity: 0.8; }
+.combat-tracker .cst-timer-row .cst-remaining { font-weight: bold; font-style: normal; opacity: 1; white-space: nowrap; }
+/* Initiative input matches a real combatant's; keep it upright despite the italic row. */
+.combat-tracker .cst-timer-row .initiative-input { font-style: normal; }
+/* Rage rows get a warm tint to distinguish them from spell rows. */
+.combat-tracker .cst-timer-row[data-cst-type="rage"] { background: rgba(200, 60, 0, 0.12); }
+
+/* Our right-click menu reuses Foundry's #context-menu styling (border, font,
+   themed colors, hover) for a native look; we only override positioning so it
+   can sit at the cursor as a body-level fixed element. */
+nav#context-menu.cst-timer-menu {
+  position: fixed;
+  width: max-content;
+  inset: unset;
+  z-index: calc(var(--z-index-tooltip, 10000) + 1);
+}
+
+/* Spell list in the owner-left-combat dialog: no bullets, icon beside name. */
+.cst-timer-list { list-style: none; margin: 4px 0; padding: 0; }
+.cst-timer-list li { display: flex; align-items: center; gap: 8px; }
+.cst-timer-list img { width: 24px; height: 24px; border-radius: 4px; flex-shrink: 0; }
+
+/* Existing-concentration dialog */
+.cst-existing-dialog { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+.cst-existing-header { display: flex; align-items: center; gap: 10px; }
+.cst-existing-header img { width: 48px; height: 48px; border-radius: 4px; flex-shrink: 0; }
+.cst-existing-rounds { display: flex; align-items: center; gap: 8px; }
+.cst-existing-rounds input { width: 4em; }
+
+/* Section heading inserted before the first Beyond20 setting in the module settings panel. */
+.cst-settings-heading {
+  margin: 1em 0 0.25em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--color-border-light-2, rgba(255,255,255,0.2));
+  font-size: var(--font-size-14, 14px);
+  font-weight: bold;
+}
+
+/* Beyond20 action buttons appended below Beyond20 chat cards. */
+.cst-beyond20-controls { display: flex; margin: 4px 0 2px; }
+.cst-beyond20-controls .cst-beyond20-cast,
+.cst-beyond20-controls .cst-beyond20-rage { flex: 1; }
+.cst-beyond20-cast i,
+.cst-beyond20-rage i { margin-right: 4px; }
+
+/* Beyond20 spell-name mapping editor */
+.cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }
+.cst-spell-map .cst-map-row .cst-map-from,
+.cst-spell-map .cst-map-row .cst-map-combo { flex: 1 1 0; min-width: 0; }
+.cst-spell-map .cst-map-arrow { flex: 0 0 auto; opacity: 0.7; }
+.cst-spell-map .cst-map-remove { flex: 0 0 auto; }
+.cst-spell-map .cst-map-footer { display: flex; gap: 6px; margin-top: 8px; }
+.cst-spell-map .cst-map-footer button[type="submit"] { margin-left: auto; }
+
+/* Spell-name combobox: input + caret toggle (suggestion list is body-level). */
+.cst-spell-map .cst-map-combo { display: flex; align-items: stretch; }
+.cst-spell-map .cst-map-combo .cst-map-to { flex: 1 1 0; min-width: 0; }
+.cst-spell-map .cst-map-toggle {
+  flex: 0 0 auto; width: 1.75rem; height: auto; padding: 0; margin: 0; line-height: 1;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+}
+.cst-spell-map .cst-map-toggle i { margin: 0; line-height: 1; }
+
+/* Body-level suggestion dropdown (escapes the small window's clipping). */
+.cst-spell-map-suggestions {
+  position: fixed; z-index: calc(var(--z-index-tooltip, 10000) + 5);
+  max-height: 330px; overflow-y: auto; margin: 0; padding: 2px; list-style: none;
+  background: var(--color-bg, #21232b); border: 1px solid var(--color-border-dark, #0f0f12);
+  border-radius: 4px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+.cst-spell-map-suggestions[hidden] { display: none; }
+.cst-spell-map-suggestions li {
+  padding: 2px 6px; cursor: pointer; border-radius: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cst-spell-map-suggestions li:hover { background: var(--color-warm-2, rgba(255, 255, 255, 0.12)); }

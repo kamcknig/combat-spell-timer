@@ -1,0 +1,63 @@
+{
+  "COMBAT_SPELL_TIMER": {
+    "Title": "Combat Spell Timer",
+    "CastRound": "Cast: Round {round}",
+    "RoundsLeft": "{n} rounds left",
+    "RemoveSpellTimer": "Remove Spell Timer",
+    "Keep": "Keep",
+    "RemoveOnDeleteTitle": "Owner Left Combat",
+    "RemoveOnDeletePrompt": "{name} was removed from combat. Also remove their tracked spell timer(s)?",
+    "RemoveOnDeleteNote": "Concentration will not be ended.",
+    "ExistingTitle": "Existing Concentration",
+    "ExistingSubtitle": "{name} is already concentrating",
+    "RoundsRemaining": "Rounds remaining",
+    "InitiativeOptional": "Initiative (optional)",
+    "InitiativeHint": "Leave blank to use combatant's rolled initiative",
+    "AddTimer": "Add Timer",
+    "RemoveConcentration": "Remove Concentration",
+    "Rage": {
+      "TimerName": "Rage",
+      "Raging": "Raging",
+      "ExtendTitle": "Rage — End of Turn",
+      "ExtendPrompt2014": "{name}'s Rage turn just ended. Extend or end it?",
+      "ExtendPrompt2024": "{name}'s Rage turn just ended. Extend or end it?",
+      "Extend": "Extend Rage",
+      "EndRage": "End Rage",
+      "AlreadyRagingTitle": "Already Raging",
+      "AlreadyRagingPrompt": "{name} is already raging! How many rounds remain?",
+      "AlreadyRagingRounds": "Rounds Remaining",
+      "RoundsLeft": "Max rounds left {n}"
+    },
+    "Beyond20": {
+      "SectionHeading": "Beyond20 Integration",
+      "CastSpell": "Cast Spell",
+      "SettingName": "Beyond20: Cast Spell button",
+      "SettingHint": "Add a \"Cast Spell\" button to Beyond20 spell chat cards that casts the spell in Foundry and consumes the slot.",
+      "AutoCastName": "Beyond20: Auto-cast spells",
+      "AutoCastHint": "Automatically cast Beyond20 spells you trigger instead of clicking the button. The button is still shown, but disabled.",
+      "AutoRageName": "Beyond20: Auto-start rage",
+      "AutoRageHint": "Automatically start Rage on Beyond20 Rage cards you trigger instead of clicking the button. The button is still shown, but disabled.",
+      "StartRage": "Start Rage",
+      "SpellNotFound": "Combat Spell Timer: couldn't find the D&D Beyond spell \"{name}\" on {actor}. Its name on the character sheet may differ.",
+      "NoActivity": "Combat Spell Timer: \"{name}\" has no usable activity to cast.",
+      "NoActor": "Combat Spell Timer: couldn't resolve the casting actor for this card.",
+      "SpellMap": {
+        "Title": "Beyond20 Spell Name Mappings",
+        "MenuName": "Spell Name Mappings",
+        "MenuLabel": "Configure Mappings",
+        "MenuHint": "Map D&D Beyond spell names to the matching spell names on your Foundry character sheets, for spells the Cast Spell button can't find by name.",
+        "Help": "Map a D&D Beyond spell name (left) to the spell's name on the Foundry character sheet (right). Matching ignores case. Leave nothing blank; incomplete rows are discarded on save.",
+        "From": "D&D Beyond name",
+        "To": "Foundry spell name",
+        "FromPlaceholder": "D&D Beyond name",
+        "ToPlaceholder": "Foundry spell name",
+        "Add": "Add Mapping",
+        "ClearAll": "Clear All",
+        "Save": "Save",
+        "Remove": "Remove mapping",
+        "ShowSuggestions": "Show spell suggestions",
+        "Saved": "Spell name mappings saved."
+      }
+    }
+  }
+}
