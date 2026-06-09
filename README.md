@@ -90,15 +90,8 @@ its values are left as-is.
 
 ## Supported Non-Spell Abilities
 
-### Barbarian Rage (D&D 5e)
-
-When a Barbarian activates Rage, a timer row is added to the tracker above their
-combatant row. At the end of each of their turns, the actor's owner is prompted
-to extend the rage or let it end. The Rage token icon is applied automatically
-and cleared when rage ends.
-
-Both the 2014 and 2024 rules editions are supported, including Persistent Rage
-(level 15+, 2024 rules) and the correct early-end conditions for each edition.
+I will slowly be adding support for class features. As of now only the Barbarian Rage feature is supported beyond
+spells.
 
 ## Integrations
 
