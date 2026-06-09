@@ -1,9 +1,19 @@
-import { MODULE_ID } from "../module.mjs";
 import { getTimers, remainingRounds, effInit } from "./store.mjs";
-import { isWriter, removeTimers, setTimerInitiative } from "./socket.mjs";
+import { isWriter, removeTimers, setTimerInitiative, removeEffect } from "./socket.mjs";
 import { getAdapter } from "../adapter/index.mjs";
+import { collectEffects } from "./effects.mjs";
 
 const ROW_CLASS = "cst-timer-row";
+const BLOCK_CLASS = "cst-effects-block";
+
+/**
+ * Combatant ids whose effect panel is expanded. Kept in memory so the open/closed
+ * state survives the tracker's frequent re-renders (advancing turns, edits, …).
+ * @type {Set<string>}
+ */
+const expandedCombatants = new Set();
+
+const esc = (s) => foundry.utils.escapeHTML?.(s ?? "") ?? (s ?? "");
 
 /**
  * True if the current user may manually remove the given timer — either the
@@ -41,10 +51,12 @@ function onEditInitiative(ev, t, combatId) {
 }
 
 /**
- * Build a tracker row element for one timer, mimicking a combatant row. The
- * row carries an editable initiative input (like a real combatant) and shows
- * the rounds remaining as a sub-line; removal is handled by the context menu.
- * @param {object} t           Timer record.
+ * Build a tracker row element for one spell timer, mimicking a combatant row.
+ * The row carries an editable initiative input (like a real combatant) and a
+ * single rounds-remaining sub-line; the caster is shown in the title in
+ * parentheses. Removal is handled by the context menu. Feature timers are not
+ * rendered as rows — they live in their owner's effect panel instead.
+ * @param {object} t           Spell timer record.
  * @param {number} remaining   Rounds left (>0).
  * @param {string} combatId    Id of the combat this row belongs to.
  * @param {string} casterName  Displayed name of the caster as shown in the tracker.
@@ -54,37 +66,118 @@ function buildRow(t, remaining, combatId, casterName) {
   const li = document.createElement("li");
   li.className = `combatant ${ROW_CLASS}`;
   li.dataset.cstTimerId = t.id;
-  if (t.type) li.dataset.cstType = t.type;
-  const escapedSpell = foundry.utils.escapeHTML?.(t.name) ?? t.name;
-  const escapedCaster = foundry.utils.escapeHTML?.(casterName) ?? casterName;
+  const escapedSpell = esc(t.name);
+  const escapedCaster = esc(casterName);
+  const title = escapedCaster ? `${escapedSpell} (${escapedCaster})` : escapedSpell;
   const editable = canControl(t);
-  const view = getAdapter().getFeatureView(t.type);   // null for spells
-  const anchored = t.anchorToOwner ?? false;
-  const roundsKey = view?.roundsLeftKey ?? "COMBAT_SPELL_TIMER.RoundsLeft";
   const initValue = t.initiative ?? "";
-  const initiativeCell = anchored
-    ? `<div class="token-initiative"></div>`
-    : `<div class="token-initiative">
+  const initiativeCell = `<div class="token-initiative">
       <input type="text" class="initiative-input cst-initiative-input" inputmode="numeric" pattern="^[+=\\-]?\\d*"
              value="${initValue}" aria-label="${game.i18n.localize("COMBAT.InitiativeScore")}" ${editable ? "" : "readonly"}>
     </div>`;
   li.innerHTML = `
     <img class="token-image" src="${t.img}" alt="${escapedSpell}" loading="lazy">
     <div class="token-name">
-      <strong class="name">${escapedSpell}</strong>
-      <div class="cst-sub">${escapedCaster}</div>
-      <div class="cst-sub">${game.i18n.format("COMBAT_SPELL_TIMER.CastRound", { round: t.castRound })}</div>
-      <div class="cst-sub cst-remaining">${game.i18n.format(roundsKey, { n: remaining })}</div>
+      <strong class="name">${title}</strong>
+      <div class="cst-sub cst-remaining">${game.i18n.format("COMBAT_SPELL_TIMER.RoundsLeft", { n: remaining })}</div>
     </div>
     ${initiativeCell}
   `;
-  if (editable && !anchored) {
+  if (editable) {
     const input = li.querySelector(".cst-initiative-input");
     input?.addEventListener("change", (ev) => onEditInitiative(ev, t, combatId));
   }
   // Our own right-click menu (replaces the core combatant menu on this row).
   li.addEventListener("contextmenu", (ev) => openTimerMenu(ev, t, combatId));
   return li;
+}
+
+/**
+ * Build the in-row effects block appended below a combatant's normal content:
+ * a divider, a left-aligned icon strip (each icon with its rounds remaining in
+ * parentheses when known) and a right-aligned chevron that toggles a detail
+ * panel. The panel lists only effects with a live countdown.
+ * @param {HTMLLIElement} li         The combatant row.
+ * @param {string} combatantId       Id of the combatant the row represents.
+ * @param {Array<object>} effects    Result of collectEffects().
+ * @param {string} combatId          Id of the combat this row belongs to.
+ */
+function buildEffectsBlock(li, combatantId, effects, combatId) {
+  li.classList.add("cst-has-effects"); // CSS hides the core .token-effects on this row
+
+  const strip = effects.map(e => {
+    const count = e.remaining != null ? ` <span class="cst-effects-count">(${e.remaining})</span>` : "";
+    return `<span class="cst-effects-icon"><img src="${e.img}" alt="${esc(e.name)}" loading="lazy">${count}</span>`;
+  }).join("");
+
+  const cards = effects.filter(e => e.expandable).map(e => {
+    const name = e.source
+      ? game.i18n.format("COMBAT_SPELL_TIMER.NameWithSource", { name: esc(e.name), source: esc(e.source) })
+      : esc(e.name);
+    const castLine = e.castRound != null
+      ? `<div class="cst-sub">${game.i18n.format("COMBAT_SPELL_TIMER.CastRound", { round: e.castRound })}</div>`
+      : "";
+    // Each card carries its effect uuid so the right-click remove menu can be
+    // wired below (replacing the core combatant menu on that card).
+    return `
+      <div class="cst-effect-card" data-cst-effect-uuid="${esc(e.effectUuid)}">
+        <img class="cst-effect-img" src="${e.img}" alt="${esc(e.name)}" loading="lazy">
+        <div class="cst-effect-info">
+          <strong class="name">${name}</strong>
+          ${castLine}
+          <div class="cst-sub cst-remaining">${game.i18n.format("COMBAT_SPELL_TIMER.RoundsLeft", { n: e.remaining })}</div>
+        </div>
+      </div>`;
+  }).join("");
+
+  const expandable = cards.length > 0;
+  const expanded = expandable && expandedCombatants.has(combatantId);
+  const chevron = expanded ? "fa-chevron-up" : "fa-chevron-down";
+  const toggle = expandable
+    ? `<button type="button" class="cst-effects-toggle" aria-label="${game.i18n.localize("COMBAT_SPELL_TIMER.ToggleEffects")}" aria-expanded="${expanded}">
+        <i class="fa-solid ${chevron}"></i>
+      </button>`
+    : "";
+
+  const block = document.createElement("div");
+  block.className = BLOCK_CLASS;
+  block.innerHTML = `
+    <div class="cst-effects-row">
+      <div class="cst-effects-strip">${strip}</div>
+      ${toggle}
+    </div>
+    ${expandable ? `<div class="cst-effects-panel" ${expanded ? "" : "hidden"}>${cards}</div>` : ""}
+    <hr class="cst-effects-divider">
+  `;
+
+  if (expandable) {
+    // Clicking anywhere on the strip row (not just the chevron) toggles the panel.
+    const row = block.querySelector(".cst-effects-row");
+    const btn = block.querySelector(".cst-effects-toggle");
+    const panel = block.querySelector(".cst-effects-panel");
+    const icon = btn.querySelector("i");
+    row.classList.add("cst-clickable");
+    row.addEventListener("click", () => {
+      const open = panel.hasAttribute("hidden");
+      if (open) { panel.removeAttribute("hidden"); expandedCombatants.add(combatantId); }
+      else { panel.setAttribute("hidden", ""); expandedCombatants.delete(combatantId); }
+      btn.setAttribute("aria-expanded", String(open));
+      icon.classList.toggle("fa-chevron-down", !open);
+      icon.classList.toggle("fa-chevron-up", open);
+    });
+  }
+
+  // Every expanded card gets our own right-click menu, suppressing the core
+  // combatant menu on these entries (and showing nothing for users who can't
+  // remove the effect — see openEffectMenu / collectEffects controllable). Cards
+  // render in the same order as the expandable effects, so zip them by index.
+  const cardEls = block.querySelectorAll(".cst-effect-card");
+  const expandableEffects = effects.filter(e => e.expandable);
+  cardEls.forEach((card, i) => {
+    const e = expandableEffects[i];
+    if (e) card.addEventListener("contextmenu", (ev) => openEffectMenu(ev, e, combatId));
+  });
+  li.appendChild(block);
 }
 
 /**
@@ -122,16 +215,19 @@ function placeRow(ol, combat, t, row) {
  */
 export function onRenderTracker(app, element) {
   // The hook also fires for the popout; handle whichever element we got.
-  element.querySelectorAll(`.${ROW_CLASS}`).forEach(n => n.remove()); // avoid duplicates on partial renders
+  element.querySelectorAll(`.${ROW_CLASS}, .${BLOCK_CLASS}`).forEach(n => n.remove()); // avoid duplicates on partial renders
 
   const combat = app.viewed;
   if (!combat) return;
   const ol = element.querySelector("ol.combat-tracker");
   if (!ol) return;
 
-  // Descending by initiative so multiple rows in one gap keep their order;
-  // null-initiative rows (anchored to their owner) sort last.
-  const timers = [...getTimers(combat)].sort((a, b) => (b.initiative ?? -Infinity) - (a.initiative ?? -Infinity));
+  // Spell rows only: feature timers (Rage, …) now live in their owner's effect
+  // panel rather than as a standalone row. Descending by initiative so multiple
+  // rows in one gap keep their order; null-initiative rows sort last.
+  const timers = [...getTimers(combat)]
+    .filter(t => !getAdapter().getFeatureView(t.type)) // drop feature timers
+    .sort((a, b) => (b.initiative ?? -Infinity) - (a.initiative ?? -Infinity));
   for (const t of timers) {
     const remaining = remainingRounds(t, combat);
     if (remaining <= 0) continue; // expired rows are pruned by the GM; never render them
@@ -141,6 +237,15 @@ export function onRenderTracker(app, element) {
       ?? combat.combatants.get(t.casterCombatantId)?.name ?? "";
     const row = buildRow(t, remaining, combat.id, casterName);
     placeRow(ol, combat, t, row);
+  }
+
+  // Fold each combatant's temporary effects into its own row.
+  for (const cli of ol.querySelectorAll("li.combatant[data-combatant-id]")) {
+    const combatant = combat.combatants.get(cli.dataset.combatantId);
+    if (!combatant) continue;
+    const effects = collectEffects(combatant, combat);
+    if (effects.length) buildEffectsBlock(cli, combatant.id, effects, combat.id);
+    else expandedCombatants.delete(combatant.id); // forget stale expand state
   }
 }
 
@@ -162,37 +267,24 @@ function closeTimerMenu() {
 }
 
 /**
- * Open our own right-click menu for a timer row and suppress the core combatant
- * menu. The core ContextMenu listens on the tracker container, so stopping
- * propagation here (the row is a descendant) prevents it — and any stale or
- * duplicate instance — from firing, which is why the menu is built by hand
- * rather than via the shared tracker context-options hook.
- * @param {MouseEvent} event   The row's contextmenu event.
- * @param {object} t           Timer record.
- * @param {string} combatId    Id of the combat this row belongs to.
+ * Build and show our single-item right-click remove menu at the cursor. Reuses
+ * Foundry's #context-menu markup so its native styling applies verbatim.
+ * @param {MouseEvent} event   The triggering contextmenu event.
+ * @param {string} label       The localized menu label.
+ * @param {() => void} onRemove Invoked when the item is clicked.
  */
-function openTimerMenu(event, t, combatId) {
-  event.preventDefault();
-  event.stopPropagation();   // keep the core combatant menu off our rows
-  ui.context?.close?.();     // dismiss any native combatant menu still open
-  closeTimerMenu();          // only one of ours open at a time
-  if (!canControl(t)) return; // nothing actionable for this user
-
-  // Reuse Foundry's #context-menu markup so its native styling applies verbatim.
+function showRemoveMenu(event, label, onRemove) {
   const nav = document.createElement("nav");
   nav.id = "context-menu";
   nav.className = "cst-timer-menu";
-  const view = getAdapter().getFeatureView(t.type);
-  const removeLabel = game.i18n.localize(view?.removeLabelKey ?? "COMBAT_SPELL_TIMER.RemoveSpellTimer");
   nav.innerHTML = `
     <ol class="context-items">
       <li class="context-item">
-        <i class="fa-solid fa-trash fa-fw"></i><span>${removeLabel}</span>
+        <i class="fa-solid fa-trash fa-fw"></i><span>${esc(label)}</span>
       </li>
     </ol>`;
   nav.querySelector(".context-item").addEventListener("click", () => {
-    removeTimers(combatId, { id: t.id });
-    getAdapter().onManualRemove(t); // ends concentration on the caster
+    onRemove();
     closeTimerMenu();
   });
   document.body.append(nav);
@@ -213,4 +305,63 @@ function openTimerMenu(event, t, combatId) {
     document.addEventListener("keydown", onKey, true);
     window.addEventListener("blur", closeTimerMenu);
   }, 0);
+}
+
+/**
+ * Suppress the core combatant menu for one of our entries, returning true if the
+ * caller may proceed to show our own menu. Always prevents the native menu (so a
+ * user who can't act gets no menu at all), then reports controllability.
+ * @param {MouseEvent} event
+ * @param {boolean} controllable
+ * @returns {boolean}
+ */
+function claimContextMenu(event, controllable) {
+  event.preventDefault();
+  event.stopPropagation();   // keep the core combatant menu off our entries
+  ui.context?.close?.();     // dismiss any native combatant menu still open
+  closeTimerMenu();          // only one of ours open at a time
+  return controllable;
+}
+
+/**
+ * Right-click menu for a spell timer row.
+ * @param {MouseEvent} event   The row's contextmenu event.
+ * @param {object} t           Spell timer record.
+ * @param {string} combatId    Id of the combat this row belongs to.
+ */
+function openTimerMenu(event, t, combatId) {
+  if (!claimContextMenu(event, canControl(t))) return;
+  const view = getAdapter().getFeatureView(t.type);
+  // Uniform with features ("End Rage"): spells read "End <spell>".
+  const label = view?.removeLabelKey
+    ? game.i18n.localize(view.removeLabelKey)
+    : game.i18n.format("COMBAT_SPELL_TIMER.EndSpell", { name: t.name });
+  showRemoveMenu(event, label, () => {
+    removeTimers(combatId, { id: t.id });
+    getAdapter().onManualRemove(t); // ends concentration on the caster
+  });
+}
+
+/**
+ * Right-click menu for an expanded effect-panel card. Feature effects remove via
+ * their timer (ending the feature); all other effects delete the ActiveEffect.
+ * Shows nothing for users who can't control the effect (but still suppresses the
+ * core combatant menu).
+ * @param {MouseEvent} event   The card's contextmenu event.
+ * @param {object} e           Effect entry from collectEffects().
+ * @param {string} combatId    Id of the combat this row belongs to.
+ */
+function openEffectMenu(event, e, combatId) {
+  if (!claimContextMenu(event, e.controllable)) return;
+  if (e.timer) {
+    const view = getAdapter().getFeatureView(e.timer.type);
+    const label = game.i18n.localize(view?.removeLabelKey ?? "COMBAT_SPELL_TIMER.RemoveSpellTimer");
+    showRemoveMenu(event, label, () => {
+      removeTimers(combatId, { id: e.timer.id });
+      getAdapter().onManualRemove(e.timer);
+    });
+  } else {
+    const label = game.i18n.format("COMBAT_SPELL_TIMER.RemoveEffect", { name: e.name });
+    showRemoveMenu(event, label, () => removeEffect(e.effectUuid));
+  }
 }
