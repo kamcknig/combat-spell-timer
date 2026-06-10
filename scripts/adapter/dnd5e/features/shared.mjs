@@ -19,6 +19,11 @@ const FEATURE_SENTINEL_ROUNDS = 99999;
  * The original feature/item effect is never mutated.
  */
 
+/** The feature id a module-owned AE was stamped with, or null. */
+export function moduleFeatureId(effect) {
+  return effect?.flags?.[MODULE_ID]?.feature ?? null;
+}
+
 /** True for any module-owned feature AE (optionally for a specific feature). */
 export function isModuleEffect(effect, feature = null) {
   const fid = effect?.flags?.[MODULE_ID]?.feature;

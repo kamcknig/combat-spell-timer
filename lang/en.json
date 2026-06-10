@@ -37,6 +37,20 @@
       "AlreadyRagingRounds": "Rounds Remaining",
       "RoundsLeft": "Max rounds left {n}"
     },
+    "FormOfTheBeast": {
+      "Title": "Form of the Beast",
+      "Prompt": "{name} rages — manifest the bestial power within? Choose a natural weapon to take form until the rage ends.",
+      "Bite": "Bite",
+      "Claws": "Claws",
+      "Tail": "Tail",
+      "None": "Don't Transform",
+      "BiteWeapon": "Bite (Form of the Beast)",
+      "ClawsWeapon": "Claws (Form of the Beast)",
+      "TailWeapon": "Tail (Form of the Beast)",
+      "BiteDescription": "Your mouth transforms into a bestial muzzle or great mandibles. Once on each of your turns when you damage a creature with this bite, you regain hit points equal to your proficiency bonus, provided you have less than half your hit points when you hit.",
+      "ClawsDescription": "Each of your hands transforms into a claw, usable as a weapon while it's empty. Once on each of your turns when you attack with a claw using the Attack action, you can make one additional claw attack as part of the same action.",
+      "TailDescription": "You grow a lashing, spiny tail with reach. When a creature you can see within 10 feet hits you with an attack roll, you can use your reaction to roll a d8 and add it to your AC against that attack, possibly causing it to miss."
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",

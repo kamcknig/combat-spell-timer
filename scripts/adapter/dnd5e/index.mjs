@@ -1,7 +1,7 @@
 import SystemAdapter from "../SystemAdapter.mjs";
 import { durationToRounds } from "./duration.mjs";
 import { getFeature, listFeatures } from "./features/index.mjs";
-import { createFeatureEffect, deleteFeatureEffect, findModuleEffect } from "./features/shared.mjs";
+import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId } from "./features/shared.mjs";
 import { dbg } from "../../utils/debug.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
@@ -221,6 +221,25 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
+   * Run a feature's cleanup when its module-owned AE is deleted by ANY path
+   * (turn-end End, expiry, manual remove, early-end, re-start refresh, or the
+   * user deleting the AE from the sheet). The hook fires on all clients; only
+   * the initiating client acts — it performed the AE delete, so it has owner
+   * permission for any companion-document cleanup too.
+   */
+  registerFeatureCleanup() {
+    Hooks.on("deleteActiveEffect", (effect, _options, userId) => {
+      if (userId !== game.user.id) return;
+      const actor = effect.parent;
+      if (actor?.documentName !== "Actor") return;
+      const f = getFeature(moduleFeatureId(effect));
+      if (!f?.onEffectDeleted) return;
+      dbg("dnd5e:feature-effect-deleted", f.id, actor.name);
+      f.onEffectDeleted(actor, effect);
+    });
+  }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:
    * clone the feature's source effect, else hard-coded changes). Returns its UUID.
    * @param {Actor} actor
@@ -231,6 +250,9 @@ export default class Dnd5eAdapter extends SystemAdapter {
   async applyFeatureEffect(actor, featureId, opts) {
     const f = getFeature(featureId);
     if (!f) return null;
+    // Feature-specific start hook — may prompt the user (e.g. Form of the Beast
+    // form selection) and add companion documents before the AE exists.
+    await f.onStart?.(actor, opts);
     const uuid = await createFeatureEffect(actor, f, opts);
     dbg("dnd5e:feature-create-ae", f.id, actor?.name, uuid);
     return uuid;
