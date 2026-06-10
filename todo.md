@@ -22,7 +22,7 @@ features are excluded.
 - [x] Rage — 1 min (2014) / 10 min (2024) — AE changes — `Rage` *(implemented)*
 - [x] Form of the Beast (Path of the Beast) — lasts until the rage ends — manifests a Bite/Claws/Tail natural weapon — `FormOfTheBeast`, weapon variants in `FormOfTheBeastWeapons` *(implemented)*
 - [x] Bolstering Magic (Wild Magic) — 10 min (100 rounds) — handled in Foundry by dnd5e; Beyond20 activation button added — `BolsteringMagic` *(implemented)*
-- [ ] Wild Surge (Wild Magic) — 1 min (10 rounds) — AE changes — `WildSurge`
+- [x] Wild Surge (Wild Magic) — auto-triggers on rage start; rage-bound results (markers, Multicolored Light, weapon enchantment) end with the rage — `WildSurge` *(implemented)*
 - [ ] Zealous Presence (Zealot) — 1 turn — AE changes — `ZealousPresence`
 - [ ] Totem Spirit: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — lasts while raging (60 s / 600 s) — Bear & Elk have AE changes, rest marker — `TotemSpiritBear` etc.
 - [ ] Totemic Attunement: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — lasts while raging — Eagle has AE changes, rest marker — `TotemicAttunementBear` etc.
