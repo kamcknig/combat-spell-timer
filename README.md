@@ -95,8 +95,21 @@ its values are left as-is.
 
 ## Supported Non-Spell Abilities
 
+A lot of the feats/abilities/features that can be activated aren't available
+in the core dnd5e system. A lot that can/will be supported are created by the
+module [ddb-importer](https://github.com/MrPrimate/ddb-importer) so it is highly
+recommended that you use that module to import your characters.
+
 I will slowly be adding support for class features. As of now only the Barbarian Rage feature is supported beyond
 spells.
+
+### Barbarian Rage (D&D 5e)
+
+The Barbarian Rage is supported In addition, most Path of the Beast and Path of
+the Wild Magic features have effect timers.
+
+Both the 2014 and 2024 rules editions are supported, including Persistent Rage
+(level 15+, 2024 rules) and the correct early-end conditions for each edition.
 
 ## Integrations
 
