@@ -1,7 +1,7 @@
 import SystemAdapter from "../SystemAdapter.mjs";
 import { durationToRounds } from "./duration.mjs";
 import { getFeature, listFeatures } from "./features/index.mjs";
-import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId } from "./features/shared.mjs";
+import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId, boundFeatureId } from "./features/shared.mjs";
 import { dbg } from "../../utils/debug.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
@@ -213,7 +213,10 @@ export default class Dnd5eAdapter extends SystemAdapter {
   /**
    * Detect feature activations via dnd5e.postUseActivity and emit a start record
    * for each registered feature that recognizes the used activity. All edition /
-   * level / naming logic lives in the feature descriptor's `detect`.
+   * level / naming logic lives in the feature descriptor's `detect`. Every
+   * activity use is also dispatched to the optional descriptor hook
+   * `onActivityUse(activity)`, for features that react to companion-item
+   * activities without starting a timer (e.g. Wild Surge marker effects).
    * @param {(record: object) => void} onFeature
    */
   registerFeatureDetection(onFeature) {
@@ -221,6 +224,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
       const actor = activity?.actor;
       if (!actor) return;
       for (const f of listFeatures()) {
+        f.onActivityUse?.(activity);
         const rec = f.detect?.(activity);
         if (!rec) continue;
         dbg("dnd5e:feature", f.id, actor.name, `${rec.durationRounds}r`);
@@ -318,18 +322,27 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
-   * The module spell timer whose countdown a spell-applied effect should mirror.
+   * The module timer whose countdown an applied effect should mirror.
    * A concentration spell's timer records the caster's concentration-effect uuid
    * in `concentrationEffectUuid`. dnd5e tags both that concentration effect (its
    * own uuid) and every target effect it applies (`flags.dnd5e.dependentOn`) with
    * that uuid — so a single equality check links the icon to the spell row's
    * clock for the caster and all targets. Non-concentration applied effects fall
    * back to matching their spell item via `origin` (Item uuid, or `<itemUuid>.Activity.<id>`).
+   * Effects whose lifetime mirrors a feature (`flags[MODULE_ID].boundFeature`,
+   * e.g. a Wild Surge marker bound to "rage") resolve to the actor's timer for
+   * that feature, so they never fall back to their sentinel AE duration.
    * @param {ActiveEffect} effect
    * @param {object[]} timers
    * @returns {object|null}
    */
   getEffectTimer(effect, timers) {
+    const bound = boundFeatureId(effect);
+    if (bound) {
+      const actorUuid = effect.parent?.uuid;
+      const byBound = timers.find(t => t.type === bound && t.casterActorUuid === actorUuid);
+      if (byBound) return byBound;
+    }
     const concKey = effect?.flags?.dnd5e?.dependentOn ?? effect?.uuid ?? null;
     if (concKey) {
       const byConc = timers.find(t => t.concentrationEffectUuid && t.concentrationEffectUuid === concKey);

@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../../../module.mjs";
 import { dbg } from "../../../utils/debug.mjs";
+import { findFeat } from "./shared.mjs";
 
 /**
  * Barbarian Path of the Beast — "Form of the Beast" (legacy/2014 rules).
@@ -24,16 +25,12 @@ const FORMS = {
 
 const FORM_KEYS = { bite: "Bite", claws: "Claws", tail: "Tail" };
 
-const isFeat = (i, name, identifier) => i?.type === "feat"
-  && (i.name?.toLowerCase() === name || i.system?.identifier?.toLowerCase() === identifier);
-
 /** Does the actor have the Form of the Beast feature? */
 export function hasFormOfTheBeast(actor) {
-  return !!actor?.items?.find(i => isFeat(i, "form of the beast", "form-of-the-beast"));
+  return !!findFeat(actor, "form of the beast", "form-of-the-beast");
 }
 
-const hasBestialSoul = (actor) =>
-  !!actor?.items?.find(i => isFeat(i, "bestial soul", "bestial-soul"));
+const hasBestialSoul = (actor) => !!findFeat(actor, "bestial soul", "bestial-soul");
 
 /**
  * Ask which form to manifest. Returns "bite" | "claws" | "tail", or null for
