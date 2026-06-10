@@ -12,16 +12,21 @@ effect ends.
 ## What it does
 
 Cast a spell or activate a tracked ability while you're a combatant in an active
-encounter, and a timer row is added to the combat tracker. Each timer row shows:
-
-- the spell or ability's icon and name
-- the caster's name
-- the round it was cast or activated on
-- the rounds remaining
-- an editable initiative box (just like a real combatant)
+encounter, and a timer row is added to the combat tracker.
 
 Timers count down automatically as the encounter advances and disappear when they
 reach zero.
+
+Effects active on a combatant (e.g., Bless) are displayed as expandable content
+beneath the combatant entry in the tracker.
+
+_Collapsed_ 
+
+![collapsed.png](docs/images/collapsed.png)
+
+_Expanded_
+
+![expanded.png](docs/images/expanded.png)
 
 ## How timers behave
 
@@ -94,6 +99,9 @@ A lot of the feats/abilities/features that can be activated aren't available
 in the core dnd5e system. A lot that can/will be supported are created by the
 module [ddb-importer](https://github.com/MrPrimate/ddb-importer) so it is highly
 recommended that you use that module to import your characters.
+
+I will slowly be adding support for class features. As of now only the Barbarian Rage feature is supported beyond
+spells.
 
 ### Barbarian Rage (D&D 5e)
 
