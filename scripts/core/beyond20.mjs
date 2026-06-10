@@ -20,8 +20,38 @@ export const SETTING = "beyond20Integration";
  */
 export const AUTOCAST_SETTING = "beyond20AutoCast";
 
-/** Module flag key under which a captured Rage context is stored on a message. */
-export const RAGE_FLAG = "beyond20-rage";
+/**
+ * Beyond20 "trait" cards this module offers a one-click activation button for,
+ * keyed by the lowercased D&D Beyond trait name.
+ *  - mode "feature": start a module-managed feature (its AE + combat timer),
+ *    routed through the feature registry — e.g. Rage.
+ *  - mode "use": trigger the actor's own item in Foundry so the system shows its
+ *    native dialog and applies its effect; the module adds no tracking — e.g.
+ *    Bolstering Magic.
+ */
+const TRAIT_ACTIONS = {
+  "rage": {
+    mode: "feature", featureId: "rage",
+    btnClass: "cst-beyond20-rage",
+    icon: "fa-solid fa-fire",
+    labelKey: "COMBAT_SPELL_TIMER.Beyond20.StartRage",
+  },
+  "bolstering magic": {
+    mode: "use", itemName: "Bolstering Magic",
+    btnClass: "cst-beyond20-bolstering-magic",
+    icon: "fa-solid fa-hand-sparkles",
+    labelKey: "COMBAT_SPELL_TIMER.Beyond20.UseBolsteringMagic",
+  },
+};
+
+/** Module flag: the lowercased trait key a Beyond20 trait card was matched to. */
+export const TRAIT_FLAG = "beyond20-trait";
+
+/** Look up the action for a Beyond20 trait request, or null. */
+function traitActionFor(request) {
+  if (request?.type !== "trait") return null;
+  return TRAIT_ACTIONS[request.name?.toLowerCase()] ?? null;
+}
 
 /** True when the Beyond20 integration setting is enabled for this client. */
 function enabled() {
@@ -37,11 +67,6 @@ function autoEnabled() {
   return enabled()
     && game.settings.settings.has(`${MODULE_ID}.${AUTOCAST_SETTING}`)
     && game.settings.get(MODULE_ID, AUTOCAST_SETTING);
-}
-
-/** True if the Beyond20 request is a Rage trait use. */
-function isRageTrait(request) {
-  return request?.type === "trait" && request.name?.toLowerCase() === "rage";
 }
 
 /**
@@ -62,12 +87,12 @@ function prunePending(now) {
   }
 }
 
-/** Pending rage messages queue, same structure as `pending` minus the ctx. */
-const ragePending = [];
+/** Pending Beyond20 trait cards awaiting their chat message; stores the match key. */
+const traitPending = [];
 
-function pruneRagePending(now) {
-  for (let i = ragePending.length - 1; i >= 0; i--) {
-    if (now - ragePending[i].at > MAX_AGE_MS) ragePending.splice(i, 1);
+function pruneTraitPending(now) {
+  for (let i = traitPending.length - 1; i >= 0; i--) {
+    if (now - traitPending[i].at > MAX_AGE_MS) traitPending.splice(i, 1);
   }
 }
 
@@ -102,10 +127,13 @@ export function onBeyond20Request(action, data) {
     prunePending(now);
     pending.push({ html: data.html, ctx, at: now });
     dbg("beyond20:request", ctx.name, `lvl ${ctx.level}`, ctx.type);
-  } else if (isRageTrait(request)) {
-    pruneRagePending(now);
-    ragePending.push({ html: data.html, at: now });
-    dbg("beyond20:rage-request", request.name);
+  } else {
+    const action = traitActionFor(request);
+    if (action) {
+      pruneTraitPending(now);
+      traitPending.push({ html: data.html, match: request.name.toLowerCase(), at: now });
+      dbg("beyond20:trait-request", request.name);
+    }
   }
 }
 
@@ -119,7 +147,7 @@ export function onBeyond20Request(action, data) {
  * @param {object} data          The raw creation data (data.content === raw html).
  */
 export function onPreCreateBeyond20Message(message, data) {
-  if (!enabled() || (!pending.length && !ragePending.length)) return;
+  if (!enabled() || (!pending.length && !traitPending.length)) return;
   const content = typeof data?.content === "string" ? data.content : message?.content;
   if (typeof content !== "string") return;
 
@@ -132,21 +160,18 @@ export function onPreCreateBeyond20Message(message, data) {
     }
   }
 
-  if (ragePending.length) {
-    const rIdx = ragePending.findIndex(p => p.html === content);
-    if (rIdx !== -1) {
-      ragePending.splice(rIdx, 1);
-      message.updateSource({ flags: { [MODULE_ID]: { [RAGE_FLAG]: true } } });
-      dbg("beyond20:rage-flag");
+  if (traitPending.length) {
+    const idx = traitPending.findIndex(p => p.html === content);
+    if (idx !== -1) {
+      const { match } = traitPending.splice(idx, 1)[0];
+      message.updateSource({ flags: { [MODULE_ID]: { [TRAIT_FLAG]: match } } });
+      dbg("beyond20:trait-flag", match);
     }
   }
 }
 
 /** Marker class so the cast-spell button is never injected twice on re-render. */
 const BTN_CLASS = "cst-beyond20-cast";
-
-/** Marker class so the start-rage button is never injected twice on re-render. */
-const RAGE_BTN_CLASS = "cst-beyond20-rage";
 
 /**
  * Message ids already auto-cast on this client. renderChatMessageHTML fires more
@@ -156,8 +181,8 @@ const RAGE_BTN_CLASS = "cst-beyond20-rage";
  */
 const autoCastDone = new Set();
 
-/** Message ids for which rage was already auto-started on this client. */
-const autoRageDone = new Set();
+/** Message ids for which a trait was already auto-activated on this client. */
+const autoTraitDone = new Set();
 
 /**
  * True if the current user may cast this message's spell — the active GM, or an
@@ -215,6 +240,32 @@ async function startFeatureFromMessage(message, featureId) {
   return true;
 }
 
+/** Run a matched Beyond20 trait card's action (module feature, or native item use). */
+async function runTraitAction(message, action) {
+  if (action.mode === "feature") return startFeatureFromMessage(message, action.featureId);
+  if (action.mode === "use")     return useFeatureFromMessage(message, action.itemName);
+  return false;
+}
+
+/**
+ * Activate one of the speaking actor's own items by name in Foundry (dnd5e shows
+ * its dialog and applies the effect). For Beyond20 traits the module doesn't manage.
+ * @param {ChatMessage} message
+ * @param {string} itemName
+ * @returns {Promise<boolean>}
+ */
+async function useFeatureFromMessage(message, itemName) {
+  if (!enabled()) return false;
+  const actor = message.speakerActor ?? null;
+  if (!actor) {
+    ui.notifications?.warn(game.i18n.localize("COMBAT_SPELL_TIMER.Beyond20.NoActor"));
+    return false;
+  }
+  dbg("beyond20:use-feature", itemName, actor.name);
+  const result = await getAdapter().useFeature(actor, { name: itemName });
+  return !!result;
+}
+
 /**
  * renderChatMessageHTML handler (v13+; `html` is an HTMLElement). When the message
  * carries a captured Beyond20 cast context and the user may cast it, append a
@@ -233,8 +284,9 @@ async function startFeatureFromMessage(message, featureId) {
 export function onRenderBeyond20Message(message, html) {
   if (!enabled()) return;
   const ctx = message.getFlag(MODULE_ID, FLAG);
-  const isRage = message.getFlag(MODULE_ID, RAGE_FLAG);
-  if (!ctx && !isRage) return;
+  const traitKey = message.getFlag(MODULE_ID, TRAIT_FLAG);
+  const action = traitKey ? TRAIT_ACTIONS[traitKey] : null;
+  if (!ctx && !action) return;
 
   const card = html.querySelector(".beyond20-message");
   if (!card) return;
@@ -276,37 +328,37 @@ export function onRenderBeyond20Message(message, html) {
     }
   }
 
-  // --- Rage "Start Rage" button ---
-  if (isRage && !container.querySelector(`.${RAGE_BTN_CLASS}`)) {
+  // --- Generic trait activation button (replaces the Rage-only block) ---
+  if (action && !container.querySelector(`.${action.btnClass}`)) {
     const actor = message.speakerActor ?? null;
     if (canCast(message, actor)) {
-      const autoRage = autoEnabled();
+      const auto = autoEnabled();
       const wrap = document.createElement("div");
       wrap.className = "cst-beyond20-controls";
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = RAGE_BTN_CLASS;
-      btn.innerHTML = `<i class="fa-solid fa-fire"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.Beyond20.StartRage")}`;
+      btn.className = action.btnClass;
+      btn.innerHTML = `<i class="${action.icon}"></i> ${game.i18n.localize(action.labelKey)}`;
 
-      if (autoRage) {
+      if (auto) {
         btn.disabled = true;
-        if (message.isAuthor && !autoRageDone.has(message.id)) {
-          autoRageDone.add(message.id);
-          dbg("beyond20:auto-rage", message.id);
-          startFeatureFromMessage(message, "rage");
+        if (message.isAuthor && !autoTraitDone.has(message.id)) {
+          autoTraitDone.add(message.id);
+          dbg("beyond20:auto-trait", traitKey);
+          runTraitAction(message, action);
         }
       } else {
         btn.addEventListener("click", async () => {
           if (!enabled()) return;
           btn.disabled = true;
-          const ok = await startFeatureFromMessage(message, "rage");
+          const ok = await runTraitAction(message, action);
           if (!ok) btn.disabled = false;
         });
       }
 
       wrap.appendChild(btn);
       container.appendChild(wrap);
-      dbg("beyond20:rage-button", autoRage ? "auto" : "manual");
+      dbg("beyond20:trait-button", traitKey, auto ? "auto" : "manual");
     }
   }
 }

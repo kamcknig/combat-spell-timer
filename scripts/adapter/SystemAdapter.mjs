@@ -64,6 +64,18 @@ export default class SystemAdapter {
   async castSpell(actor, spec) { return null; }
 
   /**
+   * Activate one of the actor's own features/traits by name, as if the user used
+   * it from their sheet — the system shows its native dialogs and applies its
+   * effects. Used by the Beyond20 integration for traits the module does not
+   * itself manage (e.g. Bolstering Magic). Returns the system's use result, or
+   * null when nothing ran (not found, no usable activity, unsupported). Default: null.
+   * @param {Actor} actor
+   * @param {{name: string}} spec  The feature/trait name to activate.
+   * @returns {Promise<object|null>}
+   */
+  async useFeature(actor, spec) { return null; }
+
+  /**
    * List candidate spell names for the system, used to populate the spell-mapping
    * editor's autocompletion datalist. Free-form input is always allowed, so an
    * empty list is acceptable. Default: none.

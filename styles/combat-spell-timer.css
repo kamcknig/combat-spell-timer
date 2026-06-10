@@ -74,11 +74,13 @@ nav#context-menu.cst-timer-menu {
 }
 
 /* Beyond20 action buttons appended below Beyond20 chat cards. */
-.cst-beyond20-controls { display: flex; margin: 4px 0 2px; }
+.cst-beyond20-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+/* Cast/Rage stretch full-width; auto-width buttons (e.g. Bolstering Magic) stay centered. */
 .cst-beyond20-controls .cst-beyond20-cast,
 .cst-beyond20-controls .cst-beyond20-rage { flex: 1; }
 .cst-beyond20-cast i,
-.cst-beyond20-rage i { margin-right: 4px; }
+.cst-beyond20-rage i,
+.cst-beyond20-bolstering-magic i { margin-right: 4px; }
 
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }

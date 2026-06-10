@@ -184,6 +184,33 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
+   * Activate a feat/trait the actor owns, by name, exactly as using it from the
+   * sheet would: dnd5e shows its own dialog(s) and applies the effect. Used for
+   * Beyond20 traits the module does not manage itself (e.g. Bolstering Magic).
+   * Matches by item name or identifier (case-insensitive). Returns the use result,
+   * or null if the feat isn't on the actor.
+   * @param {Actor} actor
+   * @param {{name: string}} spec
+   * @returns {Promise<object|null>}
+   */
+  async useFeature(actor, { name }) {
+    const n = name?.toLowerCase() ?? "";
+    const ident = n.replace(/\s+/g, "-");
+    const item = actor?.items?.find(i => i.type === "feat"
+      && (i.name?.toLowerCase() === n || i.system?.identifier?.toLowerCase() === ident));
+    if (!item) {
+      ui.notifications?.warn(game.i18n.format("COMBAT_SPELL_TIMER.Beyond20.FeatureNotFound",
+        { name, actor: actor?.name ?? "" }));
+      return null;
+    }
+    dbg("dnd5e:beyond20-use-feature", item.name, actor.name);
+    // No usage/dialog options → dnd5e runs the item's normal activation: the
+    // benefit-choice dialog appears and the chosen effect is applied. The module
+    // adds no timer of its own here.
+    return (await item.use()) ?? null;
+  }
+
+  /**
    * Detect feature activations via dnd5e.postUseActivity and emit a start record
    * for each registered feature that recognizes the used activity. All edition /
    * level / naming logic lives in the feature descriptor's `detect`.

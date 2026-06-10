@@ -59,6 +59,8 @@
       "AutoCastName": "Beyond20: Auto-cast spell / apply effect",
       "AutoCastHint": "Automatically cast spells and apply feature effects (e.g. Rage) from Beyond20 cards you trigger, instead of clicking the button. The button is still shown, but disabled.",
       "StartRage": "Start Rage",
+      "UseBolsteringMagic": "Use Bolstering Magic",
+      "FeatureNotFound": "Combat Spell Timer: couldn't find \"{name}\" on {actor}. Its name on the character sheet may differ.",
       "SpellNotFound": "Combat Spell Timer: couldn't find the D&D Beyond spell \"{name}\" on {actor}. Its name on the character sheet may differ.",
       "NoActivity": "Combat Spell Timer: \"{name}\" has no usable activity to cast.",
       "NoActor": "Combat Spell Timer: couldn't resolve the casting actor for this card.",
