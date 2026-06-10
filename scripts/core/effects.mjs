@@ -93,7 +93,8 @@ export function collectEffects(combatant, combat) {
     let timer = null;      // module feature timer → drives the remove menu
     let countdown = null;  // timer whose countdown the icon/card should mirror
 
-    const featureId = effect.flags?.[MODULE_ID]?.feature;
+    const moduleFlags = effect.flags?.[MODULE_ID] ?? {};
+    const featureId = moduleFlags.feature;
     if (featureId) {
       // Module feature (Rage, …): countdown lives in its timer record.
       timer = timers.find(t => t.effectUuid === effect.uuid)
@@ -111,6 +112,12 @@ export function collectEffects(combatant, combat) {
     if (countdown) {
       castRound = countdown.castRound;
       remaining = remainingRounds(countdown, combat);
+    } else if (featureId || moduleFlags.boundFeature) {
+      // Module feature AE / feature-bound marker with no live timer: show no
+      // countdown at all. Their AE duration is the bookkeeping sentinel, never
+      // a real clock — falling through would flash "99999" during the brief
+      // window where the feature's timer is gone but its AEs are still being
+      // deleted (e.g. while a rage end is processed).
     } else {
       // No linked timer: express the AE's own duration in whole combat rounds.
       // Combat-based durations (rounds/turns) are already in rounds; time-based

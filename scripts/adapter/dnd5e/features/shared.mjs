@@ -7,7 +7,7 @@ import { MODULE_ID } from "../../../module.mjs";
  * feature ends. The real round count lives in the module flag; the actor-sheet
  * hook (effect-sheet.mjs) renders the live remaining in place of this value.
  */
-const FEATURE_SENTINEL_ROUNDS = 99999;
+export const FEATURE_SENTINEL_ROUNDS = 99999;
 
 /**
  * Generic, feature-agnostic ActiveEffect machinery for the feature registry.
@@ -24,6 +24,15 @@ export function moduleFeatureId(effect) {
   return effect?.flags?.[MODULE_ID]?.feature ?? null;
 }
 
+/**
+ * The feature id an AE's lifetime is bound to (flags[MODULE_ID].boundFeature),
+ * or null. Set on companion AEs that live and die with a feature's timer
+ * (e.g. a Wild Surge marker bound to "rage") so displays mirror that timer.
+ */
+export function boundFeatureId(effect) {
+  return effect?.flags?.[MODULE_ID]?.boundFeature ?? null;
+}
+
 /** True for any module-owned feature AE (optionally for a specific feature). */
 export function isModuleEffect(effect, feature = null) {
   const fid = effect?.flags?.[MODULE_ID]?.feature;
@@ -34,6 +43,12 @@ export function isModuleEffect(effect, feature = null) {
 /** The actor's active module-owned AE for a feature, or null. */
 export function findModuleEffect(actor, feature) {
   return [...(actor?.effects ?? [])].find(e => isModuleEffect(e, feature)) ?? null;
+}
+
+/** The actor's feat item matching a name or identifier (case-insensitive), or null. */
+export function findFeat(actor, name, identifier) {
+  return actor?.items?.find(i => i?.type === "feat"
+    && (i.name?.toLowerCase() === name || i.system?.identifier?.toLowerCase() === identifier)) ?? null;
 }
 
 /** Overlay required markers: active, temporary (token icon), flagged, combat-bound duration. */
