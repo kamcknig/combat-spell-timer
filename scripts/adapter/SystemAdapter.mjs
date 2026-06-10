@@ -91,6 +91,13 @@ export default class SystemAdapter {
   registerFeatureEarlyEnd(onEarlyEnd) { /* optional */ }
 
   /**
+   * Subscribe to system events that should run a feature's cleanup after its
+   * module-owned effect is removed by any path (e.g. companion items created by
+   * the feature's onStart hook). Default: no-op.
+   */
+  registerFeatureCleanup() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

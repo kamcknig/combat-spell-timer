@@ -9,7 +9,15 @@
  *   unsignedAddChange(ADV_MODE.ADVANTAGE, 20, "system.abilities.str.save.roll.mode"),
  *   unsignedAddChange(ADV_MODE.ADVANTAGE, 20, "system.abilities.str.check.roll.mode")
  * 2014 and 2024 share identical changes; the melee bonus scales at roll time.
+ *
+ * Path of the Beast augmentation (legacy rules): when a barbarian with the
+ * Form of the Beast feature starts raging, `onStart` prompts for a bestial
+ * form and creates the chosen natural weapon. `onEffectDeleted` removes the
+ * weapon when the rage ends by any path (turn-end dialog, natural expiry,
+ * right-click, unconscious early-end, re-rage refresh, or manual AE deletion).
  */
+
+import { hasFormOfTheBeast, promptBeastForm, createBeastWeapon, removeBeastWeapons } from "./form-of-the-beast.mjs";
 
 const isModern = () => typeof dnd5e !== "undefined" && dnd5e?.settings?.rulesVersion === "modern";
 const barbLevel = (actor) => actor?.classes?.barbarian?.system?.levels ?? 0;
@@ -37,6 +45,24 @@ export default {
     const onUnconscious = effect.statuses?.has?.("unconscious") && (!modern || lvl >= 15);
     const onIncapacitated = modern && effect.statuses?.has?.("incapacitated");
     return onUnconscious || onIncapacitated;
+  },
+
+  /**
+   * Path of the Beast: on every fresh rage start, if the actor has the Form of
+   * the Beast feature, offer the transformation and manifest the chosen natural
+   * weapon. Runs before the raging AE is created; never on combat join (the
+   * weapon from the original rage start still exists). Not gated by edition —
+   * having the feature is the only requirement.
+   */
+  async onStart(actor) {
+    if (!hasFormOfTheBeast(actor)) return;
+    const form = await promptBeastForm(actor);
+    if (form) await createBeastWeapon(actor, form, "rage");
+  },
+
+  /** Rage ended (AE deleted by any path) → the transformation ends with it. */
+  onEffectDeleted(actor) {
+    return removeBeastWeapons(actor, "rage");
   },
 
   effect: {

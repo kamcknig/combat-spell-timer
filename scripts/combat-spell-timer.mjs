@@ -98,6 +98,7 @@ Hooks.once("ready", async () => {
   adapter.registerEarlyRemoval(onEarlyRemove);
   adapter.registerFeatureDetection((rec) => onFeatureStart(rec, (a, fid, opts) => adapter.applyFeatureEffect(a, fid, opts)));
   adapter.registerFeatureEarlyEnd(onFeatureEarlyEnd);
+  adapter.registerFeatureCleanup();
   Hooks.on("combatTurnChange", (combat, previous, _current) => onFeatureTurnEnd(combat, previous));
   Hooks.on("renderCombatTracker", onRenderTracker);
   Hooks.on("renderActorSheetV2", onRenderActorSheetEffects);
