@@ -284,6 +284,9 @@ export default class Dnd5eAdapter extends SystemAdapter {
     // Feature-specific start hook — may prompt the user (e.g. Form of the Beast
     // form selection) and add companion documents before the AE exists.
     await f.onStart?.(actor, opts);
+    // Features with no module-owned AE (effect: null) — e.g. Zealous Presence,
+    // whose effect lives on OTHER actors — are tracked by their timer row only.
+    if (!f.effect) return null;
     const uuid = await createFeatureEffect(actor, f, opts);
     dbg("dnd5e:feature-create-ae", f.id, actor?.name, uuid);
     return uuid;
@@ -296,7 +299,12 @@ export default class Dnd5eAdapter extends SystemAdapter {
   async removeFeatureEffect({ featureId, casterActorUuid, effectUuid } = {}) {
     const f = getFeature(featureId);
     if (!f) return;
-    return deleteFeatureEffect(f, { casterActorUuid, effectUuid });
+    await deleteFeatureEffect(f, { casterActorUuid, effectUuid });
+    // Feature-specific end cleanup (e.g. sweep effects the feature applied to
+    // OTHER actors). Runs on whichever client performs the removal — expiry on
+    // the GM, manual remove on the remover; early-end paths can invoke it on
+    // several clients, so implementations must be idempotent.
+    await f.onRemove?.({ casterActorUuid, effectUuid });
   }
 
   /**

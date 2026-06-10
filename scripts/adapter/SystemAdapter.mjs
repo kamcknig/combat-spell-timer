@@ -113,7 +113,9 @@ export default class SystemAdapter {
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.
-   * Returns the new AE's UUID, or null if unsupported.
+   * Returns the new AE's UUID, or null if unsupported. Implementations may also
+   * support AE-less features (effect: null) that are tracked by their timer row
+   * only, with no module-owned AE and no token icon on the caster.
    * @param {Actor} actor
    * @param {string} featureId
    * @param {{img?:string, itemUuid?:string}} opts
