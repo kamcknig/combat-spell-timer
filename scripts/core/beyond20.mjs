@@ -42,6 +42,12 @@ const TRAIT_ACTIONS = {
     icon: "fa-solid fa-hand-sparkles",
     labelKey: "COMBAT_SPELL_TIMER.Beyond20.UseBolsteringMagic",
   },
+  "zealous presence": {
+    mode: "use", itemName: "Zealous Presence",
+    btnClass: "cst-beyond20-zealous-presence",
+    icon: "fa-solid fa-bullhorn",
+    labelKey: "COMBAT_SPELL_TIMER.Beyond20.UseZealousPresence",
+  },
 };
 
 /** Module flag: the lowercased trait key a Beyond20 trait card was matched to. */

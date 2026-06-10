@@ -1,3 +1,6 @@
+_Note that some of the features implemented rely heavily on "custom" class features
+created by the [ddb-importer](https://github.com/MrPrimate/ddb-importer) module that imports characters from Dndbeyond._  
+
 # Combat Spell Timer
 
 Track spell durations and time-limited abilities right in the Foundry VTT combat
