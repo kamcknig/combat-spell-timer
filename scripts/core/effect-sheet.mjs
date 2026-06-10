@@ -27,8 +27,24 @@ function timerRemaining(effect) {
 }
 
 /**
+ * Live remaining rounds of the actor's feature timer of a given type, for AEs
+ * whose lifetime mirrors a feature (flags[MODULE_ID].boundFeature, e.g. a Wild
+ * Surge marker bound to "rage"). Null when no such timer is running.
+ * @param {Actor} actor
+ * @param {string} featureType
+ * @returns {number|null}
+ */
+function boundTimerRemaining(actor, featureType) {
+  for (const combat of game.combats ?? []) {
+    const t = getTimers(combat).find(t => t.type === featureType && t.casterActorUuid === actor.uuid);
+    if (t) return remainingRounds(t, combat);
+  }
+  return null;
+}
+
+/**
  * renderActorSheetV2 handler: replace the duration shown on each module-feature
- * effect row with the true remaining round count.
+ * effect row (and each feature-bound marker row) with the true remaining rounds.
  * @param {Application} app
  * @param {HTMLElement} element
  */
@@ -38,8 +54,11 @@ export function onRenderActorSheetEffects(app, element) {
   if (!el || !actor?.effects) return;
 
   for (const effect of actor.effects) {
-    if (effect.flags?.[MODULE_ID]?.feature == null) continue;
-    const rounds = timerRemaining(effect) ?? effect.flags[MODULE_ID].durationRounds;
+    const flags = effect.flags?.[MODULE_ID];
+    if (!flags) continue;
+    let rounds = null;
+    if (flags.feature != null) rounds = timerRemaining(effect) ?? flags.durationRounds;
+    else if (flags.boundFeature) rounds = boundTimerRemaining(actor, flags.boundFeature);
     if (rounds == null) continue;
 
     const row = el.querySelector(`[data-effect-id="${effect.id}"]`);

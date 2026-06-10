@@ -1,7 +1,7 @@
 import SystemAdapter from "../SystemAdapter.mjs";
 import { durationToRounds } from "./duration.mjs";
 import { getFeature, listFeatures } from "./features/index.mjs";
-import { createFeatureEffect, deleteFeatureEffect, findModuleEffect } from "./features/shared.mjs";
+import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId, boundFeatureId } from "./features/shared.mjs";
 import { dbg } from "../../utils/debug.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
@@ -184,9 +184,39 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
+   * Activate a feat/trait the actor owns, by name, exactly as using it from the
+   * sheet would: dnd5e shows its own dialog(s) and applies the effect. Used for
+   * Beyond20 traits the module does not manage itself (e.g. Bolstering Magic).
+   * Matches by item name or identifier (case-insensitive). Returns the use result,
+   * or null if the feat isn't on the actor.
+   * @param {Actor} actor
+   * @param {{name: string}} spec
+   * @returns {Promise<object|null>}
+   */
+  async useFeature(actor, { name }) {
+    const n = name?.toLowerCase() ?? "";
+    const ident = n.replace(/\s+/g, "-");
+    const item = actor?.items?.find(i => i.type === "feat"
+      && (i.name?.toLowerCase() === n || i.system?.identifier?.toLowerCase() === ident));
+    if (!item) {
+      ui.notifications?.warn(game.i18n.format("COMBAT_SPELL_TIMER.Beyond20.FeatureNotFound",
+        { name, actor: actor?.name ?? "" }));
+      return null;
+    }
+    dbg("dnd5e:beyond20-use-feature", item.name, actor.name);
+    // No usage/dialog options → dnd5e runs the item's normal activation: the
+    // benefit-choice dialog appears and the chosen effect is applied. The module
+    // adds no timer of its own here.
+    return (await item.use()) ?? null;
+  }
+
+  /**
    * Detect feature activations via dnd5e.postUseActivity and emit a start record
    * for each registered feature that recognizes the used activity. All edition /
-   * level / naming logic lives in the feature descriptor's `detect`.
+   * level / naming logic lives in the feature descriptor's `detect`. Every
+   * activity use is also dispatched to the optional descriptor hook
+   * `onActivityUse(activity)`, for features that react to companion-item
+   * activities without starting a timer (e.g. Wild Surge marker effects).
    * @param {(record: object) => void} onFeature
    */
   registerFeatureDetection(onFeature) {
@@ -194,6 +224,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
       const actor = activity?.actor;
       if (!actor) return;
       for (const f of listFeatures()) {
+        f.onActivityUse?.(activity);
         const rec = f.detect?.(activity);
         if (!rec) continue;
         dbg("dnd5e:feature", f.id, actor.name, `${rec.durationRounds}r`);
@@ -221,6 +252,25 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
+   * Run a feature's cleanup when its module-owned AE is deleted by ANY path
+   * (turn-end End, expiry, manual remove, early-end, re-start refresh, or the
+   * user deleting the AE from the sheet). The hook fires on all clients; only
+   * the initiating client acts — it performed the AE delete, so it has owner
+   * permission for any companion-document cleanup too.
+   */
+  registerFeatureCleanup() {
+    Hooks.on("deleteActiveEffect", (effect, _options, userId) => {
+      if (userId !== game.user.id) return;
+      const actor = effect.parent;
+      if (actor?.documentName !== "Actor") return;
+      const f = getFeature(moduleFeatureId(effect));
+      if (!f?.onEffectDeleted) return;
+      dbg("dnd5e:feature-effect-deleted", f.id, actor.name);
+      f.onEffectDeleted(actor, effect);
+    });
+  }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:
    * clone the feature's source effect, else hard-coded changes). Returns its UUID.
    * @param {Actor} actor
@@ -231,6 +281,9 @@ export default class Dnd5eAdapter extends SystemAdapter {
   async applyFeatureEffect(actor, featureId, opts) {
     const f = getFeature(featureId);
     if (!f) return null;
+    // Feature-specific start hook — may prompt the user (e.g. Form of the Beast
+    // form selection) and add companion documents before the AE exists.
+    await f.onStart?.(actor, opts);
     const uuid = await createFeatureEffect(actor, f, opts);
     dbg("dnd5e:feature-create-ae", f.id, actor?.name, uuid);
     return uuid;
@@ -269,18 +322,27 @@ export default class Dnd5eAdapter extends SystemAdapter {
   }
 
   /**
-   * The module spell timer whose countdown a spell-applied effect should mirror.
+   * The module timer whose countdown an applied effect should mirror.
    * A concentration spell's timer records the caster's concentration-effect uuid
    * in `concentrationEffectUuid`. dnd5e tags both that concentration effect (its
    * own uuid) and every target effect it applies (`flags.dnd5e.dependentOn`) with
    * that uuid — so a single equality check links the icon to the spell row's
    * clock for the caster and all targets. Non-concentration applied effects fall
    * back to matching their spell item via `origin` (Item uuid, or `<itemUuid>.Activity.<id>`).
+   * Effects whose lifetime mirrors a feature (`flags[MODULE_ID].boundFeature`,
+   * e.g. a Wild Surge marker bound to "rage") resolve to the actor's timer for
+   * that feature, so they never fall back to their sentinel AE duration.
    * @param {ActiveEffect} effect
    * @param {object[]} timers
    * @returns {object|null}
    */
   getEffectTimer(effect, timers) {
+    const bound = boundFeatureId(effect);
+    if (bound) {
+      const actorUuid = effect.parent?.uuid;
+      const byBound = timers.find(t => t.type === bound && t.casterActorUuid === actorUuid);
+      if (byBound) return byBound;
+    }
     const concKey = effect?.flags?.dnd5e?.dependentOn ?? effect?.uuid ?? null;
     if (concKey) {
       const byConc = timers.find(t => t.concentrationEffectUuid && t.concentrationEffectUuid === concKey);
