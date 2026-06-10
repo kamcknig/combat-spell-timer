@@ -90,12 +90,15 @@ its values are left as-is.
 
 ## Supported Non-Spell Abilities
 
+A lot of the feats/abilities/features that can be activated aren't available
+in the core dnd5e system. A lot that can/will be supported are created by the
+module [ddb-importer](https://github.com/MrPrimate/ddb-importer) so it is highly
+recommended that you use that module to import your characters.
+
 ### Barbarian Rage (D&D 5e)
 
-When a Barbarian activates Rage, a timer row is added to the tracker above their
-combatant row. At the end of each of their turns, the actor's owner is prompted
-to extend the rage or let it end. The Rage token icon is applied automatically
-and cleared when rage ends.
+The Barbarian Rage is supported In addition, most Path of the Beast and Path of
+the Wild Magic features have effect timers.
 
 Both the 2014 and 2024 rules editions are supported, including Persistent Rage
 (level 15+, 2024 rules) and the correct early-end conditions for each edition.
