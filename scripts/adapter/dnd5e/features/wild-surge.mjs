@@ -1,6 +1,6 @@
 import { MODULE_ID } from "../../../module.mjs";
 import { dbg } from "../../../utils/debug.mjs";
-import { FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
+import { effectOriginActor, FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
 
 /**
  * Barbarian Path of Wild Magic — "Wild Surge" (level 3).
@@ -137,22 +137,6 @@ const RAGE_BOUND_SURGE_EFFECTS = ["wild surge weapon", "multicolored light ac bo
 
 const isRageBoundSurgeEffect = (e) => e.flags?.[MODULE_ID]?.[SURGE_FLAG] === true
   || RAGE_BOUND_SURGE_EFFECTS.includes(e.name?.toLowerCase());
-
-/**
- * Resolve the Actor an applied effect originates from, walking the origin
- * UUID through Item / Activity parents. Null when there is no origin or it
- * can't be resolved (e.g. a deleted source, or a world-item origin).
- * @param {ActiveEffect} effect
- * @returns {Actor|null}
- */
-function effectOriginActor(effect) {
-  if (!effect?.origin) return null;
-  let doc = null;
-  try { doc = fromUuidSync(effect.origin); } catch { /* unresolved */ }
-  if (!doc) return null;
-  if (doc.documentName === "Actor") return doc;
-  return doc.actor ?? (doc.parent?.documentName === "Actor" ? doc.parent : null);
-}
 
 /**
  * Delete the rage-bound surge effects on one actor that pass `originOk`,

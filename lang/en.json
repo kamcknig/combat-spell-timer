@@ -61,6 +61,10 @@
       "BoltOfLight": "Bolt of Light",
       "BoltOfLightDescription": "Until your rage ends, you can use a bonus action on each of your turns to shoot another bolt of light from your chest: a creature of your choice within 30 feet must succeed on a Constitution saving throw or take 1d6 radiant damage and be blinded until the start of your next turn."
     },
+    "ZealousPresence": {
+      "RoundsLeft": "Until the caster's next turn",
+      "EndLabel": "End Zealous Presence"
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",
@@ -70,6 +74,7 @@
       "AutoCastHint": "Automatically cast spells and apply feature effects (e.g. Rage) from Beyond20 cards you trigger, instead of clicking the button. The button is still shown, but disabled.",
       "StartRage": "Start Rage",
       "UseBolsteringMagic": "Use Bolstering Magic",
+      "UseZealousPresence": "Use Zealous Presence",
       "FeatureNotFound": "Combat Spell Timer: couldn't find \"{name}\" on {actor}. Its name on the character sheet may differ.",
       "SpellNotFound": "Combat Spell Timer: couldn't find the D&D Beyond spell \"{name}\" on {actor}. Its name on the character sheet may differ.",
       "NoActivity": "Combat Spell Timer: \"{name}\" has no usable activity to cast.",
