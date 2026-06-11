@@ -4,6 +4,7 @@ import { getFeature, listFeatures } from "./features/index.mjs";
 import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId, boundFeatureId } from "./features/shared.mjs";
 import { dbg } from "../../utils/debug.mjs";
 import { onStatusEndedEffects } from "./features/status-ended-effects.mjs";
+import { onEffectDurationOverrides } from "./features/effect-duration-overrides.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -238,7 +239,10 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * End a feature early when a just-created AE matches the feature's early-end
    * policy (e.g. unconscious/incapacitated for Rage), by listening to
    * createActiveEffect on all clients. Also dispatches status-ended effects
-   * (e.g. Twilight Emanation on incapacitated) via onStatusEndedEffects.
+   * (e.g. Twilight Emanation on incapacitated) via onStatusEndedEffects, and
+   * duration corrections for applied effects whose source data carries the
+   * wrong duration (e.g. Cloak of Shadows → 1 round) via
+   * onEffectDurationOverrides.
    * @param {(query: object) => void} onEarlyEnd
    */
   registerFeatureEarlyEnd(onEarlyEnd) {
@@ -248,6 +252,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
       // Rules-bound effects that end when their bearer gains a status
       // (e.g. Twilight Emanation on incapacitated).
       onStatusEndedEffects(effect, userId);
+      // Rules-correct durations for applied effects (e.g. Cloak of Shadows).
+      onEffectDurationOverrides(effect, userId);
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
