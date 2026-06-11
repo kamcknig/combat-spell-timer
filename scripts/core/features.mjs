@@ -88,12 +88,25 @@ export async function onFeatureTurnEnd(combat, previous) {
   const prev = combat.turns[previous.turn];
   if (!prev) return;
   const timers = getTimers(combat).filter(t => {
-    const view = getAdapter().getFeatureView(t.type);
-    return view?.turnEnd?.mode === "confirm"
+    const mode = getAdapter().getFeatureView(t.type)?.turnEnd?.mode;
+    return (mode === "confirm" || mode === "expire")
       && t.casterCombatantId === prev.id
       && !(previous.round === t.castRound && previous.turn === (t.castTurn ?? -1));
   });
   if (!timers.length) return;
+
+  // "expire" timers end automatically at the end of the caster's turn — the
+  // rules fix their duration ("until the end of your next turn"), so there is
+  // nothing to confirm. Writer-gated: exactly one client removes the timer and
+  // runs the adapter cleanup.
+  const expiring = timers.filter(t => getAdapter().getFeatureView(t.type)?.turnEnd?.mode === "expire");
+  if (expiring.length && isWriter()) {
+    for (const t of expiring) {
+      dbg("feature:turn-end-expire", t.type, t.name);
+      removeTimers(combat.id, { id: t.id });
+      getAdapter().onManualRemove(t);
+    }
+  }
 
   const actor = fromUuidSync(timers[0].casterActorUuid);
   if (!actor) return;
@@ -102,7 +115,7 @@ export async function onFeatureTurnEnd(combat, previous) {
   // (e.g. Persistent Rage at L15+), in which case there's nothing to confirm.
   const prompts = timers.filter(t => {
     const te = getAdapter().getFeatureView(t.type)?.turnEnd;
-    return te && !te.skip?.(actor);
+    return te?.mode === "confirm" && !te.skip?.(actor);
   });
   if (!prompts.length) return;
 

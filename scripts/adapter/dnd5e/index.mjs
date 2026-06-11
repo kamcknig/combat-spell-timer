@@ -3,6 +3,10 @@ import { durationToRounds } from "./duration.mjs";
 import { getFeature, listFeatures } from "./features/index.mjs";
 import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId, boundFeatureId } from "./features/shared.mjs";
 import { dbg } from "../../utils/debug.mjs";
+import { onStatusEndedEffects } from "./features/status-ended-effects.mjs";
+import { onEffectDurationOverrides } from "./features/effect-duration-overrides.mjs";
+import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/action-ended-effects.mjs";
+import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -217,12 +221,18 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * activity use is also dispatched to the optional descriptor hook
    * `onActivityUse(activity)`, for features that react to companion-item
    * activities without starting a timer (e.g. Wild Surge marker effects).
+   * Also dispatches action-ended effects (e.g. Cloak of Shadows' invisibility
+   * on spell cast via onActionEndedActivityUse, and on attack roll via the
+   * dnd5e.rollAttackV2 hook registered below).
    * @param {(record: object) => void} onFeature
    */
   registerFeatureDetection(onFeature) {
     Hooks.on("dnd5e.postUseActivity", (activity) => {
       const actor = activity?.actor;
       if (!actor) return;
+      // Rules-bound effects that end when their bearer casts a spell
+      // (e.g. Cloak of Shadows' invisibility).
+      onActionEndedActivityUse(activity);
       for (const f of listFeatures()) {
         f.onActivityUse?.(activity);
         const rec = f.detect?.(activity);
@@ -231,18 +241,40 @@ export default class Dnd5eAdapter extends SystemAdapter {
         onFeature({ featureId: f.id, casterActorUuid: actor.uuid, ...rec });
       }
     });
+    // Rules-bound effects that end when their bearer makes an attack roll
+    // (e.g. Cloak of Shadows' invisibility). Workflow-local hook: fires only
+    // on the rolling client.
+    Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
+      onActionEndedAttackRoll(subject);
+    });
+    // Path to the Grave use flow: a no-activity item posts a bare card via
+    // displayCard — intercept that once to fix the item up (no-op curse
+    // template effect + consumption activity linking it), after which dnd5e's
+    // native Ability Use dialog, card EFFECTS section, and effect application
+    // own the entire flow.
+    Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayPathToTheGraveCard(item, messageConfig));
+    Hooks.on("dnd5e.preUseActivity", (activity, usageConfig) => onPreUsePathToTheGrave(activity, usageConfig));
   }
 
   /**
    * End a feature early when a just-created AE matches the feature's early-end
    * policy (e.g. unconscious/incapacitated for Rage), by listening to
-   * createActiveEffect on all clients.
+   * createActiveEffect on all clients. Also dispatches status-ended effects
+   * (e.g. Twilight Emanation on incapacitated) via onStatusEndedEffects, and
+   * duration corrections for applied effects whose source data carries the
+   * wrong duration (e.g. Cloak of Shadows → 1 round) via
+   * onEffectDurationOverrides.
    * @param {(query: object) => void} onEarlyEnd
    */
   registerFeatureEarlyEnd(onEarlyEnd) {
-    Hooks.on("createActiveEffect", (effect) => {
+    Hooks.on("createActiveEffect", (effect, _options, userId) => {
       const actor = effect.parent;
       if (!actor) return;
+      // Rules-bound effects that end when their bearer gains a status
+      // (e.g. Twilight Emanation on incapacitated).
+      onStatusEndedEffects(effect, userId);
+      // Rules-correct durations for applied effects (e.g. Cloak of Shadows).
+      onEffectDurationOverrides(effect, userId);
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
@@ -326,7 +358,9 @@ export default class Dnd5eAdapter extends SystemAdapter {
       await conc.parent.endConcentration(conc);
       return;
     }
-    await effect.delete();
+    // Tolerate concurrent removal: at expiry boundaries the system's own
+    // expired-effect cleanup can delete the same AE in the same tick.
+    await effect.delete().catch(() => {});
   }
 
   /**

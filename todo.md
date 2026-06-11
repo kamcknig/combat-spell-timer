@@ -27,18 +27,11 @@ features are excluded.
 - [x] Totem Spirit: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Bear resistances, Elk +15 ft speed, Eagle/Tiger/Wolf markers — `TotemSpiritBear` etc. *(implemented)*
 - [x] Totemic Attunement: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Eagle fly speed = walking speed (live-synced), rest markers — `TotemicAttunementBear` etc. *(implemented)*
 
-## Bard
-
-- [ ] Bardic Inspiration — 10 min (100 rounds) — marker — `BardicInspiration`
-- [ ] Unbreakable Majesty (Glamour) — 1 min (10 rounds) — marker — `UnbreakableMajesty`
-- [ ] Spirits From Beyond (Spirits) — 1 round — AE changes — `SpiritsFromBeyond`
-- [ ] Inspired Eclipse — 1 round — marker — `InspiredEclipse`
-
 ## Cleric
 
-- [ ] Channel Divinity: Twilight Sanctuary (Twilight) — 1 min (10 rounds) — AE changes — `ChannelDivinityTwilightSanctuary`
-- [ ] Channel Divinity: Cloak of Shadows (Trickery) — 1 min (10 rounds) — marker — `ChannelDivinityCloakOfShadows`
-- [ ] Channel Divinity: Path to the Grave (Grave) — 1 round — AE changes — `ChannelDivinityPathToTheGrave` (2024 variant: `PathToTheGrave`)
+- [x] Channel Divinity: Twilight Sanctuary (Twilight) — 1 min (10 rounds) — AE changes — `ChannelDivinityTwilightSanctuary`
+- [x] Channel Divinity: Cloak of Shadows (Trickery) — 1 min (10 rounds) — marker — `ChannelDivinityCloakOfShadows`
+- [x] Channel Divinity: Path to the Grave (Grave) — 1 round — AE changes — `ChannelDivinityPathToTheGrave` (2024 variant: `PathToTheGrave`)
 - [ ] Steps of Night (Twilight) — 1 min (10 rounds) — AE changes — `StepsOfNight`
 - [ ] Eyes of Night (Twilight) — 1 hour — AE changes — `EyesOfNight`
 - [ ] Divine Foreknowledge — 1 hour — AE changes — `DivineForeknowledge`
