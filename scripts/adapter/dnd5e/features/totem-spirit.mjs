@@ -18,6 +18,8 @@ import { FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
  * riders are action-economy or range-gated ally benefits that cannot be
  * automated as stat changes, matching ddb's own TotemSpiritEagle/Tiger/Wolf
  * enrichers which also define marker effects with no stat changes.
+ * Elk has a real stat change (+15 ft walking speed) but gates on no-heavy-armor;
+ * that condition lives in the description text, as in ddb's modeling.
  */
 
 /** Module flag marking an AE this module created for a totem spirit. */
@@ -35,6 +37,18 @@ const TOTEM_SPIRITS = [
     changes: () => Object.keys(CONFIG.DND5E?.damageTypes ?? {})
       .filter(type => type !== "psychic")
       .map(type => ({ key: "system.traits.dr.value", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: type, priority: 20 })),
+  },
+  {
+    key: "elk",
+    statusId: "cst-totem-elk",
+    fallbackImg: "icons/creatures/mammals/elk-moose-marked-green.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.ElkDescription",
+    // +15 ft walking speed (ddb: unsignedAddChange("15", 20,
+    // "system.attributes.movement.walk")). The no-heavy-armor condition lives
+    // in the description, as in ddb's modeling.
+    changes: () => [
+      { key: "system.attributes.movement.walk", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "15", priority: 20 },
+    ],
   },
   {
     key: "eagle",
