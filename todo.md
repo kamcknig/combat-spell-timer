@@ -24,7 +24,7 @@ features are excluded.
 - [x] Bolstering Magic (Wild Magic) — 10 min (100 rounds) — handled in Foundry by dnd5e; Beyond20 activation button added — `BolsteringMagic` *(implemented)*
 - [x] Wild Surge (Wild Magic) — auto-triggers on rage start; rage-bound results (markers, Multicolored Light, weapon enchantment) end with the rage — `WildSurge` *(implemented)*
 - [x] Zealous Presence (Zealot) — until the start of the caster's next turn — caster-anchored timer, target-side cleanup, Beyond20 button — `ZealousPresence` *(implemented)*
-- [ ] Totem Spirit: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — lasts while raging (60 s / 600 s) — Bear & Elk have AE changes, rest marker — `TotemSpiritBear` etc.
+- [x] Totem Spirit: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Bear resistances, Elk +15 ft speed, Eagle/Tiger/Wolf markers — `TotemSpiritBear` etc. *(implemented)*
 - [ ] Totemic Attunement: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — lasts while raging — Eagle has AE changes, rest marker — `TotemicAttunementBear` etc.
 
 ## Bard
