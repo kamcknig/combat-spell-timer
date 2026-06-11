@@ -79,6 +79,13 @@
       "RoundsLeft": "Until the caster's next turn",
       "EndLabel": "End Zealous Presence"
     },
+    "PathToTheGrave": {
+      "NoPool": "Couldn't find a Channel Divinity uses pool for {name} — the ability won't consume anything.",
+      "EffectName": "Cursed",
+      "EffectDescription": "Cursed until the end of the caster's next turn: the next time the caster or an ally hits this creature with an attack, it has vulnerability to all of the attack's damage, and then the curse ends.",
+      "RoundsLeft": "Until the end of the caster's next turn",
+      "EndLabel": "End Path to the Grave"
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",
