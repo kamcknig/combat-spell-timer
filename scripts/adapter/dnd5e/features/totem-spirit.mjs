@@ -13,6 +13,11 @@ import { FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
  * are damage resistance to every type except psychic. ddb ships the item with a
  * DISABLED transfer effect instead (manual-toggle style); that template lives
  * on the item, never on the actor, so our flag-scoped cleanup cannot touch it.
+ *
+ * Eagle, Tiger, and Wolf are marker-only entries (changes: () => []) — their
+ * riders are action-economy or range-gated ally benefits that cannot be
+ * automated as stat changes, matching ddb's own TotemSpiritEagle/Tiger/Wolf
+ * enrichers which also define marker effects with no stat changes.
  */
 
 /** Module flag marking an AE this module created for a totem spirit. */
@@ -30,6 +35,31 @@ const TOTEM_SPIRITS = [
     changes: () => Object.keys(CONFIG.DND5E?.damageTypes ?? {})
       .filter(type => type !== "psychic")
       .map(type => ({ key: "system.traits.dr.value", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: type, priority: 20 })),
+  },
+  {
+    key: "eagle",
+    statusId: "cst-totem-eagle",
+    fallbackImg: "icons/creatures/birds/raptor-hawk-flying.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.EagleDescription",
+    // Marker only (matches ddb's TotemSpiritEagle): the rider is action
+    // economy (Dash as a bonus action, OA disadvantage) — nothing to change.
+    changes: () => [],
+  },
+  {
+    key: "tiger",
+    statusId: "cst-totem-tiger",
+    fallbackImg: "icons/creatures/mammals/cat-hunched-glowing-red.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.TigerDescription",
+    // Marker only (matches ddb's TotemSpiritTiger): jump distances.
+    changes: () => [],
+  },
+  {
+    key: "wolf",
+    statusId: "cst-totem-wolf",
+    fallbackImg: "icons/creatures/mammals/wolf-howl-moon-black.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.WolfDescription",
+    // Marker only (matches ddb's TotemSpiritWolf): ally melee advantage near you.
+    changes: () => [],
   },
 ];
 
