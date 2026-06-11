@@ -31,7 +31,7 @@ features are excluded.
 
 - [x] Channel Divinity: Twilight Sanctuary (Twilight) — 1 min (10 rounds) — AE changes — `ChannelDivinityTwilightSanctuary`
 - [x] Channel Divinity: Cloak of Shadows (Trickery) — 1 min (10 rounds) — marker — `ChannelDivinityCloakOfShadows`
-- [ ] Channel Divinity: Path to the Grave (Grave) — 1 round — AE changes — `ChannelDivinityPathToTheGrave` (2024 variant: `PathToTheGrave`)
+- [x] Channel Divinity: Path to the Grave (Grave) — 1 round — AE changes — `ChannelDivinityPathToTheGrave` (2024 variant: `PathToTheGrave`)
 - [ ] Steps of Night (Twilight) — 1 min (10 rounds) — AE changes — `StepsOfNight`
 - [ ] Eyes of Night (Twilight) — 1 hour — AE changes — `EyesOfNight`
 - [ ] Divine Foreknowledge — 1 hour — AE changes — `DivineForeknowledge`
