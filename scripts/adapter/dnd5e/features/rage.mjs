@@ -10,7 +10,7 @@
  *   unsignedAddChange(ADV_MODE.ADVANTAGE, 20, "system.abilities.str.check.roll.mode")
  * 2014 and 2024 share identical changes; the melee bonus scales at roll time.
  *
- * Rage-start augmentations (both gated only on the actor having the feature):
+ * Rage-start augmentations (all gated only on the actor having the feature):
  *  - Path of Wild Magic: Wild Surge fires automatically on every rage entry —
  *    the actor's own Wild Surge item is activated so dnd5e rolls the table and
  *    applies its effects. This module adds no timer or AE for the surge effects.
@@ -18,10 +18,14 @@
  *    chosen natural weapon. `onEffectDeleted` removes the weapon when the rage
  *    ends by any path (turn-end dialog, natural expiry, right-click, unconscious
  *    early-end, re-rage refresh, or manual AE deletion).
+ *  - Path of the Totem Warrior (Bear): `onStart` creates a temporary AE
+ *    granting resistance to all damage except psychic. `onEffectDeleted`
+ *    removes it via `removeTotemSpiritEffects`.
  */
 
 import { hasFormOfTheBeast, promptBeastForm, createBeastWeapon, removeBeastWeapons } from "./form-of-the-beast.mjs";
 import { triggerWildSurge, removeWildSurgeEffects, onWildSurgeActivity } from "./wild-surge.mjs";
+import { applyTotemSpiritEffects, removeTotemSpiritEffects } from "./totem-spirit.mjs";
 
 const isModern = () => typeof dnd5e !== "undefined" && dnd5e?.settings?.rulesVersion === "modern";
 const barbLevel = (actor) => actor?.classes?.barbarian?.system?.levels ?? 0;
@@ -61,9 +65,12 @@ export default {
    *    actor's own item so dnd5e rolls the table and applies its effects.
    *  - Path of the Beast: offer the Form of the Beast transformation and
    *    manifest the chosen natural weapon.
+   *  - Path of the Totem Warrior (Bear): grants resistance to all damage
+   *    except psychic for the duration of the rage.
    */
   onStart(actor) {
     triggerWildSurge(actor).catch(err => console.error("combat-spell-timer | wild surge trigger failed", err));
+    applyTotemSpiritEffects(actor).catch(err => console.error("combat-spell-timer | totem spirit apply failed", err));
     if (hasFormOfTheBeast(actor)) {
       promptBeastForm(actor)
         // Guard on the status: if the rage already ended while the dialog sat
@@ -91,6 +98,7 @@ export default {
     return Promise.all([
       removeBeastWeapons(actor, "rage"),
       removeWildSurgeEffects(actor),
+      removeTotemSpiritEffects(actor),
     ]);
   },
 
