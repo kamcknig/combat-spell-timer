@@ -6,6 +6,7 @@ import { dbg } from "../../utils/debug.mjs";
 import { onStatusEndedEffects } from "./features/status-ended-effects.mjs";
 import { onEffectDurationOverrides } from "./features/effect-duration-overrides.mjs";
 import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/action-ended-effects.mjs";
+import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -246,6 +247,13 @@ export default class Dnd5eAdapter extends SystemAdapter {
     Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
       onActionEndedAttackRoll(subject);
     });
+    // Path to the Grave use flow: a no-activity item posts a bare card via
+    // displayCard — intercept that once to fix the item up (no-op curse
+    // template effect + consumption activity linking it), after which dnd5e's
+    // native Ability Use dialog, card EFFECTS section, and effect application
+    // own the entire flow.
+    Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayPathToTheGraveCard(item, messageConfig));
+    Hooks.on("dnd5e.preUseActivity", (activity, usageConfig) => onPreUsePathToTheGrave(activity, usageConfig));
   }
 
   /**
@@ -350,7 +358,9 @@ export default class Dnd5eAdapter extends SystemAdapter {
       await conc.parent.endConcentration(conc);
       return;
     }
-    await effect.delete();
+    // Tolerate concurrent removal: at expiry boundaries the system's own
+    // expired-effect cleanup can delete the same AE in the same tick.
+    await effect.delete().catch(() => {});
   }
 
   /**

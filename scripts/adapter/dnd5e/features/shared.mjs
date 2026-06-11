@@ -1,6 +1,22 @@
 import { MODULE_ID } from "../../../module.mjs";
 
 /**
+ * Every distinct actor that could carry an applied effect: world actors plus
+ * each scene token's actor — unlinked tokens have synthetic actors that live
+ * on the token, not in game.actors.
+ */
+export function candidateActors() {
+  const seen = new Map();
+  for (const actor of game.actors ?? []) seen.set(actor.uuid, actor);
+  for (const scene of game.scenes ?? []) {
+    for (const token of scene.tokens ?? []) {
+      if (token.actor) seen.set(token.actor.uuid, token.actor);
+    }
+  }
+  return [...seen.values()];
+}
+
+/**
  * Sentinel rounds duration stamped on feature AEs. Large enough that Foundry
  * v14's expiry registry never reaches (or "reframes" via an Infinity remaining)
  * it during play, so the module timer stays the sole authority on when the
@@ -119,20 +135,30 @@ export async function createFeatureEffect(actor, feature, { img, itemUuid, durat
   return effect?.uuid ?? null;
 }
 
-/** The Item an effect originates from (directly or via an Activity), or null. */
+/**
+ * The Item an effect originates from, or null. The origin may be the Item
+ * itself, an Activity on it, or — for effects applied from a usage chat card
+ * (dnd5e's EffectApplicationElement sets origin to the source effect's uuid)
+ * — the TEMPLATE ActiveEffect on the item; that last one hops to the
+ * effect's parent item first.
+ */
 export function effectOriginItem(effect) {
   if (!effect?.origin) return null;
   let doc = null;
   try { doc = fromUuidSync(effect.origin); } catch { return null; }
   if (!doc) return null;
+  if (doc.documentName === "ActiveEffect") doc = doc.parent ?? doc;
   if (doc.documentName === "Item") return doc;
   return doc.item ?? null;
 }
 
 /**
  * Resolve the Actor an applied effect originates from, walking the origin
- * UUID through Item / Activity parents. Null when there is no origin or it
- * can't be resolved (e.g. a deleted source, or a world-item origin).
+ * UUID through ActiveEffect / Item / Activity parents. Effects applied from a
+ * usage chat card carry the source TEMPLATE effect's uuid as origin (dnd5e's
+ * EffectApplicationElement) — hop to its parent item, then the actor. Null
+ * when there is no origin or it can't be resolved (e.g. a deleted source, or
+ * a world-item origin).
  * @param {ActiveEffect} effect
  * @returns {Actor|null}
  */
@@ -140,6 +166,8 @@ export function effectOriginActor(effect) {
   if (!effect?.origin) return null;
   let doc = null;
   try { doc = fromUuidSync(effect.origin); } catch { /* unresolved */ }
+  if (!doc) return null;
+  if (doc.documentName === "ActiveEffect") doc = doc.parent ?? doc;
   if (!doc) return null;
   if (doc.documentName === "Actor") return doc;
   return doc.actor ?? (doc.parent?.documentName === "Actor" ? doc.parent : null);

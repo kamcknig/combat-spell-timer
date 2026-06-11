@@ -225,7 +225,7 @@ export default class SystemAdapter {
  * @property {string}  roundsLeftKey          i18n key for the "N rounds left" sub-line.
  * @property {string}  removeLabelKey         i18n key for the context-menu / delete label.
  * @property {object}  [turnEnd]              Turn-end policy; absent → plain countdown.
- * @property {"confirm"} turnEnd.mode
+ * @property {"confirm"|"expire"} turnEnd.mode  "confirm" prompts to extend/end; "expire" auto-ends (writer-gated) at the first qualifying turn end.
  * @property {string}  turnEnd.titleKey
  * @property {string}  turnEnd.extendKey
  * @property {string}  turnEnd.endKey

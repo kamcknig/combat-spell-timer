@@ -1,5 +1,5 @@
 import { dbg } from "../../../utils/debug.mjs";
-import { effectOriginActor } from "./shared.mjs";
+import { candidateActors, effectOriginActor } from "./shared.mjs";
 import { removeEffect } from "../../../core/socket.mjs";
 
 /**
@@ -18,22 +18,6 @@ const APPLIED_EFFECT_NAME = "zealous presence";
 
 const isZealousPresenceItem = (i) => i?.type === "feat"
   && (i.name?.toLowerCase() === "zealous presence" || i.system?.identifier?.toLowerCase() === "zealous-presence");
-
-/**
- * Every distinct actor that could carry an applied effect: world actors plus
- * each scene token's actor — unlinked tokens have synthetic actors that live
- * on the token, not in game.actors.
- */
-function candidateActors() {
-  const seen = new Map();
-  for (const actor of game.actors ?? []) seen.set(actor.uuid, actor);
-  for (const scene of game.scenes ?? []) {
-    for (const token of scene.tokens ?? []) {
-      if (token.actor) seen.set(token.actor.uuid, token.actor);
-    }
-  }
-  return [...seen.values()];
-}
 
 export default {
   id: "zealous-presence",
