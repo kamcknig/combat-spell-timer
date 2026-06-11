@@ -1,6 +1,6 @@
 import { MODULE_ID } from "../../../module.mjs";
 import { dbg } from "../../../utils/debug.mjs";
-import { FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
+import { effectOriginActor, FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
 
 /**
  * Barbarian Path of Wild Magic — "Wild Surge" (level 3).
@@ -139,29 +139,68 @@ const isRageBoundSurgeEffect = (e) => e.flags?.[MODULE_ID]?.[SURGE_FLAG] === tru
   || RAGE_BOUND_SURGE_EFFECTS.includes(e.name?.toLowerCase());
 
 /**
- * Remove any rage-bound Wild Surge effects (none is fine). Called when the
- * rage ends by any path. Sweeps the actor's own effects (roll 6, module
- * markers) AND each item's effects (roll 4's weapon enchantment lives on the
- * enchanted item). The ddb-applied AEs carry no module flag and no
- * self-expiring duration, so without this they would linger after the rage.
+ * Delete the rage-bound surge effects on one actor that pass `originOk`,
+ * sweeping the actor's own effects (roll 6, module markers) and each item's
+ * effects (roll 4's weapon enchantment lives on the enchanted item).
  * @param {Actor} actor
+ * @param {(e: ActiveEffect) => boolean} originOk
  */
-export async function removeWildSurgeEffects(actor) {
-  if (!actor) return;
-  const ids = [...(actor.effects ?? [])].filter(isRageBoundSurgeEffect).map(e => e.id);
+async function sweepSurgeEffects(actor, originOk) {
+  const match = (e) => isRageBoundSurgeEffect(e) && originOk(e);
+  const ids = [...(actor.effects ?? [])].filter(match).map(e => e.id);
   if (ids.length) {
     dbg("dnd5e:wild-surge-effects-removed", actor.name, ids.length);
     await actor.deleteEmbeddedDocuments("ActiveEffect", ids);
   }
   for (const item of actor.items ?? []) {
-    // NEVER touch the Wild Surge item itself: it holds the TEMPLATE effects
+    // NEVER touch a Wild Surge item itself: it holds the TEMPLATE effects
     // its activities apply copies of ("Multicolored Light AC Bonus", "Wild
     // Surge Weapon"). Deleting those would permanently break the feature —
     // only applied copies elsewhere (actor, enchanted weapon) are rage-bound.
     if (isWildSurgeItem(item)) continue;
-    const eids = [...(item.effects ?? [])].filter(isRageBoundSurgeEffect).map(e => e.id);
+    const eids = [...(item.effects ?? [])].filter(match).map(e => e.id);
     if (!eids.length) continue;
     dbg("dnd5e:wild-surge-enchantment-removed", actor.name, item.name, eids.length);
     await item.deleteEmbeddedDocuments("ActiveEffect", eids);
+  }
+}
+
+/** Every distinct combatant actor across all combats except the rager. */
+function otherCombatantActors(rager) {
+  const seen = new Map();
+  for (const combat of game.combats ?? []) {
+    for (const combatant of combat.combatants ?? []) {
+      const a = combatant.actor;
+      if (a && a.uuid !== rager.uuid) seen.set(a.uuid, a);
+    }
+  }
+  return [...seen.values()];
+}
+
+/**
+ * Remove the rage-bound Wild Surge effects when a rage ends (none is fine),
+ * scoped by ORIGIN so concurrent ragers don't clobber each other:
+ *  - On the rager's own actor: remove effects that originate from the rager,
+ *    plus unattributable ones (no/unresolvable origin — assumed self-applied).
+ *    An effect another rager's surge shared onto this actor (e.g. roll 6's
+ *    ally AC bonus) survives — it ends with THAT rage, not this one.
+ *  - On every other combatant: remove only effects that provably originate
+ *    from this rager (the ally-shared copies), and only where this client
+ *    has owner permission — natural expiry runs GM-side and cleans them all;
+ *    a player ending their own rage can only clean actors they own.
+ * The ddb-applied AEs carry no module flag and no self-expiring duration, so
+ * without this they would linger after the rage.
+ * @param {Actor} rager  The actor whose rage just ended.
+ */
+export async function removeWildSurgeEffects(rager) {
+  if (!rager) return;
+  const fromRager = (e) => effectOriginActor(e)?.uuid === rager.uuid;
+  await sweepSurgeEffects(rager, (e) => {
+    const src = effectOriginActor(e);
+    return !src || src.uuid === rager.uuid;
+  });
+  for (const actor of otherCombatantActors(rager)) {
+    if (!actor.isOwner) continue;
+    await sweepSurgeEffects(actor, fromRager);
   }
 }

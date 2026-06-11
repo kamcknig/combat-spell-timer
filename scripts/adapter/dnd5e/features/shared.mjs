@@ -119,6 +119,22 @@ export async function createFeatureEffect(actor, feature, { img, itemUuid, durat
   return effect?.uuid ?? null;
 }
 
+/**
+ * Resolve the Actor an applied effect originates from, walking the origin
+ * UUID through Item / Activity parents. Null when there is no origin or it
+ * can't be resolved (e.g. a deleted source, or a world-item origin).
+ * @param {ActiveEffect} effect
+ * @returns {Actor|null}
+ */
+export function effectOriginActor(effect) {
+  if (!effect?.origin) return null;
+  let doc = null;
+  try { doc = fromUuidSync(effect.origin); } catch { /* unresolved */ }
+  if (!doc) return null;
+  if (doc.documentName === "Actor") return doc;
+  return doc.actor ?? (doc.parent?.documentName === "Actor" ? doc.parent : null);
+}
+
 /** Delete the module-owned AE by uuid, else by scanning the actor. */
 export async function deleteFeatureEffect(feature, { casterActorUuid, effectUuid } = {}) {
   if (effectUuid) {
