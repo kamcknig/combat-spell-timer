@@ -5,6 +5,7 @@ import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatu
 import { dbg } from "../../utils/debug.mjs";
 import { onStatusEndedEffects } from "./features/status-ended-effects.mjs";
 import { onEffectDurationOverrides } from "./features/effect-duration-overrides.mjs";
+import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/action-ended-effects.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -219,12 +220,18 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * activity use is also dispatched to the optional descriptor hook
    * `onActivityUse(activity)`, for features that react to companion-item
    * activities without starting a timer (e.g. Wild Surge marker effects).
+   * Also dispatches action-ended effects (e.g. Cloak of Shadows' invisibility
+   * on spell cast via onActionEndedActivityUse, and on attack roll via the
+   * dnd5e.rollAttackV2 hook registered below).
    * @param {(record: object) => void} onFeature
    */
   registerFeatureDetection(onFeature) {
     Hooks.on("dnd5e.postUseActivity", (activity) => {
       const actor = activity?.actor;
       if (!actor) return;
+      // Rules-bound effects that end when their bearer casts a spell
+      // (e.g. Cloak of Shadows' invisibility).
+      onActionEndedActivityUse(activity);
       for (const f of listFeatures()) {
         f.onActivityUse?.(activity);
         const rec = f.detect?.(activity);
@@ -232,6 +239,12 @@ export default class Dnd5eAdapter extends SystemAdapter {
         dbg("dnd5e:feature", f.id, actor.name, `${rec.durationRounds}r`);
         onFeature({ featureId: f.id, casterActorUuid: actor.uuid, ...rec });
       }
+    });
+    // Rules-bound effects that end when their bearer makes an attack roll
+    // (e.g. Cloak of Shadows' invisibility). Workflow-local hook: fires only
+    // on the rolling client.
+    Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
+      onActionEndedAttackRoll(subject);
     });
   }
 

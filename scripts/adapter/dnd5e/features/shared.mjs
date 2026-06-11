@@ -119,6 +119,16 @@ export async function createFeatureEffect(actor, feature, { img, itemUuid, durat
   return effect?.uuid ?? null;
 }
 
+/** The Item an effect originates from (directly or via an Activity), or null. */
+export function effectOriginItem(effect) {
+  if (!effect?.origin) return null;
+  let doc = null;
+  try { doc = fromUuidSync(effect.origin); } catch { return null; }
+  if (!doc) return null;
+  if (doc.documentName === "Item") return doc;
+  return doc.item ?? null;
+}
+
 /**
  * Resolve the Actor an applied effect originates from, walking the origin
  * UUID through Item / Activity parents. Null when there is no origin or it

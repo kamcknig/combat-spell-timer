@@ -1,4 +1,5 @@
 import { dbg } from "../../../utils/debug.mjs";
+import { effectOriginItem } from "./shared.mjs";
 
 /**
  * Duration corrections for applied effects whose source data carries the
@@ -16,16 +17,6 @@ const DURATION_OVERRIDES = [
     duration: { rounds: 1 },
   },
 ];
-
-/** The Item an effect originates from (directly or via an Activity), or null. */
-function effectOriginItem(effect) {
-  if (!effect?.origin) return null;
-  let doc = null;
-  try { doc = fromUuidSync(effect.origin); } catch { return null; }
-  if (!doc) return null;
-  if (doc.documentName === "Item") return doc;
-  return doc.item ?? null;
-}
 
 /**
  * createActiveEffect dispatch (from the adapter's early-end listener): when a
