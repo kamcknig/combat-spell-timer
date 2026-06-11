@@ -3,10 +3,11 @@ import { dbg } from "../../../utils/debug.mjs";
 import { FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
 
 /**
- * Barbarian Path of the Totem Warrior — "Totem Spirit" rage augmentations.
+ * Barbarian Path of the Totem Warrior — "Totem Spirit" (level 3) and
+ * "Totemic Attunement" (level 14) rage augmentations.
  * While raging, a totem warrior gains their chosen animal's boon; the module
  * creates a temporary AE on the rager when the rage starts and removes it when
- * the rage ends by any path. One table entry per supported animal.
+ * the rage ends by any path. One table entry per supported animal per tier.
  *
  * Effect modeling mirrors ddb-importer (`dist/main.mjs`, class TotemSpiritBear):
  * the effect is named after the feat ("Totem Spirit: Bear") and Bear's changes
@@ -14,20 +15,29 @@ import { FEATURE_SENTINEL_ROUNDS } from "./shared.mjs";
  * DISABLED transfer effect instead (manual-toggle style); that template lives
  * on the item, never on the actor, so our flag-scoped cleanup cannot touch it.
  *
- * Eagle, Tiger, and Wolf are marker-only entries (changes: () => []) — their
- * riders are action-economy or range-gated ally benefits that cannot be
- * automated as stat changes, matching ddb's own TotemSpiritEagle/Tiger/Wolf
- * enrichers which also define marker effects with no stat changes.
- * Elk has a real stat change (+15 ft walking speed) but gates on no-heavy-armor;
- * that condition lives in the description text, as in ddb's modeling.
+ * Marker-only entries (changes: () => []):
+ *   Spirit tier  — Eagle, Tiger, Wolf (action-economy / positional riders)
+ *   Attunement tier — Bear, Elk, Tiger, Wolf (action-economy / positional riders)
+ * Real-change entries:
+ *   Spirit tier  — Bear (all-damage resistance), Elk (+15 ft walk)
+ *   Attunement tier — Eagle (fly speed = current walking speed, live-synced)
+ *
+ * Eagle attunement: dnd5e's prepareMovement resolves each movement value via
+ * simplifyBonus(value, rollData) on every data preparation, so the formula
+ * "@attributes.movement.walk" re-derives fly from the current walk each time
+ * anything about the actor changes — no updateActor hook needed. This mirrors
+ * ddb's TotemicAttunementEagle: upgradeChange("@attributes.movement.walk", 20,
+ * "system.attributes.movement.fly").
  */
 
 /** Module flag marking an AE this module created for a totem spirit. */
 const TOTEM_FLAG = "totemSpirit";
 
 const TOTEM_SPIRITS = [
+  // ── Spirit tier (level 3) ────────────────────────────────────────────────
   {
-    key: "bear",
+    key: "spirit-bear",
+    nameParts: ["totem spirit", "bear"],
     statusId: "cst-totem-bear",
     fallbackImg: "icons/creatures/abilities/bear-roar-bite-brown.webp",
     descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.BearDescription",
@@ -39,7 +49,8 @@ const TOTEM_SPIRITS = [
       .map(type => ({ key: "system.traits.dr.value", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: type, priority: 20 })),
   },
   {
-    key: "elk",
+    key: "spirit-elk",
+    nameParts: ["totem spirit", "elk"],
     statusId: "cst-totem-elk",
     fallbackImg: "icons/creatures/mammals/elk-moose-marked-green.webp",
     descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.ElkDescription",
@@ -51,7 +62,8 @@ const TOTEM_SPIRITS = [
     ],
   },
   {
-    key: "eagle",
+    key: "spirit-eagle",
+    nameParts: ["totem spirit", "eagle"],
     statusId: "cst-totem-eagle",
     fallbackImg: "icons/creatures/birds/raptor-hawk-flying.webp",
     descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.EagleDescription",
@@ -60,7 +72,8 @@ const TOTEM_SPIRITS = [
     changes: () => [],
   },
   {
-    key: "tiger",
+    key: "spirit-tiger",
+    nameParts: ["totem spirit", "tiger"],
     statusId: "cst-totem-tiger",
     fallbackImg: "icons/creatures/mammals/cat-hunched-glowing-red.webp",
     descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.TigerDescription",
@@ -68,22 +81,74 @@ const TOTEM_SPIRITS = [
     changes: () => [],
   },
   {
-    key: "wolf",
+    key: "spirit-wolf",
+    nameParts: ["totem spirit", "wolf"],
     statusId: "cst-totem-wolf",
     fallbackImg: "icons/creatures/mammals/wolf-howl-moon-black.webp",
     descriptionKey: "COMBAT_SPELL_TIMER.TotemSpirit.WolfDescription",
     // Marker only (matches ddb's TotemSpiritWolf): ally melee advantage near you.
     changes: () => [],
   },
+  // ── Attunement tier (level 14) ───────────────────────────────────────────
+  {
+    key: "attunement-bear",
+    nameParts: ["totemic attunement", "bear"],
+    statusId: "cst-attunement-bear",
+    fallbackImg: "icons/creatures/abilities/bear-roar-bite-brown.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemicAttunement.BearDescription",
+    // Marker only: hostile creatures near you attack others at disadvantage.
+    changes: () => [],
+  },
+  {
+    key: "attunement-eagle",
+    nameParts: ["totemic attunement", "eagle"],
+    statusId: "cst-attunement-eagle",
+    fallbackImg: "icons/creatures/birds/raptor-hawk-flying.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemicAttunement.EagleDescription",
+    // Fly speed = CURRENT walking speed. The formula value re-derives on every
+    // data preparation (dnd5e prepareMovement resolves movement formulas via
+    // simplifyBonus + roll data), so it tracks walk changes live — no hook.
+    // Mirrors ddb's TotemicAttunementEagle: upgradeChange("@attributes.movement.walk").
+    changes: () => [
+      { key: "system.attributes.movement.fly", mode: CONST.ACTIVE_EFFECT_MODES.UPGRADE, value: "@attributes.movement.walk", priority: 20 },
+    ],
+  },
+  {
+    key: "attunement-elk",
+    nameParts: ["totemic attunement", "elk"],
+    statusId: "cst-attunement-elk",
+    fallbackImg: "icons/creatures/mammals/elk-moose-marked-green.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemicAttunement.ElkDescription",
+    // Marker only: bonus-action pass-through knockdown.
+    changes: () => [],
+  },
+  {
+    key: "attunement-tiger",
+    nameParts: ["totemic attunement", "tiger"],
+    statusId: "cst-attunement-tiger",
+    fallbackImg: "icons/creatures/mammals/cat-hunched-glowing-red.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemicAttunement.TigerDescription",
+    // Marker only: bonus-action attack after a 20-ft straight-line charge.
+    changes: () => [],
+  },
+  {
+    key: "attunement-wolf",
+    nameParts: ["totemic attunement", "wolf"],
+    statusId: "cst-attunement-wolf",
+    fallbackImg: "icons/creatures/mammals/wolf-howl-moon-black.webp",
+    descriptionKey: "COMBAT_SPELL_TIMER.TotemicAttunement.WolfDescription",
+    // Marker only: bonus-action knockdown on a melee hit.
+    changes: () => [],
+  },
 ];
 
-/** The actor's feat item for a totem animal, or null. Matches ddb's
- *  "Totem Spirit: Bear" naming and hand-made variants leniently. */
-function findTotemFeat(actor, key) {
+/** The actor's feat item for a totem entry, or null. Matches every name part
+ *  (e.g. ["totemic attunement", "eagle"]) case-insensitively. */
+function findTotemFeat(actor, entry) {
   return actor?.items?.find(i => {
     if (i?.type !== "feat") return false;
     const n = i.name?.toLowerCase() ?? "";
-    return n.includes("totem spirit") && n.includes(key);
+    return entry.nameParts.every(part => n.includes(part));
   }) ?? null;
 }
 
@@ -94,7 +159,7 @@ function findTotemFeat(actor, key) {
  */
 export async function applyTotemSpiritEffects(actor) {
   for (const totem of TOTEM_SPIRITS) {
-    const item = findTotemFeat(actor, totem.key);
+    const item = findTotemFeat(actor, totem);
     if (!item) continue;
     await removeTotemSpiritEffects(actor, totem.key); // never stack stale copies
     const data = {

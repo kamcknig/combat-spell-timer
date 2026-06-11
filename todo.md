@@ -25,7 +25,7 @@ features are excluded.
 - [x] Wild Surge (Wild Magic) — auto-triggers on rage start; rage-bound results (markers, Multicolored Light, weapon enchantment) end with the rage — `WildSurge` *(implemented)*
 - [x] Zealous Presence (Zealot) — until the start of the caster's next turn — caster-anchored timer, target-side cleanup, Beyond20 button — `ZealousPresence` *(implemented)*
 - [x] Totem Spirit: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Bear resistances, Elk +15 ft speed, Eagle/Tiger/Wolf markers — `TotemSpiritBear` etc. *(implemented)*
-- [ ] Totemic Attunement: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — lasts while raging — Eagle has AE changes, rest marker — `TotemicAttunementBear` etc.
+- [x] Totemic Attunement: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Eagle fly speed = walking speed (live-synced), rest markers — `TotemicAttunementBear` etc. *(implemented)*
 
 ## Bard
 
