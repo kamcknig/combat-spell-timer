@@ -51,6 +51,9 @@
       "ClawsDescription": "Each of your hands transforms into a claw, usable as a weapon while it's empty. Once on each of your turns when you attack with a claw using the Attack action, you can make one additional claw attack as part of the same action.",
       "TailDescription": "You grow a lashing, spiny tail with reach. When a creature you can see within 10 feet hits you with an attack roll, you can use your reaction to roll a d8 and add it to your AC against that attack, possibly causing it to miss."
     },
+    "TotemSpirit": {
+      "BearDescription": "While raging, you have resistance to all damage except psychic damage."
+    },
     "WildSurge": {
       "ExplodingSpirit": "Exploding Spirit",
       "ExplodingSpiritDescription": "Until your rage ends, you can use a bonus action on each of your turns to summon another exploding spirit. At the end of the turn it appears, the spirit explodes: each creature within 5 feet of it must succeed on a Dexterity saving throw or take 1d6 force damage.",
