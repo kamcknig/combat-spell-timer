@@ -101,6 +101,10 @@
       "AlreadyActiveRounds": "Rounds Remaining",
       "NoWildShapeUses": "{name} has no Wild Shape uses remaining for Wrath of the Sea."
     },
+    "MoonlightStep": {
+      "RoundsLeft": "Until the end of your turn",
+      "EndLabel": "End Moonlight Step"
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",

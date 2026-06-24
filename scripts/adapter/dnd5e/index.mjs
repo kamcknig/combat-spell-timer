@@ -7,6 +7,7 @@ import { onStatusEndedEffects } from "./features/status-ended-effects.mjs";
 import { onEffectDurationOverrides } from "./features/effect-duration-overrides.mjs";
 import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/action-ended-effects.mjs";
 import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
+import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./features/moonlight-step.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -247,6 +248,10 @@ export default class Dnd5eAdapter extends SystemAdapter {
     Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
       onActionEndedAttackRoll(subject);
     });
+    // Moonlight Step grants Advantage on the bearer's attack rolls while active.
+    // Pre-roll so D20Roll.applyKeybindings sees config.advantage before the roll
+    // is evaluated.
+    Hooks.on("dnd5e.preRollAttackV2", (config) => onMoonlightStepPreRollAttack(config));
     // Path to the Grave use flow: a no-activity item posts a bare card via
     // displayCard — intercept that once to fix the item up (no-op curse
     // template effect + consumption activity linking it), after which dnd5e's
@@ -287,6 +292,13 @@ export default class Dnd5eAdapter extends SystemAdapter {
         dbg("dnd5e:feature-early-end", f.id, actor.name);
         onEarlyEnd({ featureId: f.id, casterActorUuid: actor.uuid });
       }
+    });
+    // Moonlight Step is consumed by the bearer's next attack roll — end the
+    // feature (drop its timer + marker AE). Workflow-local hook: fires only on
+    // the rolling client, which owns the actor.
+    Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
+      const query = onMoonlightStepAttackRolled(subject);
+      if (query) onEarlyEnd(query);
     });
   }
 
