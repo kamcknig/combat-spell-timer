@@ -86,6 +86,13 @@
       "RoundsLeft": "Until the end of the caster's next turn",
       "EndLabel": "End Path to the Grave"
     },
+    "SymbioticEntity": {
+      "RoundsLeft": "Max rounds left {n}",
+      "EndLabel": "End Symbiotic Entity",
+      "AlreadyActiveTitle": "Symbiotic Entity Active",
+      "AlreadyActivePrompt": "{name} already has Symbiotic Entity active! How many rounds remain?",
+      "AlreadyActiveRounds": "Rounds Remaining"
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",
