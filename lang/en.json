@@ -93,6 +93,14 @@
       "AlreadyActivePrompt": "{name} already has Symbiotic Entity active! How many rounds remain?",
       "AlreadyActiveRounds": "Rounds Remaining"
     },
+    "WrathOfTheSea": {
+      "RoundsLeft": "Max rounds left {n}",
+      "EndLabel": "End Wrath of the Sea",
+      "AlreadyActiveTitle": "Wrath of the Sea Active",
+      "AlreadyActivePrompt": "{name} already has Wrath of the Sea active! How many rounds remain?",
+      "AlreadyActiveRounds": "Rounds Remaining",
+      "NoWildShapeUses": "{name} has no Wild Shape uses remaining for Wrath of the Sea."
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",

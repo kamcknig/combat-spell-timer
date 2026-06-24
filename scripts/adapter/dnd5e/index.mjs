@@ -253,7 +253,14 @@ export default class Dnd5eAdapter extends SystemAdapter {
     // native Ability Use dialog, card EFFECTS section, and effect application
     // own the entire flow.
     Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayPathToTheGraveCard(item, messageConfig));
-    Hooks.on("dnd5e.preUseActivity", (activity, usageConfig) => onPreUsePathToTheGrave(activity, usageConfig));
+    Hooks.on("dnd5e.preUseActivity", (activity, usageConfig, dialogConfig, messageConfig) => {
+      // Generic per-feature pre-use hook (e.g. Wrath of the Sea defaults the Wild
+      // Shape consume checkbox off and snapshots its uses). These only mutate the
+      // usage/dialog config; they never cancel the use.
+      for (const f of listFeatures()) f.onPreUse?.(activity, usageConfig, dialogConfig, messageConfig);
+      // Path to the Grave's repair path may cancel (returns false); keep that.
+      return onPreUsePathToTheGrave(activity, usageConfig);
+    });
   }
 
   /**
