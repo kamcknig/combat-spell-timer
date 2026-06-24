@@ -88,10 +88,15 @@ export async function onFeatureTurnEnd(combat, previous) {
   const prev = combat.turns[previous.turn];
   if (!prev) return;
   const timers = getTimers(combat).filter(t => {
-    const mode = getAdapter().getFeatureView(t.type)?.turnEnd?.mode;
-    return (mode === "confirm" || mode === "expire")
-      && t.casterCombatantId === prev.id
-      && !(previous.round === t.castRound && previous.turn === (t.castTurn ?? -1));
+    const te = getAdapter().getFeatureView(t.type)?.turnEnd;
+    if (te?.mode !== "confirm" && te?.mode !== "expire") return false;
+    if (t.casterCombatantId !== prev.id) return false;
+    // The cast turn is normally skipped (a feature shouldn't end on the turn it
+    // started). Features whose rules end them at the END OF THEIR OWN cast turn
+    // (e.g. Moonlight Step — "before the end of this turn") opt in via
+    // turnEnd.includeCastTurn, so the cast turn itself qualifies.
+    const isCastTurn = previous.round === t.castRound && previous.turn === (t.castTurn ?? -1);
+    return te.includeCastTurn ? true : !isCastTurn;
   });
   if (!timers.length) return;
 

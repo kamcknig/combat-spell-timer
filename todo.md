@@ -24,7 +24,6 @@ features are excluded.
 
 ## Druid
 
-- [ ] Moonlight Step — 1 turn — AE changes — `MoonlightStep`
 - [ ] Circle Forms / Wild Shape (Moon) — `floor(druid level / 2)` hours — AE changes — `CircleForms`
 
 ## Fighter

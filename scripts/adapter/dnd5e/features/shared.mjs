@@ -122,7 +122,12 @@ function findSourceEffect(actor, feature, itemUuid) {
 /** Tier 1 (clone) → Tier 2 (hard-coded). Creates the AE on the actor; returns its uuid. */
 export async function createFeatureEffect(actor, feature, { img, itemUuid, durationRounds } = {}) {
   if (!actor || !feature) return null;
-  const source = findSourceEffect(actor, feature, itemUuid);
+  // Features whose source item ships a midi/DAE-only effect (no usable core
+  // changes) opt out of the Tier-1 clone via effect.hardcodedOnly, so the
+  // module-owned AE is always built from the descriptor's own changes()
+  // (e.g. Moonlight Step — its imported "Advantage on Next Attack" effect is
+  // inert without midi-qol/DAE).
+  const source = feature.effect?.hardcodedOnly ? null : findSourceEffect(actor, feature, itemUuid);
   const origin = itemUuid ?? source?.parent?.uuid ?? null;
   let base;
   if (source) {
