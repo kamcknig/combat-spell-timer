@@ -105,6 +105,14 @@
       "RoundsLeft": "Until the end of your turn",
       "EndLabel": "End Moonlight Step"
     },
+    "GiantsMight": {
+      "RoundsLeft": "Max rounds left {n}",
+      "EndLabel": "End Giant's Might",
+      "AlreadyActiveTitle": "Giant's Might Active",
+      "AlreadyActivePrompt": "{name} already has Giant's Might active! How many rounds remain?",
+      "AlreadyActiveRounds": "Rounds Remaining",
+      "ResizeToken": "Change token size (Large)"
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",
