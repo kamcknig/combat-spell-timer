@@ -8,6 +8,7 @@ import { onEffectDurationOverrides } from "./features/effect-duration-overrides.
 import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/action-ended-effects.mjs";
 import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
 import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./features/moonlight-step.mjs";
+import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -265,6 +266,13 @@ export default class Dnd5eAdapter extends SystemAdapter {
       for (const f of listFeatures()) f.onPreUse?.(activity, usageConfig, dialogConfig, messageConfig);
       // Path to the Grave's repair path may cancel (returns false); keep that.
       return onPreUsePathToTheGrave(activity, usageConfig);
+    });
+    // Feature-driven controls injected into the native activity usage dialog
+    // (e.g. Giant's Might's "Change token size" toggle). AppV2 fires this hook
+    // for every class in the inheritance chain, so the concrete class name
+    // works; element is the dialog's root HTMLElement.
+    Hooks.on("renderActivityUsageDialog", (app, element) => {
+      onGiantsMightRenderUsageDialog(app, element);
     });
   }
 

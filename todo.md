@@ -24,7 +24,6 @@ features are excluded.
 
 ## Fighter
 
-- [x] Giant's Might (Rune Knight) — 1 min (10 rounds) — AE changes — `GiantsMight`
 - [ ] Fire Rune (Rune Knight) — 1 min (10 rounds) — AE changes — `FireRune`
 - [ ] Frost Rune (Rune Knight) — 10 min (100 rounds) — AE changes — `FrostRune`
 - [ ] Hill Rune (Rune Knight) — 1 min (10 rounds) — AE changes — `HillRune`
