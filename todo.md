@@ -22,13 +22,8 @@ features are excluded.
 - [ ] Divine Foreknowledge — 1 hour — AE changes — `DivineForeknowledge`
 - [ ] Blessing of the Forge (Forge) — 24 hours (low combat value) — AE changes — `BlessingOfTheForge`
 
-## Druid
-
-- [ ] Circle Forms / Wild Shape (Moon) — `floor(druid level / 2)` hours — AE changes — `CircleForms`
-
 ## Fighter
 
-- [ ] Giant's Might (Rune Knight) — 1 min (10 rounds) — AE changes — `GiantsMight`
 - [ ] Fire Rune (Rune Knight) — 1 min (10 rounds) — AE changes — `FireRune`
 - [ ] Frost Rune (Rune Knight) — 10 min (100 rounds) — AE changes — `FrostRune`
 - [ ] Hill Rune (Rune Knight) — 1 min (10 rounds) — AE changes — `HillRune`
