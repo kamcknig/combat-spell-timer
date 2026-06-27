@@ -9,6 +9,15 @@ export default class SystemAdapter {
   static SYSTEM_ID = null;
 
   /**
+   * CSS classes applied to module-owned dialogs (ConfirmationDialog /
+   * NotificationDialog) so they match the active system's look. Agnostic default:
+   * none — the dialog renders as a plain ApplicationV2 with Foundry default
+   * styling. System adapters override to return their theme class(es).
+   * @returns {string[]}
+   */
+  get dialogClasses() { return []; }
+
+  /**
    * Subscribe to the system's "a spell was cast" signal. For every trackable
    * cast, invoke `onCast(record)` with a NormalizedCast (see below). Trackable =
    * the caster is in an active combat AND the spell has a finite time duration.

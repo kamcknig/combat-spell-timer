@@ -114,3 +114,58 @@ nav#context-menu.cst-timer-menu {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .cst-spell-map-suggestions li:hover { background: var(--color-warm-2, rgba(255, 255, 255, 0.12)); }
+
+/* Reusable confirmation / notification dialogs.
+   Layout only (centering); composes on top of the system theme (dnd5e2) or
+   Foundry default AppV2 styling when agnostic. */
+/* Cap the width so long messages wrap instead of stretching the dialog. */
+.cst-confirm-dialog { max-width: min(420px, 90vw); }
+.cst-confirm-dialog .cst-confirm-message { margin-bottom: 4px; }
+/* Center the single CONFIRM button instead of stretching it full width. */
+.cst-confirm-dialog .form-footer { justify-content: center; }
+.cst-confirm-dialog .form-footer button { flex: 0 0 auto; }
+
+/* Bottom section (button [+ toggle]) spaced from the content above.
+   ConfirmationDialog: the footer is the bottom section. NotificationDialog wraps
+   the footer + toggle in .cst-dialog-bottom, so move the spacing onto the wrapper
+   and zero the footer's own margin inside it. */
+.cst-confirm-dialog .form-footer { margin-top: 12px; }
+.cst-notification-dialog .cst-dialog-bottom { margin-top: 12px; }
+.cst-notification-dialog .cst-dialog-bottom .form-footer { margin-top: 0; }
+
+/* dnd5e dialog fixups: our reusable DialogV2 also matches dnd5e's `.dnd5e2.dialog`
+   (DialogV2 adds the `dialog` class), which hard-codes a light-parchment
+   `background` (ignoring the themed `--dnd5e-application-background`) and hides the
+   window title. Re-point the background at the themed variable (denim under
+   theme-dark) and restore the title. Higher specificity than dnd5e's own rules,
+   so no !important needed. Only matches dnd5e dialogs (dnd5e2); agnostic ones are
+   untouched. */
+.cst-confirm-dialog.dnd5e2.dialog {
+  background: var(--dnd5e-application-background);
+}
+/* Title is rendered in the content (form > header), like native dnd5e dialogs.
+   Keep the window-title bar clear — dnd5e hides its (absolutely-positioned) title
+   for dnd5e2 dialogs; this also covers the agnostic case. */
+.cst-confirm-dialog .window-header .window-title { visibility: hidden; }
+.cst-confirm-dialog header.cst-dialog-title {
+  font-weight: bold;
+  text-align: center;
+  font-size: var(--font-size-20, 1.25rem);
+  margin: 0 0 0.5rem;
+}
+/* No sheet banner in a dialog, so drop dnd5e's reserved banner gap below the
+   header (it otherwise leaves the title/content floating oddly). */
+.cst-confirm-dialog.dnd5e2.application:not(.minimized) .window-header { margin-block-end: 0.5rem; }
+
+/* "Don't show again" checkbox: centered below the CONFIRM button. */
+.cst-notification-dialog .cst-dont-show-again {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+.cst-notification-dialog .cst-dont-show-again label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
