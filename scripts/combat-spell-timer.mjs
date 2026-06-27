@@ -1,6 +1,7 @@
 import { MODULE_ID, log, warn } from "./module.mjs";
 import { dbg } from "./utils/debug.mjs";
 import { registerInstallTrackerSetting, maybeSendInstallRecord } from "./utils/installTracker.mjs";
+import { registerNotificationReceiptsSetting } from "./utils/notification-receipts.mjs";
 import { loadAdapter } from "./adapter/index.mjs";
 import { registerSocket } from "./core/socket.mjs";
 import { onSpellCast, onEarlyRemove } from "./core/timers.mjs";
@@ -11,6 +12,7 @@ import { onUpdateCombat } from "./core/combat.mjs";
 import { onCreateCombatant, onUpdateCombatant, onDeleteCombatant } from "./core/combatant.mjs";
 import { registerBeyond20Integration, SETTING as BEYOND20_SETTING, AUTOCAST_SETTING as BEYOND20_AUTOCAST_SETTING } from "./core/beyond20.mjs";
 import { SPELL_MAP_SETTING, spellMapField } from "./core/spell-map.mjs";
+import { maybeWarnDdbImporterMissing } from "./core/ddb-importer-check.mjs";
 import SpellMapConfig from "./apps/spell-map-config.mjs";
 
 Hooks.once("init", () => {
@@ -63,6 +65,7 @@ Hooks.once("init", () => {
     restricted: true
   });
   registerInstallTrackerSetting();
+  registerNotificationReceiptsSetting();
 
   // Inject a visual section heading before the first Beyond20 setting so the
   // three related settings are visually grouped in the module settings panel.
@@ -93,6 +96,7 @@ Hooks.once("ready", async () => {
   log(`adapter resolved: ${adapter.constructor.SYSTEM_ID}`);
   dbg("ready");
   await maybeSendInstallRecord();
+  await maybeWarnDdbImporterMissing();
   registerSocket();
   adapter.registerCastDetection(onSpellCast);
   adapter.registerEarlyRemoval(onEarlyRemove);

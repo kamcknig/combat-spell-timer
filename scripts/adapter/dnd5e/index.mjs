@@ -14,6 +14,15 @@ export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
 
   /**
+   * Classes that make a DialogV2 read as a native dnd5e *dark* dialog. dnd5e's
+   * `.themed.theme-dark.dnd5e2` rule (all three on the same element) supplies the
+   * denim application background plus the full dark variable set, and `themed
+   * theme-dark` resolves the Foundry color vars to light text — so it renders
+   * self-contained (no dependency on the body color scheme, which can be absent).
+   */
+  get dialogClasses() { return ["dnd5e2", "themed", "theme-dark"]; }
+
+  /**
    * Detect trackable spell casts via dnd5e.postUseActivity and emit a
    * NormalizedCast for each. Only spells, only finite time durations, only
    * when the caster is a combatant in the active combat.
