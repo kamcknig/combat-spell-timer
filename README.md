@@ -101,7 +101,8 @@ its values are left as-is.
 A lot of the feats/abilities/features that can be activated aren't available
 in the core dnd5e system. A lot that can/will be supported are created by the
 module [ddb-importer](https://github.com/MrPrimate/ddb-importer) so it is highly
-recommended that you use that module to import your characters.
+recommended that you use that module to import your characters. If it isn't
+installed, the GM sees a one-time reminder on load (dismissible permanently).
 
 I will slowly be adding support for class features. As of now only the Barbarian Rage feature is supported beyond
 spells.

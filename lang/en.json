@@ -86,6 +86,33 @@
       "RoundsLeft": "Until the end of the caster's next turn",
       "EndLabel": "End Path to the Grave"
     },
+    "SymbioticEntity": {
+      "RoundsLeft": "Max rounds left {n}",
+      "EndLabel": "End Symbiotic Entity",
+      "AlreadyActiveTitle": "Symbiotic Entity Active",
+      "AlreadyActivePrompt": "{name} already has Symbiotic Entity active! How many rounds remain?",
+      "AlreadyActiveRounds": "Rounds Remaining"
+    },
+    "WrathOfTheSea": {
+      "RoundsLeft": "Max rounds left {n}",
+      "EndLabel": "End Wrath of the Sea",
+      "AlreadyActiveTitle": "Wrath of the Sea Active",
+      "AlreadyActivePrompt": "{name} already has Wrath of the Sea active! How many rounds remain?",
+      "AlreadyActiveRounds": "Rounds Remaining",
+      "NoWildShapeUses": "{name} has no Wild Shape uses remaining for Wrath of the Sea."
+    },
+    "MoonlightStep": {
+      "RoundsLeft": "Until the end of your turn",
+      "EndLabel": "End Moonlight Step"
+    },
+    "GiantsMight": {
+      "RoundsLeft": "Max rounds left {n}",
+      "EndLabel": "End Giant's Might",
+      "AlreadyActiveTitle": "Giant's Might Active",
+      "AlreadyActivePrompt": "{name} already has Giant's Might active! How many rounds remain?",
+      "AlreadyActiveRounds": "Rounds Remaining",
+      "ResizeToken": "Change token size (Large)"
+    },
     "Beyond20": {
       "SectionHeading": "Beyond20 Integration",
       "CastSpell": "Cast Spell",
@@ -116,6 +143,14 @@
         "Remove": "Remove mapping",
         "ShowSuggestions": "Show spell suggestions",
         "Saved": "Spell name mappings saved."
+      }
+    },
+    "Notification": {
+      "Confirm": "CONFIRM",
+      "DontShowAgain": "Don't show again",
+      "DdbImporter": {
+        "Title": "DDB-Importer Recommended",
+        "Message": "Beyond its D&D Beyond concentration integration, Combat Spell Timer relies heavily on the images, actor features, and items created by the <a href=\"https://foundryvtt.com/packages/ddb-importer\" target=\"_blank\" rel=\"noopener\">DDB-Importer</a> module. Without it, many features and items may not be detected or displayed correctly."
       }
     }
   }

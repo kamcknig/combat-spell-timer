@@ -17,36 +17,13 @@ features are excluded.
 - Caveat: features whose duration ddb parses from description text at import time
   (`DDBDescriptions.getDuration`) are not in this list — only explicit durations.
 
-## Barbarian
-
-- [x] Rage — 1 min (2014) / 10 min (2024) — AE changes — `Rage` *(implemented)*
-- [x] Form of the Beast (Path of the Beast) — lasts until the rage ends — manifests a Bite/Claws/Tail natural weapon — `FormOfTheBeast`, weapon variants in `FormOfTheBeastWeapons` *(implemented)*
-- [x] Bolstering Magic (Wild Magic) — 10 min (100 rounds) — handled in Foundry by dnd5e; Beyond20 activation button added — `BolsteringMagic` *(implemented)*
-- [x] Wild Surge (Wild Magic) — auto-triggers on rage start; rage-bound results (markers, Multicolored Light, weapon enchantment) end with the rage — `WildSurge` *(implemented)*
-- [x] Zealous Presence (Zealot) — until the start of the caster's next turn — caster-anchored timer, target-side cleanup, Beyond20 button — `ZealousPresence` *(implemented)*
-- [x] Totem Spirit: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Bear resistances, Elk +15 ft speed, Eagle/Tiger/Wolf markers — `TotemSpiritBear` etc. *(implemented)*
-- [x] Totemic Attunement: Bear / Eagle / Elk / Tiger / Wolf (Totem Warrior) — rage-bound effects: Eagle fly speed = walking speed (live-synced), rest markers — `TotemicAttunementBear` etc. *(implemented)*
-
 ## Cleric
 
-- [x] Channel Divinity: Twilight Sanctuary (Twilight) — 1 min (10 rounds) — AE changes — `ChannelDivinityTwilightSanctuary`
-- [x] Channel Divinity: Cloak of Shadows (Trickery) — 1 min (10 rounds) — marker — `ChannelDivinityCloakOfShadows`
-- [x] Channel Divinity: Path to the Grave (Grave) — 1 round — AE changes — `ChannelDivinityPathToTheGrave` (2024 variant: `PathToTheGrave`)
-- [ ] Steps of Night (Twilight) — 1 min (10 rounds) — AE changes — `StepsOfNight`
-- [ ] Eyes of Night (Twilight) — 1 hour — AE changes — `EyesOfNight`
 - [ ] Divine Foreknowledge — 1 hour — AE changes — `DivineForeknowledge`
 - [ ] Blessing of the Forge (Forge) — 24 hours (low combat value) — AE changes — `BlessingOfTheForge`
 
-## Druid
-
-- [ ] Symbiotic Entity (Spores) — 10 min (100 rounds) — AE changes — `SymbioticEntity`
-- [ ] Wrath of the Sea (Sea) — 10 min (100 rounds) — marker — `WrathOfTheSea`
-- [ ] Moonlight Step — 1 turn — AE changes — `MoonlightStep`
-- [ ] Circle Forms / Wild Shape (Moon) — `floor(druid level / 2)` hours — AE changes — `CircleForms`
-
 ## Fighter
 
-- [ ] Giant's Might (Rune Knight) — 1 min (10 rounds) — AE changes — `GiantsMight`
 - [ ] Fire Rune (Rune Knight) — 1 min (10 rounds) — AE changes — `FireRune`
 - [ ] Frost Rune (Rune Knight) — 10 min (100 rounds) — AE changes — `FrostRune`
 - [ ] Hill Rune (Rune Knight) — 1 min (10 rounds) — AE changes — `HillRune`

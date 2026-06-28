@@ -7,9 +7,20 @@ import { onStatusEndedEffects } from "./features/status-ended-effects.mjs";
 import { onEffectDurationOverrides } from "./features/effect-duration-overrides.mjs";
 import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/action-ended-effects.mjs";
 import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
+import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./features/moonlight-step.mjs";
+import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
+
+  /**
+   * Classes that make a DialogV2 read as a native dnd5e *dark* dialog. dnd5e's
+   * `.themed.theme-dark.dnd5e2` rule (all three on the same element) supplies the
+   * denim application background plus the full dark variable set, and `themed
+   * theme-dark` resolves the Foundry color vars to light text — so it renders
+   * self-contained (no dependency on the body color scheme, which can be absent).
+   */
+  get dialogClasses() { return ["dnd5e2", "themed", "theme-dark"]; }
 
   /**
    * Detect trackable spell casts via dnd5e.postUseActivity and emit a
@@ -247,13 +258,31 @@ export default class Dnd5eAdapter extends SystemAdapter {
     Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
       onActionEndedAttackRoll(subject);
     });
+    // Moonlight Step grants Advantage on the bearer's attack rolls while active.
+    // Pre-roll so D20Roll.applyKeybindings sees config.advantage before the roll
+    // is evaluated.
+    Hooks.on("dnd5e.preRollAttackV2", (config) => onMoonlightStepPreRollAttack(config));
     // Path to the Grave use flow: a no-activity item posts a bare card via
     // displayCard — intercept that once to fix the item up (no-op curse
     // template effect + consumption activity linking it), after which dnd5e's
     // native Ability Use dialog, card EFFECTS section, and effect application
     // own the entire flow.
     Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayPathToTheGraveCard(item, messageConfig));
-    Hooks.on("dnd5e.preUseActivity", (activity, usageConfig) => onPreUsePathToTheGrave(activity, usageConfig));
+    Hooks.on("dnd5e.preUseActivity", (activity, usageConfig, dialogConfig, messageConfig) => {
+      // Generic per-feature pre-use hook (e.g. Wrath of the Sea defaults the Wild
+      // Shape consume checkbox off and snapshots its uses). These only mutate the
+      // usage/dialog config; they never cancel the use.
+      for (const f of listFeatures()) f.onPreUse?.(activity, usageConfig, dialogConfig, messageConfig);
+      // Path to the Grave's repair path may cancel (returns false); keep that.
+      return onPreUsePathToTheGrave(activity, usageConfig);
+    });
+    // Feature-driven controls injected into the native activity usage dialog
+    // (e.g. Giant's Might's "Change token size" toggle). AppV2 fires this hook
+    // for every class in the inheritance chain, so the concrete class name
+    // works; element is the dialog's root HTMLElement.
+    Hooks.on("renderActivityUsageDialog", (app, element) => {
+      onGiantsMightRenderUsageDialog(app, element);
+    });
   }
 
   /**
@@ -280,6 +309,13 @@ export default class Dnd5eAdapter extends SystemAdapter {
         dbg("dnd5e:feature-early-end", f.id, actor.name);
         onEarlyEnd({ featureId: f.id, casterActorUuid: actor.uuid });
       }
+    });
+    // Moonlight Step is consumed by the bearer's next attack roll — end the
+    // feature (drop its timer + marker AE). Workflow-local hook: fires only on
+    // the rolling client, which owns the actor.
+    Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
+      const query = onMoonlightStepAttackRolled(subject);
+      if (query) onEarlyEnd(query);
     });
   }
 

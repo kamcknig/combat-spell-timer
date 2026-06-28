@@ -9,6 +9,15 @@ export default class SystemAdapter {
   static SYSTEM_ID = null;
 
   /**
+   * CSS classes applied to module-owned dialogs (ConfirmationDialog /
+   * NotificationDialog) so they match the active system's look. Agnostic default:
+   * none — the dialog renders as a plain ApplicationV2 with Foundry default
+   * styling. System adapters override to return their theme class(es).
+   * @returns {string[]}
+   */
+  get dialogClasses() { return []; }
+
+  /**
    * Subscribe to the system's "a spell was cast" signal. For every trackable
    * cast, invoke `onCast(record)` with a NormalizedCast (see below). Trackable =
    * the caster is in an active combat AND the spell has a finite time duration.
@@ -226,6 +235,7 @@ export default class SystemAdapter {
  * @property {string}  removeLabelKey         i18n key for the context-menu / delete label.
  * @property {object}  [turnEnd]              Turn-end policy; absent → plain countdown.
  * @property {"confirm"|"expire"} turnEnd.mode  "confirm" prompts to extend/end; "expire" auto-ends (writer-gated) at the first qualifying turn end.
+ * @property {boolean} [turnEnd.includeCastTurn]  When true, the caster's OWN cast turn qualifies for "expire" (default skips it). For features that end "before the end of this turn".
  * @property {string}  turnEnd.titleKey
  * @property {string}  turnEnd.extendKey
  * @property {string}  turnEnd.endKey
