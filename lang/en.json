@@ -145,6 +145,49 @@
         "Saved": "Spell name mappings saved."
       }
     },
+    "Ddb": {
+      "Config": {
+        "MenuName": "D&D Beyond Importer",
+        "MenuLabel": "Cobalt Cookie",
+        "MenuHint": "Set and validate the D&D Beyond cobalt session cookie used for imports.",
+        "Title": "D&D Beyond — Cobalt Cookie",
+        "CobaltLabel": "Cobalt Session Cookie",
+        "CobaltHint": "Paste the value of your dndbeyond.com CobaltSession cookie. Stored for this world.",
+        "CobaltSet": "A cobalt cookie is currently saved.",
+        "Save": "Save",
+        "ClearCobalt": "Clear",
+        "Validate": "Validate",
+        "Saved": "Cobalt cookie saved.",
+        "Validating": "Checking cobalt cookie…",
+        "ValidBad": "That doesn't look like a CobaltSession cookie. Paste the CobaltSession value (it contains a '..'), not the cobalt-token / bearer.",
+        "ValidFormatOk": "Format looks valid. Live validation runs once the import proxy is configured.",
+        "ValidUnreachable": "Couldn't reach the import proxy.",
+        "ValidAuth": "D&D Beyond rejected the cobalt — it may be expired.",
+        "ValidOk": "Cobalt looks valid ({name})."
+      },
+      "Import": {
+        "HeaderButton": "Import from D&D Beyond",
+        "Title": "Import from D&D Beyond",
+        "UrlLabel": "Character URL or ID",
+        "Button": "Import",
+        "SuccessTitle": "Character Imported",
+        "SuccessBody": "Retrieved <strong>{name}</strong> — level {level} {cls}. (Data cached on the actor; actor creation comes later.)",
+        "ErrorTitle": "Import Failed",
+        "Error": {
+          "invalid-id": "That doesn't look like a D&D Beyond character URL or ID.",
+          "no-proxy": "The import proxy isn't configured yet.",
+          "no-cobalt": "No cobalt session cookie is saved. Add one in the D&D Beyond Importer settings.",
+          "bad-cobalt": "The saved cobalt cookie doesn't look valid. Re-paste it in the settings.",
+          "proxy-unreachable": "Couldn't reach the import proxy.",
+          "auth": "D&D Beyond rejected the session. Your cobalt cookie may be expired — grab a fresh one and save it again.",
+          "not-found": "That character wasn't found. Check the URL/ID, and that the character is shared or owned by your account.",
+          "ddb": "D&D Beyond returned an error for that character.",
+          "http": "The proxy returned an unexpected response.",
+          "bad-response": "The proxy response wasn't valid character data.",
+          "unknown": "Something went wrong during import."
+        }
+      }
+    },
     "Notification": {
       "Confirm": "CONFIRM",
       "DontShowAgain": "Don't show again",

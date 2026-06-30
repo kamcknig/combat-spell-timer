@@ -1,0 +1,26 @@
+<div class="cst-ddb-config-body">
+  <div class="form-group stacked">
+    <label for="cst-cobalt">{{localize "COMBAT_SPELL_TIMER.Ddb.Config.CobaltLabel"}}</label>
+    <div class="form-fields">
+      <textarea name="cobalt" id="cst-cobalt" rows="4"
+                placeholder="{{localize 'COMBAT_SPELL_TIMER.Ddb.Config.CobaltHint'}}"></textarea>
+    </div>
+    {{#if hasCobalt}}
+    <p class="hint">{{localize "COMBAT_SPELL_TIMER.Ddb.Config.CobaltSet"}}</p>
+    {{/if}}
+  </div>
+
+  <footer class="cst-ddb-config-footer">
+      <div class="cst-actions">
+          <button type="submit">
+              <i class="fa-solid fa-floppy-disk"></i> {{localize "COMBAT_SPELL_TIMER.Ddb.Config.Save"}}
+          </button>
+          <button type="button" data-action="clearCobalt">
+              <i class="fa-solid fa-xmark"></i> {{localize "COMBAT_SPELL_TIMER.Ddb.Config.ClearCobalt"}}
+          </button>
+          <button type="button" data-action="validate">
+              <i class="fa-solid fa-circle-check"></i> {{localize "COMBAT_SPELL_TIMER.Ddb.Config.Validate"}}
+          </button>
+      </div>
+  </footer>
+</div>
