@@ -1,5 +1,6 @@
 import SystemAdapter from "../SystemAdapter.mjs";
 import { durationToRounds } from "./duration.mjs";
+import { parseImportedFeatures } from "./import/index.mjs";
 import { getFeature, listFeatures } from "./features/index.mjs";
 import { createFeatureEffect, deleteFeatureEffect, findModuleEffect, moduleFeatureId, boundFeatureId } from "./features/shared.mjs";
 import { dbg } from "../../utils/debug.mjs";
@@ -566,5 +567,16 @@ export default class Dnd5eAdapter extends SystemAdapter {
       }
     }
     return [...names].sort((a, b) => a.localeCompare(b));
+  }
+
+  /**
+   * Build dnd5e-shaped creation data for the character's class/subclass/features from
+   * cached DDB `.data`. See `import/index.mjs` for the parsing logic.
+   * @param {Actor} actor
+   * @param {object} ddbData
+   * @returns {Promise<{items: object[]}>}
+   */
+  async parseImportedFeatures(actor, ddbData) {
+    return parseImportedFeatures(actor, ddbData);
   }
 }

@@ -4,7 +4,9 @@ import { decodeJwtPayload, looksLikeCobalt } from "./jwt.mjs";
 
 // Our own proxy (foundry-modules-install-tracker, /ddb-importer/* routes). It does
 // the CobaltSession→bearer exchange + character fetch server-side (a browser can't).
-const PROXY_BASE = "https://foundry.turkeysunite-local.org";
+// LOCAL DEV: pointing at the docker-compose proxy (host 8202 → container 3000).
+// Switch back to "https://foundry.turkeysunite-local.org" before release.
+const PROXY_BASE = "http://localhost:8202";
 
 const NAMEID = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
 

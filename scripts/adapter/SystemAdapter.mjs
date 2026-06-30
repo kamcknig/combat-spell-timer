@@ -212,6 +212,16 @@ export default class SystemAdapter {
    * @returns {object|null}
    */
   getFeatureStartRecord(actor, featureId) { return null; }
+
+  /**
+   * Build system-shaped creation data for the character's class/subclass/features from
+   * cached DDB `.data`. System-agnostic core creates the returned items. Default: empty
+   * (no import support until a system adapter overrides this).
+   * @param {Actor} actor
+   * @param {object} ddbData  the cached `.data` character object
+   * @returns {Promise<{items: object[]}>}
+   */
+  async parseImportedFeatures(actor, ddbData) { return { items: [] }; }
 }
 
 /**

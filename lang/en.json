@@ -173,7 +173,8 @@
         "Button": "Import",
         "Routed": "Import sent to {gm} to process…",
         "SuccessTitle": "Character Imported",
-        "SuccessBody": "Imported {name} — level {level} {cls} (cached on the actor; parsing comes later).",
+        "SuccessBody": "Imported {name} — level {level} {cls}.",
+        "FeaturesAdded": "{count} features added.",
         "ErrorTitle": "Import Failed",
         "Error": {
           "invalid-id": "That doesn't look like a D&D Beyond character URL or ID.",

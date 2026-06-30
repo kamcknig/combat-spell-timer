@@ -1,13 +1,56 @@
-import { SOCKET, MODULE_ID } from "../module.mjs";
+import { SOCKET, MODULE_ID, warn } from "../module.mjs";
 import { getCobalt, IMPORTER_FLAG } from "../ddb/settings.mjs";
 import { fetchCharacter, DdbImportError } from "../ddb/client.mjs";
 import DdbConfig from "../apps/ddb-config.mjs";
 import { dbg } from "../utils/debug.mjs";
+import { getAdapter } from "../adapter/index.mjs";
 
 /** Per-actor flag: the DDB character id (pre-fills the prompt next time). */
 export const ID_FLAG = "ddbCharacterId";
 /** Per-actor flag: the cached raw `.data` character object. */
 export const SRC_FLAG = "ddbSource";
+/** Per-item flag: marks an item this module created during a DDB import. */
+export const IMPORT_FLAG = "ddbImport";
+
+/** Delete items this module created on a prior import (clean-slate re-import). */
+async function removePriorImportItems(actor) {
+  const ids = actor.items.filter((i) => i.getFlag(MODULE_ID, IMPORT_FLAG)).map((i) => i.id);
+  if (!ids.length) return;
+  dbg("ddb:import", "removing prior import items", { actor: actor.id, count: ids.length });
+  await actor.deleteEmbeddedDocuments("Item", ids);
+}
+
+/**
+ * Create parsed feature items on the actor. Tries one batched create first; if that
+ * throws, falls back to creating items one at a time so a single bad item doesn't sink
+ * the rest — items that still fail are logged as a console warning.
+ * @param {Actor} actor
+ * @param {object[]} items
+ * @returns {Promise<number>} count of items actually created
+ */
+async function createFeatureItems(actor, items) {
+  try {
+    await actor.createEmbeddedDocuments("Item", items, { keepId: true });
+    return items.length;
+  } catch (batchErr) {
+    dbg("ddb:import", "batch feature create failed, retrying individually", { error: batchErr?.message });
+  }
+
+  let created = 0;
+  const failed = [];
+  for (const item of items) {
+    try {
+      await actor.createEmbeddedDocuments("Item", [item], { keepId: true });
+      created++;
+    } catch (itemErr) {
+      failed.push({ name: item?.name, type: item?.type, error: itemErr?.message });
+    }
+  }
+  if (failed.length) {
+    warn(`DDB import: ${failed.length} feature item(s) failed to create`, failed);
+  }
+  return created;
+}
 
 /** Online GMs, lowest-id first (deterministic across clients). */
 function onlineGms() {
@@ -84,11 +127,26 @@ async function doImport(msg) {
     await actor.setFlag(MODULE_ID, ID_FLAG, msg.characterId);
     await actor.setFlag(MODULE_ID, SRC_FLAG, data);
     dbg("ddb:import", "imported", { actor: actor.id, name: data?.name });
+
+    let created = 0;
+    try {
+      const parsed = await getAdapter().parseImportedFeatures(actor, data);
+      await removePriorImportItems(actor);
+      if (parsed.items?.length) {
+        created = await createFeatureItems(actor, parsed.items);
+      }
+      dbg("ddb:import", "features created", { actor: actor.id, created });
+    } catch (featErr) {
+      // Non-fatal: the raw data is already cached; report a partial result.
+      dbg("ddb:import", "feature creation failed", { error: featErr?.message });
+    }
+
     sendResult(msg.userId, {
       ok: true,
       name: data?.name ?? "?",
       cls: data?.classes?.[0]?.definition?.name ?? "?",
       level: (data?.classes ?? []).reduce((n, c) => n + (c.level ?? 0), 0) || "?",
+      created,
     });
   } catch (err) {
     const code = err instanceof DdbImportError ? err.code : "unknown";
@@ -105,17 +163,20 @@ function sendResult(userId, payload) {
 
 /**
  * Requester side: notify success or (code-specific) failure.
- * @param {{ok:boolean, code?:string, name?:string, cls?:string, level?:(string|number)}} payload
+ * @param {{ok:boolean, code?:string, name?:string, cls?:string, level?:(string|number), created?:number}} payload
  */
 export function showImportResult(payload) {
   if (payload.ok) {
-    ui.notifications?.info(
-      game.i18n.format("COMBAT_SPELL_TIMER.Ddb.Import.SuccessBody", {
-        name: payload.name ?? "?",
-        cls: payload.cls ?? "?",
-        level: payload.level ?? "?",
-      })
-    );
+    const body = game.i18n.format("COMBAT_SPELL_TIMER.Ddb.Import.SuccessBody", {
+      name: payload.name ?? "?",
+      cls: payload.cls ?? "?",
+      level: payload.level ?? "?",
+    });
+    const created = payload.created ?? 0;
+    const featureLine = created
+      ? game.i18n.format("COMBAT_SPELL_TIMER.Ddb.Import.FeaturesAdded", { count: created })
+      : "";
+    ui.notifications?.info(featureLine ? `${body} ${featureLine}` : body);
     return;
   }
   const code = payload.code ?? "unknown";
