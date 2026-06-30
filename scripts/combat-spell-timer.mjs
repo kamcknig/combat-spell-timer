@@ -8,12 +8,15 @@ import { onSpellCast, onEarlyRemove } from "./core/timers.mjs";
 import { onFeatureStart, onFeatureEarlyEnd, onFeatureTurnEnd, reconcileTurnEndDialogs } from "./core/features.mjs";
 import { onRenderTracker } from "./core/tracker.mjs";
 import { onRenderActorSheetEffects } from "./core/effect-sheet.mjs";
+import { onRenderActorSheetImportButton } from "./core/ddb-sheet-button.mjs";
+import { fetchCharacter, parseCharacterId } from "./ddb/client.mjs";
 import { onUpdateCombat } from "./core/combat.mjs";
 import { onCreateCombatant, onUpdateCombatant, onDeleteCombatant } from "./core/combatant.mjs";
 import { registerBeyond20Integration, SETTING as BEYOND20_SETTING, AUTOCAST_SETTING as BEYOND20_AUTOCAST_SETTING } from "./core/beyond20.mjs";
 import { SPELL_MAP_SETTING, spellMapField } from "./core/spell-map.mjs";
 import { maybeWarnDdbImporterMissing } from "./core/ddb-importer-check.mjs";
 import SpellMapConfig from "./apps/spell-map-config.mjs";
+import { registerDdbImporterSettings, syncImporterFlag } from "./ddb/settings.mjs";
 
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "debugLogging", {
@@ -66,6 +69,7 @@ Hooks.once("init", () => {
   });
   registerInstallTrackerSetting();
   registerNotificationReceiptsSetting();
+  registerDdbImporterSettings();
 
   // Inject a visual section heading before the first Beyond20 setting so the
   // three related settings are visually grouped in the module settings panel.
@@ -106,6 +110,11 @@ Hooks.once("ready", async () => {
   Hooks.on("combatTurnChange", (combat, previous, _current) => onFeatureTurnEnd(combat, previous));
   Hooks.on("renderCombatTracker", onRenderTracker);
   Hooks.on("renderActorSheetV2", onRenderActorSheetEffects);
+  Hooks.on("renderActorSheetV2", onRenderActorSheetImportButton);
+  game.modules.get(MODULE_ID).ddb = { fetchCharacter, parseCharacterId };
+  // Advertise (or clear) this GM's cobalt presence so imports route to a cobalt-holding GM.
+  await syncImporterFlag();
+  // Cached raw .data lives on the actor: actor.getFlag("combat-spell-timer", "ddbSource")
   Hooks.on("updateCombat", onUpdateCombat);
   // Close a feature's turn-end dialog when its timer is removed by any path.
   Hooks.on("updateCombat", reconcileTurnEndDialogs);
