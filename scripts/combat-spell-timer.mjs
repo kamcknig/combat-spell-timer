@@ -16,7 +16,7 @@ import { registerBeyond20Integration, SETTING as BEYOND20_SETTING, AUTOCAST_SETT
 import { SPELL_MAP_SETTING, spellMapField } from "./core/spell-map.mjs";
 import { maybeWarnDdbImporterMissing } from "./core/ddb-importer-check.mjs";
 import SpellMapConfig from "./apps/spell-map-config.mjs";
-import { registerDdbImporterSettings } from "./ddb/settings.mjs";
+import { registerDdbImporterSettings, syncImporterFlag } from "./ddb/settings.mjs";
 
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "debugLogging", {
@@ -112,6 +112,8 @@ Hooks.once("ready", async () => {
   Hooks.on("renderActorSheetV2", onRenderActorSheetEffects);
   Hooks.on("renderActorSheetV2", onRenderActorSheetImportButton);
   game.modules.get(MODULE_ID).ddb = { fetchCharacter, parseCharacterId };
+  // Advertise (or clear) this GM's cobalt presence so imports route to a cobalt-holding GM.
+  await syncImporterFlag();
   // Cached raw .data lives on the actor: actor.getFlag("combat-spell-timer", "ddbSource")
   Hooks.on("updateCombat", onUpdateCombat);
   // Close a feature's turn-end dialog when its timer is removed by any path.

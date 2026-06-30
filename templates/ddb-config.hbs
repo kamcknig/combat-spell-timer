@@ -1,4 +1,9 @@
 <div class="cst-ddb-config-body">
+  {{#if requesterName}}
+  <p class="notification info cst-ddb-request">
+    {{localize "COMBAT_SPELL_TIMER.Ddb.Config.RequestBanner" name=requesterName}}
+  </p>
+  {{/if}}
   <div class="form-group stacked">
     <label for="cst-cobalt">{{localize "COMBAT_SPELL_TIMER.Ddb.Config.CobaltLabel"}}</label>
     <div class="form-fields">

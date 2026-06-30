@@ -6,6 +6,13 @@ import DdbConfig from "../apps/ddb-config.mjs";
 export const COBALT_SETTING = "ddbCobaltCookie";
 
 /**
+ * User-flag key a GM sets to advertise that their browser holds a cobalt, so
+ * other clients can route imports to a cobalt-holding GM (the cobalt itself
+ * never leaves that browser — only this boolean is shared).
+ */
+export const IMPORTER_FLAG = "canDdbImport";
+
+/**
  * Register the cobalt setting and the GM-only config menu entry. Call once from
  * the `init` hook (translations are not yet loaded — pass raw i18n keys for
  * name/hint/label; the settings UI localizes them at render time).
@@ -43,8 +50,24 @@ export function registerDdbImporterSettings() {
 export const getCobalt = () => (game.settings.get(MODULE_ID, COBALT_SETTING) || "").trim();
 
 /**
- * Persist a new cobalt value (trimmed). Pass `""` or `null` to clear.
+ * Persist a new cobalt value (trimmed) and keep the importer flag in sync. Pass
+ * `""` or `null` to clear. The flag write is GM-only (only GMs set cobalts).
  * @param {string|null} v
  * @returns {Promise<void>}
  */
-export const setCobalt = (v) => game.settings.set(MODULE_ID, COBALT_SETTING, (v ?? "").trim());
+export const setCobalt = async (v) => {
+  const val = (v ?? "").trim();
+  await game.settings.set(MODULE_ID, COBALT_SETTING, val);
+  if (game.user.isGM) await game.user.setFlag(MODULE_ID, IMPORTER_FLAG, !!val);
+};
+
+/**
+ * Reconcile this GM's importer flag with the cobalt actually present in their
+ * browser (client-scoped, so it survives reloads but the flag may not). Call
+ * once on `ready`. No-op for non-GM users.
+ * @returns {Promise<void>}
+ */
+export async function syncImporterFlag() {
+  if (!game.user.isGM) return;
+  await game.user.setFlag(MODULE_ID, IMPORTER_FLAG, !!getCobalt());
+}

@@ -32,15 +32,53 @@ export default class DdbConfig extends HandlebarsApplicationMixin(ApplicationV2)
     form: { template: "modules/combat-spell-timer/templates/ddb-config.hbs" }
   };
 
+  /** When opened on a player's behalf: `{ requesterName }`; otherwise null. */
+  #requestContext = null;
+  /** Resolver for the `requestCobalt()` promise, if opened in request mode. */
+  #requestResolve = null;
+  /** Guards against resolving the request promise more than once. */
+  #settled = false;
+
+  /**
+   * Open the cobalt dialog and resolve when it closes: `true` if a cobalt was
+   * saved, `false` if dismissed. Used to prompt a GM to enter a cobalt on a
+   * player's behalf — pass the requesting player's name to show the banner.
+   * @param {string|null} [requesterName]
+   * @returns {Promise<boolean>}
+   */
+  static requestCobalt(requesterName = null) {
+    return new Promise((resolve) => {
+      const app = new this();
+      app.#requestContext = { requesterName };
+      app.#requestResolve = resolve;
+      app.render(true);
+    });
+  }
+
+  /** Resolve the request promise once (no-op on subsequent calls). */
+  #settle(result) {
+    if (this.#settled) return;
+    this.#settled = true;
+    const resolve = this.#requestResolve;
+    this.#requestResolve = null;
+    resolve?.(result);
+  }
+
+  /** Resolve a pending request as "not provided" when the dialog is dismissed. */
+  _onClose(options) {
+    super._onClose(options);
+    this.#settle(false);
+  }
+
   /**
    * Supply the render context. The textarea is intentionally left empty — we
-   * never echo the saved cobalt back to the page. A `hasCobalt` flag controls
-   * whether the "currently saved" hint is shown.
+   * never echo the saved cobalt back to the page. `hasCobalt` controls the
+   * "currently saved" hint; `requesterName` (request mode) shows the banner.
    * @param {object} _options
-   * @returns {Promise<{hasCobalt: boolean}>}
+   * @returns {Promise<{hasCobalt: boolean, requesterName: (string|null)}>}
    */
   async _prepareContext(_options) {
-    return { hasCobalt: !!getCobalt() };
+    return { hasCobalt: !!getCobalt(), requesterName: this.#requestContext?.requesterName ?? null };
   }
 
   /**
@@ -54,6 +92,7 @@ export default class DdbConfig extends HandlebarsApplicationMixin(ApplicationV2)
     await setCobalt(DdbConfig.#normalizeCobalt(formData.object.cobalt));
     dbg("ddb:config", "saved");
     ui.notifications?.info(game.i18n.localize("COMBAT_SPELL_TIMER.Ddb.Config.Saved"));
+    this.#settle(true);   // request mode: a cobalt was provided
   }
 
   /**

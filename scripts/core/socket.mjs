@@ -1,6 +1,7 @@
 import { SOCKET, MODULE_ID } from "../module.mjs";
 import { gmAddTimer, gmRemoveTimers, gmPruneExpired, gmSetInitiative, gmSetTimerInitiative, gmSetTimerRounds } from "./store.mjs";
 import { getAdapter } from "../adapter/index.mjs";
+import { handleDdbSocket } from "./ddb-import.mjs";
 import { dbg } from "../utils/debug.mjs";
 
 /** True if this client should perform Combat writes (the single active GM). */
@@ -11,6 +12,10 @@ export function isWriter() {
 /** Register the GM-side socket listener. Call once on ready. */
 export function registerSocket() {
   game.socket.on(SOCKET, (msg) => {
+    // DDB imports route to the elected cobalt-holding GM (not necessarily the
+    // active GM), and results route to the requesting player — so they're
+    // handled before the active-GM-only timer writes below.
+    if (handleDdbSocket(msg)) return;
     if (!isWriter()) return; // only the active GM acts
     handle(msg);
   });

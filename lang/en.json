@@ -154,6 +154,7 @@
         "CobaltLabel": "Cobalt Session Cookie",
         "CobaltHint": "Paste the value of your dndbeyond.com CobaltSession cookie. Stored for this world.",
         "CobaltSet": "A cobalt cookie is currently saved.",
+        "RequestBanner": "{name} is requesting a D&D Beyond character import. Enter your cobalt session cookie to run it for them.",
         "Save": "Save",
         "ClearCobalt": "Clear",
         "Validate": "Validate",
@@ -170,8 +171,9 @@
         "Title": "Import from D&D Beyond",
         "UrlLabel": "Character URL or ID",
         "Button": "Import",
+        "Routed": "Import sent to {gm} to process…",
         "SuccessTitle": "Character Imported",
-        "SuccessBody": "Retrieved <strong>{name}</strong> — level {level} {cls}. (Data cached on the actor; actor creation comes later.)",
+        "SuccessBody": "Imported {name} — level {level} {cls} (cached on the actor; parsing comes later).",
         "ErrorTitle": "Import Failed",
         "Error": {
           "invalid-id": "That doesn't look like a D&D Beyond character URL or ID.",
@@ -184,6 +186,9 @@
           "ddb": "D&D Beyond returned an error for that character.",
           "http": "The proxy returned an unexpected response.",
           "bad-response": "The proxy response wasn't valid character data.",
+          "no-importer": "No Game Master is online to run the import.",
+          "no-actor": "Couldn't find that character actor on the server.",
+          "declined": "The GM didn't enter a cobalt cookie, so the import was cancelled.",
           "unknown": "Something went wrong during import."
         }
       }
