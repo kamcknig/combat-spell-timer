@@ -150,6 +150,15 @@ export default class SystemAdapter {
   registerGreatWeaponFightingSync() { /* optional */ }
 
   /**
+   * Subscribe to system events that keep a token's vision (detection modes) in
+   * sync with its actor's derived senses (e.g. dnd5e's Blind Fighting fighting
+   * style, whose blindsight ActiveEffect updates the sheet but not token
+   * vision, since the system never bridges senses -> detection modes itself).
+   * Default: no-op.
+   */
+  registerVisionSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

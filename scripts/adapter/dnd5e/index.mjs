@@ -14,6 +14,7 @@ import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
 import { registerGreatWeaponFightingHooks } from "./great-weapon-fighting.mjs";
+import { registerVisionSyncHooks } from "./vision-sync.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -362,6 +363,11 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * Wire up the Great Weapon Fighting reroll button (see great-weapon-fighting.mjs).
    */
   registerGreatWeaponFightingSync() { registerGreatWeaponFightingHooks(); }
+
+  /**
+   * Wire up the senses -> token-vision bridge (see vision-sync.mjs).
+   */
+  registerVisionSync() { registerVisionSyncHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

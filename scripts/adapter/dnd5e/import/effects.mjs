@@ -1,34 +1,47 @@
 /**
- * Feature keys whose feat item ships with a purely cosmetic, empty-changes
- * transfer effect — so the actor's Effects tab shows "you have this fighting
- * style" for as long as they have the feat, regardless of equipment. The
- * actual mechanical bonus (conditional on the specific weapon used in a given
- * attack) is applied separately, at roll time, by archery.mjs / dueling.mjs —
- * NOT by this effect, which never has any changes.
+ * Feature keys whose feat item ships with a standing, `transfer: true`
+ * ActiveEffect baked directly onto the item — active for as long as the actor
+ * has the feat, regardless of equipment. Keyed by the effect's `changes`
+ * array: an empty array is a purely cosmetic marker (the actor's Effects tab
+ * shows "you have this fighting style," but the actual mechanical bonus, when
+ * one exists, is conditional on the specific weapon/armor used and is applied
+ * separately at roll time or by a dynamic sync hook — see archery.mjs,
+ * dueling.mjs, great-weapon-fighting.mjs, defense.mjs). A non-empty array is a
+ * real, unconditional bonus with no such gating — currently only Blind
+ * Fighting's blindsight grant.
  */
-export const COSMETIC_EFFECT_KEYS = new Set([
-  "feat:fighting-style-archery",
-  "feat:fighting-style-dueling",
-  "feat:fighting-style-great-weapon-fighting",
-  "feat:fighting-style-protection",
-]);
+export const FEATURE_EFFECT_CHANGES = {
+  "feat:fighting-style-archery": [],
+  "feat:fighting-style-dueling": [],
+  "feat:fighting-style-great-weapon-fighting": [],
+  "feat:fighting-style-protection": [],
+  "feat:fighting-style-blind-fighting": [
+    {
+      key: "system.attributes.senses.blindsight",
+      mode: CONST.ACTIVE_EFFECT_MODES.ADD,
+      value: "10",
+      priority: 20,
+    },
+  ],
+};
 
 /**
- * Build the `effects` array for a feature item: one empty-changes, always-on
- * transfer effect (same name/icon as the item) when the key is in
- * COSMETIC_EFFECT_KEYS, else none.
+ * Build the `effects` array for a feature item: one `transfer: true` effect
+ * (same name/icon as the item) carrying `FEATURE_EFFECT_CHANGES[key]` when the
+ * key is registered, else none.
  * @param {string} key   featureKey("feat", name)
  * @param {{name: string, img: string}} item
  * @returns {object[]}
  */
 export function buildFeatureEffects(key, { name, img }) {
-  if (!COSMETIC_EFFECT_KEYS.has(key)) return [];
+  const changes = FEATURE_EFFECT_CHANGES[key];
+  if (!changes) return [];
   return [{
     _id: foundry.utils.randomID(),
     name,
     img,
     transfer: true,
     disabled: false,
-    changes: [],
+    changes,
   }];
 }

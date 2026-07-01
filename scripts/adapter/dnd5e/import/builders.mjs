@@ -160,14 +160,25 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
 /**
  * Choice features (e.g. "Fighting Style") → one feat per chosen option, named
  * "Parent: Option" (e.g. "Fighting Style: Archery"). The generic parent feature is
- * dropped by the caller. Chosen options come from `ddbData.options.class[]`, matched to
- * the parent by componentId.
+ * dropped by the caller. Chosen options come from two DDB shapes, both matched to the
+ * parent class feature by componentId:
+ *  - `ddbData.options.class[]` — the 2014-rules shape, a plain "chosen option."
+ *  - `ddbData.feats[]` — the 2024-rules shape, where the choice is a genuine granted
+ *    Feat (e.g. "Blind Fighting" for Fighter's 2024 "Fighting Style" class feature).
+ *    Additionally scoped by componentTypeId === the parent's own entityTypeId, so only
+ *    grants FROM this specific class feature are picked up (ddbData.feats[] also
+ *    carries unrelated feat-granted-by-feat entries, e.g. Weapon Mastery, with a
+ *    different componentTypeId).
  * @returns {object[]}  feat items for the chosen options ([] if none chosen)
  */
 export function buildChoiceFeatureItems(parentDef, ddbData, ctx) {
-  const chosen = (ddbData?.options?.class ?? []).filter((o) => o?.componentId === parentDef?.id && o?.definition);
-  return chosen.map((opt) => {
-    const od = opt.definition;
+  const fromOptions = (ddbData?.options?.class ?? [])
+    .filter((o) => o?.componentId === parentDef?.id && o?.definition)
+    .map((o) => o.definition);
+  const fromFeats = (ddbData?.feats ?? [])
+    .filter((f) => f?.componentId === parentDef?.id && f?.componentTypeId === parentDef?.entityTypeId && f?.definition)
+    .map((f) => f.definition);
+  return [...fromOptions, ...fromFeats].map((od) => {
     const optName = `${parentDef.name}: ${od.name}`;         // "Fighting Style: Archery"
     return buildFeatureItem(
       { ...od, requiredLevel: parentDef.requiredLevel, sources: od.sources ?? parentDef.sources },
