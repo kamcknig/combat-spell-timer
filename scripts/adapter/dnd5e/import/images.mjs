@@ -13,6 +13,7 @@ export const FEATURE_IMAGES = {
   "feat:fighting-style-defense":               `${BASE}/fighting-style-defense.webp`,
   "feat:fighting-style-dueling":               `${BASE}/fighting-style-dueling.webp`,
   "feat:fighting-style-great-weapon-fighting": `${BASE}/fighting-style-great-weapon-fighting.webp`,
+  "feat:fighting-style-protection":            `${BASE}/fighting-style-protection.webp`,
 };
 
 /** Curated path for a key, else the provided dnd5e fallback icon. */
