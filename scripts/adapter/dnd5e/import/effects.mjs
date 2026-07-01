@@ -8,6 +8,9 @@ export const FEATURE_EFFECTS = {
   "feat:fighting-style-archery": [
     { key: "system.bonuses.rwak.attack", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "+2", priority: 20 },
   ],
+  "feat:fighting-style-defense": [
+    { key: "system.attributes.ac.bonus", mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: "+1", priority: 20 },
+  ],
 };
 
 /**

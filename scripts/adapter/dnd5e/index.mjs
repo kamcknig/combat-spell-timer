@@ -10,6 +10,7 @@ import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/ac
 import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
 import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./features/moonlight-step.mjs";
 import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
+import { registerDuelingHooks } from "./dueling.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -338,6 +339,11 @@ export default class Dnd5eAdapter extends SystemAdapter {
       f.onEffectDeleted(actor, effect);
     });
   }
+
+  /**
+   * Wire up the Dueling equip-state sync (see dueling.mjs).
+   */
+  registerDuelingSync() { registerDuelingHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

@@ -119,6 +119,14 @@ export default class SystemAdapter {
   registerFeatureCleanup() { /* optional */ }
 
   /**
+   * Subscribe to system events that keep a dynamically-computed passive effect
+   * in sync with live state (e.g. dnd5e's "Dueling" fighting style, whose
+   * bonus depends on current equipment rather than merely having the feat).
+   * Default: no-op.
+   */
+  registerDuelingSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.
