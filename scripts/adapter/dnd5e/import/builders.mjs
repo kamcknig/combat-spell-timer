@@ -3,6 +3,7 @@ import { slugIdentifier } from "./identifier.mjs";
 import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { buildDdbDescription } from "./description.mjs";
 import { imageFor } from "./images.mjs";
+import { buildFeatureEffects } from "./effects.mjs";
 
 const DEFAULT_CLASS_IMG = "icons/skills/melee/weapons-crossed-swords-yellow.webp";
 const DEFAULT_FEAT_IMG  = "icons/sundries/books/book-embossed-jewel-gold-purple.webp";
@@ -129,12 +130,14 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
   // "<Class> Features" instead of "Other Features" (dnd5e reads this even though we
   // never ran the real Advancement Manager).
   if (ctx.classId) flags.dnd5e = { advancementOrigin: `${ctx.classId}.ddbImport` };
+  const key = featureKey("feat", name);
+  const img = imageFor(key, DEFAULT_FEAT_IMG);
   return {
     _id: foundry.utils.randomID(),
     name,
     type: "feat",
-    img: imageFor(featureKey("feat", name), DEFAULT_FEAT_IMG),
-    effects: [],
+    img,
+    effects: buildFeatureEffects(key, { name, img }),
     system: {
       type: { value: "class", subtype },
       requirements: ctx.className ? `${ctx.className} ${Number.isInteger(req) ? req : 1}` : "",
