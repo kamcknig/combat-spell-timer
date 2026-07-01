@@ -11,6 +11,8 @@ import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./featur
 import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./features/moonlight-step.mjs";
 import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
+import { registerDefenseHooks } from "./defense.mjs";
+import { registerArcheryHooks } from "./archery.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -344,6 +346,16 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * Wire up the Dueling equip-state sync (see dueling.mjs).
    */
   registerDuelingSync() { registerDuelingHooks(); }
+
+  /**
+   * Wire up the Defense armor-state sync (see defense.mjs).
+   */
+  registerDefenseSync() { registerDefenseHooks(); }
+
+  /**
+   * Wire up the Archery roll-time bonus (see archery.mjs).
+   */
+  registerArcherySync() { registerArcheryHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

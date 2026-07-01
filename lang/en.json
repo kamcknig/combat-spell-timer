@@ -201,6 +201,10 @@
         "Title": "DDB-Importer Recommended",
         "Message": "Beyond its D&D Beyond concentration integration, Combat Spell Timer relies heavily on the images, actor features, and items created by the <a href=\"https://foundryvtt.com/packages/ddb-importer\" target=\"_blank\" rel=\"noopener\">DDB-Importer</a> module. Without it, many features and items may not be detected or displayed correctly."
       }
+    },
+    "EffectSync": {
+      "Added": "{actor} gained {effect}.",
+      "Removed": "{actor} lost {effect}."
     }
   }
 }

@@ -127,6 +127,21 @@ export default class SystemAdapter {
   registerDuelingSync() { /* optional */ }
 
   /**
+   * Subscribe to system events that keep a dynamically-computed passive effect
+   * in sync with live state (e.g. dnd5e's "Defense" fighting style, whose
+   * bonus depends on currently-equipped armor rather than merely having the
+   * feat). Default: no-op.
+   */
+  registerDefenseSync() { /* optional */ }
+
+  /**
+   * Subscribe to system events that apply a roll-time passive bonus (e.g.
+   * dnd5e's "Archery" fighting style, whose +2 attack bonus only applies when
+   * attacking with an equipped ranged weapon). Default: no-op.
+   */
+  registerArcherySync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.
