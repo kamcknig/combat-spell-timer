@@ -9,6 +9,7 @@
 export const COSMETIC_EFFECT_KEYS = new Set([
   "feat:fighting-style-archery",
   "feat:fighting-style-dueling",
+  "feat:fighting-style-great-weapon-fighting",
 ]);
 
 /**

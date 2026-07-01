@@ -205,6 +205,10 @@
     "EffectSync": {
       "Added": "{actor} gained {effect}.",
       "Removed": "{actor} lost {effect}."
+    },
+    "GreatWeaponFighting": {
+      "RerollButton": "Great Weapon Fighting",
+      "RerollFlavor": "Great Weapon Fighting Reroll"
     }
   }
 }

@@ -7,11 +7,12 @@ const BASE = `modules/${MODULE_ID}/assets/icons`;
  * (see featureKey() in builders.mjs). Add an entry as each feature's art is created.
  */
 export const FEATURE_IMAGES = {
-  "class:fighter":               `${BASE}/fighter.webp`,
-  "feat:second-wind":            `${BASE}/second-wind.webp`,
-  "feat:fighting-style-archery": `${BASE}/fighting-style-archery.webp`,
-  "feat:fighting-style-defense": `${BASE}/fighting-style-defense.webp`,
-  "feat:fighting-style-dueling": `${BASE}/fighting-style-dueling.webp`,
+  "class:fighter":                             `${BASE}/fighter.webp`,
+  "feat:second-wind":                          `${BASE}/second-wind.webp`,
+  "feat:fighting-style-archery":               `${BASE}/fighting-style-archery.webp`,
+  "feat:fighting-style-defense":               `${BASE}/fighting-style-defense.webp`,
+  "feat:fighting-style-dueling":               `${BASE}/fighting-style-dueling.webp`,
+  "feat:fighting-style-great-weapon-fighting": `${BASE}/fighting-style-great-weapon-fighting.webp`,
 };
 
 /** Curated path for a key, else the provided dnd5e fallback icon. */

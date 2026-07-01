@@ -142,6 +142,14 @@ export default class SystemAdapter {
   registerArcherySync() { /* optional */ }
 
   /**
+   * Subscribe to system events that let a player trigger a Great Weapon
+   * Fighting reroll from a damage-roll chat message (dnd5e's "Great Weapon
+   * Fighting" fighting style — reroll 1s/2s on a two-handed/versatile melee
+   * weapon's damage dice). Default: no-op.
+   */
+  registerGreatWeaponFightingSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

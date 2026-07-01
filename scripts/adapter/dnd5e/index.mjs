@@ -13,6 +13,7 @@ import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
+import { registerGreatWeaponFightingHooks } from "./great-weapon-fighting.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -356,6 +357,11 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * Wire up the Archery roll-time bonus (see archery.mjs).
    */
   registerArcherySync() { registerArcheryHooks(); }
+
+  /**
+   * Wire up the Great Weapon Fighting reroll button (see great-weapon-fighting.mjs).
+   */
+  registerGreatWeaponFightingSync() { registerGreatWeaponFightingHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:
