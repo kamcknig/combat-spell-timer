@@ -26,10 +26,10 @@
 import { hasFormOfTheBeast, promptBeastForm, createBeastWeapon, removeBeastWeapons } from "./form-of-the-beast.mjs";
 import { triggerWildSurge, removeWildSurgeEffects, onWildSurgeActivity } from "./wild-surge.mjs";
 import { applyTotemSpiritEffects, removeTotemSpiritEffects } from "./totem-spirit.mjs";
+import { isModernRules } from "./shared.mjs";
 
-const isModern = () => typeof dnd5e !== "undefined" && dnd5e?.settings?.rulesVersion === "modern";
 const barbLevel = (actor) => actor?.classes?.barbarian?.system?.levels ?? 0;
-const rageDuration = () => (isModern() ? 100 : 10);
+const rageDuration = () => (isModernRules() ? 100 : 10);
 const isRageItem = (i) => i?.type === "feat"
   && (i.name?.toLowerCase() === "rage" || i.system?.identifier?.toLowerCase() === "rage");
 
@@ -49,7 +49,7 @@ export default {
   },
 
   endsEarlyOnEffect(effect, actor) {
-    const modern = isModern(), lvl = barbLevel(actor);
+    const modern = isModernRules(), lvl = barbLevel(actor);
     const onUnconscious = effect.statuses?.has?.("unconscious") && (!modern || lvl >= 15);
     const onIncapacitated = modern && effect.statuses?.has?.("incapacitated");
     return onUnconscious || onIncapacitated;
@@ -131,8 +131,8 @@ export default {
       extendKey: "COMBAT_SPELL_TIMER.Rage.Extend",
       endKey: "COMBAT_SPELL_TIMER.Rage.EndRage",
       icon: "fa-solid fa-fire",
-      promptKey: () => isModern() ? "COMBAT_SPELL_TIMER.Rage.ExtendPrompt2024" : "COMBAT_SPELL_TIMER.Rage.ExtendPrompt2014",
-      skip: (actor) => isModern() && barbLevel(actor) >= 15,
+      promptKey: () => isModernRules() ? "COMBAT_SPELL_TIMER.Rage.ExtendPrompt2024" : "COMBAT_SPELL_TIMER.Rage.ExtendPrompt2014",
+      skip: (actor) => isModernRules() && barbLevel(actor) >= 15,
     },
     joinPrompt: {
       titleKey: "COMBAT_SPELL_TIMER.Rage.AlreadyRagingTitle",

@@ -2,7 +2,7 @@ import { MODULE_ID } from "../../module.mjs";
 import { dbg } from "../../utils/debug.mjs";
 import { isWriter } from "../../core/socket.mjs";
 import { notifyEffectSync } from "../../utils/effect-notify.mjs";
-import { findFeat } from "./features/shared.mjs";
+import { findFeat, isModernRules } from "./features/shared.mjs";
 
 /**
  * dnd5e "Fighting Style: Defense" — "While you are wearing armor, you gain a
@@ -14,6 +14,10 @@ import { findFeat } from "./features/shared.mjs";
  * shields, since dnd5e itself buckets them separately when computing AC.
  *
  * Not gated by Strict Mode (scripts/utils/settings.mjs) — always enforced.
+ * Under 2024 ("modern") rules, additionally requires the equipped armor be
+ * Light/Medium/Heavy (see isDefenseEligible / features/shared.mjs's
+ * isModernRules) — 2014 rules keep the original unconditional "wearing any
+ * armor" check.
  */
 
 const DEFENSE_NAME = "fighting style: defense";
@@ -30,9 +34,21 @@ function defenseEffect(actor) {
   return actor?.effects?.find((e) => e.getFlag(MODULE_ID, DEFENSE_EFFECT_FLAG)) ?? null;
 }
 
-/** True when the actor has at least one piece of body armor equipped (shields don't count). */
+/**
+ * True when the actor has at least one piece of body armor equipped (shields
+ * don't count — Actor#armor already excludes them). Under 2024 ("modern")
+ * rules, additionally require the armor be Light/Medium/Heavy — dnd5e's
+ * armorTypes enum also has a "natural" category (e.g. some species/feature-
+ * granted natural-armor equipment items) that Actor#armor does NOT exclude
+ * the way it excludes shields; the 2024 PHB Defense text explicitly says
+ * "Light, Medium, or Heavy armor," closing that gap. 2014 rules keep the
+ * original unconditional "wearing armor" check.
+ */
 function isDefenseEligible(actor) {
-  return !!actor?.armor;
+  const armor = actor?.armor;
+  if (!armor) return false;
+  if (!isModernRules()) return true;
+  return ["light", "medium", "heavy"].includes(armor.system?.type?.value);
 }
 
 /**
@@ -85,6 +101,10 @@ function isDefenseFeatItem(item) {
  * armor and their possession of the feat itself:
  *  - updateItem: an equipment item's system.equipped flag changed → recompute
  *    (armor items are dnd5e type "equipment", not a distinct "armor" type).
+ *    Also recompute on a system.type.value change — under 2024 rules,
+ *    isDefenseEligible reads the equipped armor's type (light/medium/heavy
+ *    vs. e.g. natural), so editing an already-equipped item's Armor Type on
+ *    its sheet must re-trigger the same sync an equip toggle would.
  *  - createItem / deleteItem: the Defense feat itself was granted/removed →
  *    recompute immediately rather than waiting for the next equip toggle.
  * Call once during setup.
@@ -92,8 +112,9 @@ function isDefenseFeatItem(item) {
 export function registerDefenseHooks() {
   Hooks.on("updateItem", (item, changes) => {
     if (item?.type !== "equipment" || !item.actor) return;
-    if (!("equipped" in (changes.system ?? {}))) return;
-    dbg("dnd5e:defense:updateItem", item.actor.name, changes.system.equipped);
+    const sys = changes.system ?? {};
+    if (!("equipped" in sys) && !("type" in sys)) return;
+    dbg("dnd5e:defense:updateItem", item.actor.name, sys.equipped, sys.type?.value);
     syncDefenseEffect(item.actor);
   });
   Hooks.on("createItem", (item) => {

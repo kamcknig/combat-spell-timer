@@ -67,6 +67,19 @@ export function findFeat(actor, name, identifier) {
     && (i.name?.toLowerCase() === name || i.system?.identifier?.toLowerCase() === identifier)) ?? null;
 }
 
+/**
+ * True when the world's dnd5e system is configured to use the 2024 ("modern")
+ * ruleset rather than the 2014 ("legacy") ruleset. Backed by dnd5e's own
+ * world setting (scope: "world", so every client reads the same value),
+ * cached onto the `dnd5e` global's `.settings.rulesVersion` at dnd5e's own
+ * `init` hook. Defensive `typeof dnd5e !== "undefined"` guard matches this
+ * codebase's existing usage (previously private to rage.mjs).
+ * @returns {boolean}
+ */
+export function isModernRules() {
+  return typeof dnd5e !== "undefined" && dnd5e?.settings?.rulesVersion === "modern";
+}
+
 /** Overlay required markers: active, temporary (token icon), flagged, combat-bound duration. */
 function withMarkers(base, feature, origin, durationRounds) {
   const statusId = feature.effect?.statusId;
