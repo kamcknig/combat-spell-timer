@@ -14,6 +14,7 @@ export const FEATURE_IMAGES = {
   "feat:fighting-style-dueling":               `${BASE}/fighting-style-dueling.webp`,
   "feat:fighting-style-great-weapon-fighting": `${BASE}/fighting-style-great-weapon-fighting.webp`,
   "feat:fighting-style-protection":            `${BASE}/fighting-style-protection.webp`,
+  "feat:fighting-style-interception":          `${BASE}/fighting-style-interception.webp`,
   "feat:fighting-style-blind-fighting":        `${BASE}/fighting-style-blind-fighting.webp`,
 };
 

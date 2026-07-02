@@ -32,12 +32,20 @@ export async function parseImportedFeatures(_actor, ddbData) {
     const sub = buildSubclassItem(ddbClass);
     if (sub) items.push(sub);
 
-    const { kept } = filterByLevel(ddbClass.classFeatures, ddbClass.level);
+    const { kept, skipped } = filterByLevel(ddbClass.classFeatures, ddbClass.level);
+    dbg("ddb:parse", "class features by level", {
+      class: ctx.className, level: ddbClass.level,
+      kept: kept.map((f) => f?.definition?.name),
+      skipped: skipped.map((f) => f?.definition?.name),
+    });
     for (const f of kept) {
       const fdef = f?.definition;
       if (!fdef) continue;
       if (CHOICE_FEATURE_NAMES.has(fdef.name)) {
         const options = buildChoiceFeatureItems(fdef, ddbData, ctx);
+        dbg("ddb:parse", "choice feature resolved", {
+          feature: fdef.name, options: options.map((o) => o.name),
+        });
         items.push(...options);   // drop the generic parent (DISCARD_FEATURE_AFTER_CHOICES)
         continue;
       }

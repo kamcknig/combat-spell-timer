@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../../../module.mjs";
+import { dbg } from "../../../utils/debug.mjs";
 import { slugIdentifier } from "./identifier.mjs";
 import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { buildDdbDescription } from "./description.mjs";
@@ -172,12 +173,28 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
  * @returns {object[]}  feat items for the chosen options ([] if none chosen)
  */
 export function buildChoiceFeatureItems(parentDef, ddbData, ctx) {
+  dbg("ddb:choices", "resolving options for", {
+    parent: parentDef?.name,
+    parentId: parentDef?.id,
+    parentEntityTypeId: parentDef?.entityTypeId,
+    optionsClass: (ddbData?.options?.class ?? []).map((o) => ({
+      name: o?.definition?.name, componentId: o?.componentId, hasDefinition: !!o?.definition,
+    })),
+    feats: (ddbData?.feats ?? []).map((f) => ({
+      name: f?.definition?.name, componentId: f?.componentId, componentTypeId: f?.componentTypeId, hasDefinition: !!f?.definition,
+    })),
+  });
   const fromOptions = (ddbData?.options?.class ?? [])
     .filter((o) => o?.componentId === parentDef?.id && o?.definition)
     .map((o) => o.definition);
   const fromFeats = (ddbData?.feats ?? [])
     .filter((f) => f?.componentId === parentDef?.id && f?.componentTypeId === parentDef?.entityTypeId && f?.definition)
     .map((f) => f.definition);
+  dbg("ddb:choices", "matched", {
+    parent: parentDef?.name,
+    fromOptions: fromOptions.map((d) => d.name),
+    fromFeats: fromFeats.map((d) => d.name),
+  });
   return [...fromOptions, ...fromFeats].map((od) => {
     const optName = `${parentDef.name}: ${od.name}`;         // "Fighting Style: Archery"
     return buildFeatureItem(
