@@ -5,6 +5,7 @@ import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { buildDdbDescription } from "./description.mjs";
 import { imageFor } from "./images.mjs";
 import { buildFeatureEffects } from "./effects.mjs";
+import { buildFeatureUses } from "./uses.mjs";
 
 const DEFAULT_CLASS_IMG = "icons/skills/melee/weapons-crossed-swords-yellow.webp";
 const DEFAULT_FEAT_IMG  = "icons/sundries/books/book-embossed-jewel-gold-purple.webp";
@@ -119,7 +120,9 @@ function featureSubtype(name) {
 /**
  * Build one `feat` (class feature) item from a DDB feature definition.
  * @param {object} def        a `.classFeatures[].definition` (or chosen-option definition)
- * @param {object} ctx        { className, classIdentifier, rules, classId }
+ * @param {object} ctx        { className, classIdentifier, rules, classId, actions }
+ *   (`actions` is ddbData.actions?.class ?? [], for reading a feature's current
+ *   `system.uses.spent` via buildFeatureUses — see uses.mjs)
  * @param {object} [overrides] e.g. { name, subtype } for a chosen choice option
  */
 export function buildFeatureItem(def, ctx, overrides = {}) {
@@ -152,6 +155,7 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
       prerequisites: { items: ctx.classIdentifier ? [`class:${ctx.classIdentifier}`] : [], level: Number.isInteger(req) ? req : null, repeatable: false },
       properties: [],
       activities: {},
+      uses: buildFeatureUses(key, ctx.rules, { actions: ctx.actions, name }),
       advancement: {},
     },
     flags,

@@ -90,6 +90,11 @@ nav#context-menu.cst-timer-menu {
 .cst-gwf-controls .cst-gwf-reroll { flex: 1; }
 .cst-gwf-reroll i { margin-right: 4px; }
 
+/* Second Wind "Roll Healing" button appended below its announcement chat card. */
+.cst-second-wind-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-second-wind-controls .cst-second-wind-heal { flex: 1; }
+.cst-second-wind-heal i { margin-right: 4px; }
+
 /* Unarmed Fighting Grapple Damage button appended below the feat's chat card.
    (The same button is also appended into dnd5e's native .card-buttons on the
    Unarmed Strike attack card — that placement needs no extra CSS, since it
@@ -136,9 +141,11 @@ nav#context-menu.cst-timer-menu {
 /* Cap the width so long messages wrap instead of stretching the dialog. */
 .cst-confirm-dialog { max-width: min(420px, 90vw); }
 .cst-confirm-dialog .cst-confirm-message { margin-bottom: 4px; }
-/* Center the single CONFIRM button instead of stretching it full width. */
+/* Center the footer's button(s) instead of stretching them full width, with
+   extra horizontal breathing room — Foundry/dnd5e's default button padding
+   reads cramped once a button is sized to its content instead of stretched. */
 .cst-confirm-dialog .form-footer { justify-content: center; }
-.cst-confirm-dialog .form-footer button { flex: 0 0 auto; }
+.cst-confirm-dialog .form-footer button { flex: 0 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; }
 
 /* Bottom section (button [+ toggle]) spaced from the content above.
    ConfirmationDialog: the footer is the bottom section. NotificationDialog wraps

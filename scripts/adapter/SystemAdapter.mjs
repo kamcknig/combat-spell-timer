@@ -174,6 +174,12 @@ export default class SystemAdapter {
   registerVisionSync() { /* optional */ }
 
   /**
+   * Subscribe to system hooks for Second Wind's activation flow (dialog,
+   * consumption, chat-card heal button). Default: no-op (no such feature).
+   */
+  registerSecondWindSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

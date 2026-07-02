@@ -17,6 +17,7 @@ import { registerGreatWeaponFightingHooks } from "./great-weapon-fighting.mjs";
 import { registerThrownWeaponFightingHooks } from "./thrown-weapon-fighting.mjs";
 import { registerUnarmedFightingHooks } from "./unarmed-fighting.mjs";
 import { registerVisionSyncHooks } from "./vision-sync.mjs";
+import { registerSecondWindHooks } from "./second-wind.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
@@ -381,6 +382,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * Wire up the senses -> token-vision bridge (see vision-sync.mjs).
    */
   registerVisionSync() { registerVisionSyncHooks(); }
+
+  registerSecondWindSync() { registerSecondWindHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

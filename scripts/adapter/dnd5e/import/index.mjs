@@ -16,6 +16,7 @@ import { slugIdentifier } from "./identifier.mjs";
  */
 export async function parseImportedFeatures(_actor, ddbData) {
   const items = [];
+  const actions = ddbData?.actions?.class ?? [];   // current per-feature usage (numberUsed), for buildFeatureUses
   for (const ddbClass of ddbData?.classes ?? []) {
     const def = ddbClass?.definition ?? {};
     const rules = classEditionRules(def.id);
@@ -26,6 +27,7 @@ export async function parseImportedFeatures(_actor, ddbData) {
       rules,
       classId,
       classLevel: ddbClass.level,   // for {{classlevel}} substitution in feature text
+      actions,
     };
 
     items.push(buildClassItem(ddbClass, { id: classId }));
