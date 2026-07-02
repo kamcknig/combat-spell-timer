@@ -90,6 +90,13 @@ nav#context-menu.cst-timer-menu {
 .cst-gwf-controls .cst-gwf-reroll { flex: 1; }
 .cst-gwf-reroll i { margin-right: 4px; }
 
+/* Unarmed Fighting Grapple Damage button appended below the feat's chat card.
+   (The same button is also appended into dnd5e's native .card-buttons on the
+   Unarmed Strike attack card — that placement needs no extra CSS, since it
+   inherits the native ATTACK/DAMAGE buttons' flex-column/gap styling.) */
+.cst-uf-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-uf-controls .cst-uf-grapple { flex: 1; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }

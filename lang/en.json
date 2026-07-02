@@ -210,6 +210,10 @@
       "RerollButton": "Great Weapon Fighting",
       "RerollFlavor": "Great Weapon Fighting Reroll",
       "ClampFlavor": "Great Weapon Fighting (Treated as 3)"
+    },
+    "UnarmedFighting": {
+      "GrappleButton": "Grapple Damage",
+      "GrappleFlavor": "Grapple Damage (Unarmed Fighting)"
     }
   }
 }

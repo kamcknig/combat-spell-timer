@@ -157,6 +157,14 @@ export default class SystemAdapter {
   registerThrownWeaponFightingSync() { /* optional */ }
 
   /**
+   * Subscribe to system roll/chat hooks for the Unarmed Fighting fighting
+   * style (dnd5e's "Fighting Style: Unarmed Fighting" — swap Unarmed Strike
+   * damage to 1d6/1d8 + Strength, and a Grapple Damage button on the feat's
+   * chat card). Default: no-op.
+   */
+  registerUnarmedFightingSync() { /* optional */ }
+
+  /**
    * Subscribe to system events that keep a token's vision (detection modes) in
    * sync with its actor's derived senses (e.g. dnd5e's Blind Fighting fighting
    * style, whose blindsight ActiveEffect updates the sheet but not token
