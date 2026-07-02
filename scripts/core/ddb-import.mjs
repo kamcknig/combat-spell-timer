@@ -136,6 +136,7 @@ async function doImport(msg) {
         created = await createFeatureItems(actor, parsed.items);
       }
       dbg("ddb:import", "features created", { actor: actor.id, created });
+      getAdapter().auditEditionMismatches([actor]).catch((err) => dbg("ddb:import", "edition audit failed", { error: err?.message }));
     } catch (featErr) {
       // Non-fatal: the raw data is already cached; report a partial result.
       dbg("ddb:import", "feature creation failed", { error: featErr?.message });

@@ -17,6 +17,7 @@ import { registerGreatWeaponFightingHooks } from "./great-weapon-fighting.mjs";
 import { registerThrownWeaponFightingHooks } from "./thrown-weapon-fighting.mjs";
 import { registerUnarmedFightingHooks } from "./unarmed-fighting.mjs";
 import { registerVisionSyncHooks } from "./vision-sync.mjs";
+import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -620,5 +621,13 @@ export default class Dnd5eAdapter extends SystemAdapter {
    */
   async parseImportedFeatures(actor, ddbData) {
     return parseImportedFeatures(actor, ddbData);
+  }
+
+  async auditEditionMismatches(actors) {
+    return runEditionMismatchAudit(actors);
+  }
+
+  registerEditionMismatchWatch() {
+    registerEditionMismatchWatchHooks();
   }
 }

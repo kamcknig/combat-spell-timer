@@ -277,6 +277,21 @@ export default class SystemAdapter {
    * @returns {Promise<{items: object[]}>}
    */
   async parseImportedFeatures(actor, ddbData) { return { items: [] }; }
+
+  /**
+   * Scan `actors`' module-imported items for a mismatch between their stamped DDB edition and
+   * the system's active rules-version-equivalent setting, warning the GM (console + an
+   * acknowledgeable dialog) when any are found. Default: no-op (no edition concept).
+   * @param {Actor[]} actors
+   * @returns {Promise<void>}
+   */
+  async auditEditionMismatches(actors) {}
+
+  /**
+   * Register a listener that re-runs the edition-mismatch audit (over every world actor)
+   * whenever the system's rules-version-equivalent setting changes. Default: no-op.
+   */
+  registerEditionMismatchWatch() {}
 }
 
 /**

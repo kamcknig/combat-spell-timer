@@ -101,6 +101,9 @@ Hooks.once("ready", async () => {
   dbg("ready");
   await maybeSendInstallRecord();
   await maybeWarnDdbImporterMissing();
+  adapter.auditEditionMismatches(game.actors.contents)
+    .catch((err) => dbg("ready", "edition audit failed", { error: err?.message }));
+  adapter.registerEditionMismatchWatch();
   registerSocket();
   adapter.registerCastDetection(onSpellCast);
   adapter.registerEarlyRemoval(onEarlyRemove);

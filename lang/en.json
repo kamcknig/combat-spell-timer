@@ -175,6 +175,8 @@
         "SuccessTitle": "Character Imported",
         "SuccessBody": "Imported {name} — level {level} {cls}.",
         "FeaturesAdded": "{count} features added.",
+        "EditionMismatchTitle": "DDB Import — Rules Edition Mismatch",
+        "EditionMismatchBody": "This world's dnd5e system is set to {active} rules, but the following imported content uses a different edition:",
         "ErrorTitle": "Import Failed",
         "Error": {
           "invalid-id": "That doesn't look like a D&D Beyond character URL or ID.",
