@@ -150,6 +150,13 @@ export default class SystemAdapter {
   registerGreatWeaponFightingSync() { /* optional */ }
 
   /**
+   * Subscribe to system roll hooks that apply the Thrown Weapon Fighting
+   * damage bonus at roll time (e.g. dnd5e's dnd5e.preRollDamageV2).
+   * Default: no-op.
+   */
+  registerThrownWeaponFightingSync() { /* optional */ }
+
+  /**
    * Subscribe to system events that keep a token's vision (detection modes) in
    * sync with its actor's derived senses (e.g. dnd5e's Blind Fighting fighting
    * style, whose blindsight ActiveEffect updates the sheet but not token

@@ -16,6 +16,7 @@ export const FEATURE_EFFECT_CHANGES = {
   "feat:fighting-style-great-weapon-fighting": [],
   "feat:fighting-style-protection": [],
   "feat:fighting-style-interception": [],
+  "feat:fighting-style-thrown-weapon-fighting": [],
   "feat:fighting-style-blind-fighting": [
     {
       key: "system.attributes.senses.blindsight",

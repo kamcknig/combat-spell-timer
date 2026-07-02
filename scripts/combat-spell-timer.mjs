@@ -111,6 +111,7 @@ Hooks.once("ready", async () => {
   adapter.registerDefenseSync();
   adapter.registerArcherySync();
   adapter.registerGreatWeaponFightingSync();
+  adapter.registerThrownWeaponFightingSync();
   adapter.registerVisionSync();
   Hooks.on("combatTurnChange", (combat, previous, _current) => onFeatureTurnEnd(combat, previous));
   Hooks.on("renderCombatTracker", onRenderTracker);
