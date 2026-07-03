@@ -45,6 +45,28 @@ function numberUsedFrom(actions, name) {
 }
 
 /**
+ * Feature keys whose uses max is read directly from the DDB import's own
+ * resolved value (`actions.class[].limitedUse.maxUses`) rather than a
+ * hardcoded per-edition number — for features whose recovery rule is
+ * identical in both editions, with no DDB-data quirk to work around
+ * (contrast FEATURE_USES_CONFIG above, needed for Second Wind's 2024
+ * two-tier short/long-rest partial recovery). DDB already applies the
+ * class-feature's own level-scaling (levelScales[]) to this number — e.g.
+ * Action Surge resolves to 1 below level 17 and 2 at 17+ — so reading it
+ * directly is correct without this module duplicating that scaling logic.
+ */
+export const DYNAMIC_USES_CONFIG = {
+  "feat:action-surge": { recovery: [{ period: "sr", type: "recoverAll" }] },
+};
+
+/** The DDB-resolved max uses for a named feature (already level-scaled), or null. */
+function maxUsesFrom(actions, name) {
+  const match = (actions ?? []).find((a) => (a?.name ?? "").toLowerCase() === (name ?? "").toLowerCase());
+  const max = Number(match?.limitedUse?.maxUses);
+  return Number.isFinite(max) && max > 0 ? max : null;
+}
+
+/**
  * Build the `system.uses` override for a feature item, or the schema's own
  * default when the key (or edition) has no registered override.
  * @param {string} key    featureKey("feat", name)
@@ -58,6 +80,11 @@ function numberUsedFrom(actions, name) {
  */
 export function buildFeatureUses(key, rules, { actions, name } = {}) {
   const config = FEATURE_USES_CONFIG[key]?.[rules];
-  if (!config) return { spent: 0, max: "", recovery: [] };
-  return { ...config, spent: numberUsedFrom(actions, name) };
+  if (config) return { ...config, spent: numberUsedFrom(actions, name) };
+  const dynamic = DYNAMIC_USES_CONFIG[key];
+  if (dynamic) {
+    const max = maxUsesFrom(actions, name);
+    if (max) return { max: String(max), recovery: dynamic.recovery, spent: numberUsedFrom(actions, name) };
+  }
+  return { spent: 0, max: "", recovery: [] };
 }

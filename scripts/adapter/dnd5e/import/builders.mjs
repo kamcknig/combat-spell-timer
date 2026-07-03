@@ -140,6 +140,7 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
   if (ctx.classId) flags.dnd5e = { advancementOrigin: `${ctx.classId}.ddbImport` };
   const key = overrides.imageKey ?? featureKey("feat", name);
   const img = imageFor(key, DEFAULT_FEAT_IMG);
+  const uses = buildFeatureUses(key, ctx.rules, { actions: ctx.actions, name });
   return {
     _id: foundry.utils.randomID(),
     name,
@@ -151,7 +152,7 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
       requirements: ctx.className ? `${ctx.className} ${Number.isInteger(req) ? req : 1}` : "",
       description: {
         value: buildDdbDescription(def.snippet, def.description, {
-          classLevel: ctx.classLevel, featureName: overrides.name ?? def.name,
+          classLevel: ctx.classLevel, featureName: overrides.name ?? def.name, scaleValue: uses.max,
         }),
         chat: "",
       },
@@ -159,7 +160,7 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
       prerequisites: { items: ctx.classIdentifier ? [`class:${ctx.classIdentifier}`] : [], level: Number.isInteger(req) ? req : null, repeatable: false },
       properties: [],
       activities: {},
-      uses: buildFeatureUses(key, ctx.rules, { actions: ctx.actions, name }),
+      uses,
       advancement: {},
     },
     flags,

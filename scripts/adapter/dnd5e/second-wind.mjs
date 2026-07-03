@@ -34,15 +34,20 @@ function usesOf(item) {
  * dnd5e.preDisplayCard dispatch — the path a no-activity item takes. Always
  * cancels dnd5e's bare card and runs the module's own USE/CHAT flow instead
  * (never hands off to a native flow, unlike Path to the Grave).
+ * `messageConfig.data` is already dnd5e's fully-rendered card (icon + name +
+ * description, via item-card.hbs) plus its speaker and `flags.dnd5e.item` —
+ * captured here and reused as-is so the eventual announcement looks exactly
+ * like a normal dnd5e item-use card instead of a hand-rolled one-line flavor
+ * message.
  */
-export function onPreDisplaySecondWindCard(item, _messageConfig) {
+export function onPreDisplaySecondWindCard(item, messageConfig) {
   if (!isSecondWindItem(item)) return true;
-  handleSecondWindUse(item).catch((err) => console.error("combat-spell-timer | second wind failed", err));
+  handleSecondWindUse(item, messageConfig?.data).catch((err) => console.error("combat-spell-timer | second wind failed", err));
   return false;
 }
 
 /** Prompt USE/CHAT, consume on USE (if uses remain), then post the announcement card either way. */
-async function handleSecondWindUse(item) {
+async function handleSecondWindUse(item, cardData) {
   const actor = item.actor;
   if (!actor) return;
   const { remaining } = usesOf(item);
@@ -63,16 +68,16 @@ async function handleSecondWindUse(item) {
     await item.update({ "system.uses.spent": item.system.uses.spent + 1 });
     dbg("dnd5e:second-wind:consumed", actor.name, remaining - 1);
   }
-  await postSecondWindCard(item, actor);
+  await postSecondWindCard(item, actor, cardData);
 }
 
 /** Post the announcement card carrying the deferred heal-roll button. */
-async function postSecondWindCard(item, actor) {
-  const content = `<p>${game.i18n.format("COMBAT_SPELL_TIMER.SecondWind.ChatFlavor", { name: actor.name })}</p>`;
+async function postSecondWindCard(item, actor, cardData) {
   const message = await ChatMessage.create({
-    content,
-    speaker: ChatMessage.getSpeaker({ actor }),
-    flags: { [MODULE_ID]: { [SECOND_WIND_FLAG]: { actorUuid: actor.uuid, itemUuid: item.uuid } } },
+    ...cardData,
+    flags: foundry.utils.mergeObject(cardData.flags ?? {}, {
+      [MODULE_ID]: { [SECOND_WIND_FLAG]: { actorUuid: actor.uuid, itemUuid: item.uuid } },
+    }),
   });
   dbg("dnd5e:second-wind:posted", actor.name, message?.id);
 }

@@ -180,6 +180,12 @@ export default class SystemAdapter {
   registerSecondWindSync() { /* optional */ }
 
   /**
+   * Subscribe to system hooks for Action Surge's activation flow (dialog,
+   * consumption, chat-card announcement). Default: no-op (no such feature).
+   */
+  registerActionSurgeSync() { /* optional */ }
+
+  /**
    * Subscribe to system roll/chat hooks for Weapon Mastery's mechanical
    * properties (Cleave/Graze/Topple chat-card buttons, Sap/Slow's
    * apply-effects trays — dnd5e's 2024-rules Fighter feature). Default:

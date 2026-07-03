@@ -223,9 +223,13 @@
       "Title": "Second Wind",
       "Prompt": "Regain 1d10 + your fighter level hit points. {remaining} use(s) remaining.",
       "NoUses": "{name} has no uses of Second Wind remaining.",
-      "ChatFlavor": "{name} catches their breath, ready to use Second Wind.",
       "HealButton": "Roll Healing",
       "HealFlavor": "Second Wind — Healing"
+    },
+    "ActionSurge": {
+      "Title": "Action Surge",
+      "Prompt": "Take one additional action this turn (not the Magic action). {remaining} use(s) remaining.",
+      "NoUses": "{name} has no uses of Action Surge remaining."
     },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",

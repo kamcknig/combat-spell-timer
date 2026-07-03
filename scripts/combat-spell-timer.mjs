@@ -118,6 +118,7 @@ Hooks.once("ready", async () => {
   adapter.registerUnarmedFightingSync();
   adapter.registerVisionSync();
   adapter.registerSecondWindSync();
+  adapter.registerActionSurgeSync();
   adapter.registerWeaponMasterySync();
   Hooks.on("combatTurnChange", (combat, previous, _current) => onFeatureTurnEnd(combat, previous));
   Hooks.on("renderCombatTracker", onRenderTracker);

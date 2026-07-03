@@ -20,6 +20,7 @@ import { registerThrownWeaponFightingHooks } from "./thrown-weapon-fighting.mjs"
 import { registerUnarmedFightingHooks } from "./unarmed-fighting.mjs";
 import { registerVisionSyncHooks } from "./vision-sync.mjs";
 import { registerSecondWindHooks } from "./second-wind.mjs";
+import { registerActionSurgeHooks } from "./action-surge.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -413,6 +414,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerVisionSync() { registerVisionSyncHooks(); }
 
   registerSecondWindSync() { registerSecondWindHooks(); }
+
+  registerActionSurgeSync() { registerActionSurgeHooks(); }
 
   registerWeaponMasterySync() { registerWeaponMasteryHooks(); }
 
