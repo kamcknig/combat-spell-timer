@@ -226,6 +226,20 @@
       "ChatFlavor": "{name} catches their breath, ready to use Second Wind.",
       "HealButton": "Roll Healing",
       "HealFlavor": "Second Wind — Healing"
+    },
+    "WeaponMastery": {
+      "CleaveButton": "Cleave Attack",
+      "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",
+      "GrazeButton": "Graze Damage",
+      "GrazeFlavor": "Graze Damage (Weapon Mastery)",
+      "ToppleButton": "Topple Save",
+      "ToppleNoTarget": "Topple: no target selected — select the creature you hit and try again.",
+      "SapEffectName": "Sapped",
+      "SapRoundsLeft": "Until the attacker's next turn",
+      "SapEndLabel": "End Sap",
+      "SlowEffectName": "Slowed",
+      "SlowRoundsLeft": "Until the attacker's next turn",
+      "SlowEndLabel": "End Slow"
     }
   }
 }

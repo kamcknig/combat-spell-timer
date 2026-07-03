@@ -10,6 +10,8 @@ import { onActionEndedActivityUse, onActionEndedAttackRoll } from "./features/ac
 import { onPreDisplayPathToTheGraveCard, onPreUsePathToTheGrave } from "./features/path-to-the-grave.mjs";
 import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./features/moonlight-step.mjs";
 import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
+import { onSapPreRollAttack, onSapAttackRolled, onSapEffectApplied } from "./features/sap.mjs";
+import { onSlowPreCreate, onSlowEffectApplied } from "./features/slow.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
@@ -19,6 +21,7 @@ import { registerUnarmedFightingHooks } from "./unarmed-fighting.mjs";
 import { registerVisionSyncHooks } from "./vision-sync.mjs";
 import { registerSecondWindHooks } from "./second-wind.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
+import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
 export default class Dnd5eAdapter extends SystemAdapter {
   static SYSTEM_ID = "dnd5e";
@@ -272,6 +275,9 @@ export default class Dnd5eAdapter extends SystemAdapter {
     // Pre-roll so D20Roll.applyKeybindings sees config.advantage before the roll
     // is evaluated.
     Hooks.on("dnd5e.preRollAttackV2", (config) => onMoonlightStepPreRollAttack(config));
+    // Weapon Mastery Sap imposes Disadvantage on a sapped actor's next attack
+    // roll. Same pre-roll timing as Moonlight Step, above.
+    Hooks.on("dnd5e.preRollAttackV2", (config) => onSapPreRollAttack(config));
     // Path to the Grave use flow: a no-activity item posts a bare card via
     // displayCard — intercept that once to fix the item up (no-op curse
     // template effect + consumption activity linking it), after which dnd5e's
@@ -306,14 +312,33 @@ export default class Dnd5eAdapter extends SystemAdapter {
    * @param {(query: object) => void} onEarlyEnd
    */
   registerFeatureEarlyEnd(onEarlyEnd) {
+    // Weapon Mastery Slow: never stack a second Slow marker onto an
+    // already-slowed target, regardless of source/attacker. Must run BEFORE
+    // the effect is created (preCreateActiveEffect, not createActiveEffect)
+    // so it can cancel the create.
+    Hooks.on("preCreateActiveEffect", (effect) => onSlowPreCreate(effect));
     Hooks.on("createActiveEffect", (effect, _options, userId) => {
       const actor = effect.parent;
-      if (!actor) return;
+      // Item-owned effects (e.g. Weapon Mastery's persisted template AEs —
+      // weapon-mastery.mjs#ensureMasteryEffectTemplate) must NOT reach the
+      // dispatches below: they're plain truthy documents, so a bare
+      // `if (!actor) return` lets them through and misfires
+      // onSapEffectApplied/onSlowEffectApplied (which read casterActorUuid
+      // off the TEMPLATE, not an applied marker) the instant the template is
+      // first created — well before anyone actually applies Sap/Slow to a
+      // target.
+      if (actor?.documentName !== "Actor") return;
       // Rules-bound effects that end when their bearer gains a status
       // (e.g. Twilight Emanation on incapacitated).
       onStatusEndedEffects(effect, userId);
       // Rules-correct durations for applied effects (e.g. Cloak of Shadows).
       onEffectDurationOverrides(effect, userId);
+      // A Sap/Slow marker was just applied to a target via the apply-effects
+      // tray — start the attacker-anchored timer. Not a `for (const f of
+      // listFeatures())` case: this is detecting the effect landing on the
+      // TARGET, not the caster gaining/losing a status.
+      onSapEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
+      onSlowEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
@@ -326,6 +351,10 @@ export default class Dnd5eAdapter extends SystemAdapter {
     Hooks.on("dnd5e.rollAttackV2", (_rolls, { subject } = {}) => {
       const query = onMoonlightStepAttackRolled(subject);
       if (query) onEarlyEnd(query);
+      // Weapon Mastery Sap: any attack roll by a sapped actor consumes the
+      // marker immediately.
+      const sapQuery = onSapAttackRolled(subject);
+      if (sapQuery) onEarlyEnd(sapQuery);
     });
   }
 
@@ -385,6 +414,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
 
   registerSecondWindSync() { registerSecondWindHooks(); }
 
+  registerWeaponMasterySync() { registerWeaponMasteryHooks(); }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:
    * clone the feature's source effect, else hard-coded changes). Returns its UUID.
@@ -409,9 +440,11 @@ export default class Dnd5eAdapter extends SystemAdapter {
 
   /**
    * Delete a feature's module-owned AE during early-end / cleanup.
-   * @param {{featureId?:string, casterActorUuid?:string, effectUuid?:string}} query
+   * @param {{featureId?:string, casterActorUuid?:string, effectUuid?:string, exceptEffectUuid?:string}} query
+   *   exceptEffectUuid: see core/features.mjs#onFeatureStart's doc — spare this one
+   *   target-side effect from a feature's onRemove sweep.
    */
-  async removeFeatureEffect({ featureId, casterActorUuid, effectUuid } = {}) {
+  async removeFeatureEffect({ featureId, casterActorUuid, effectUuid, exceptEffectUuid } = {}) {
     const f = getFeature(featureId);
     if (!f) return;
     await deleteFeatureEffect(f, { casterActorUuid, effectUuid });
@@ -419,7 +452,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
     // OTHER actors). Runs on whichever client performs the removal — expiry on
     // the GM, manual remove on the remover; early-end paths can invoke it on
     // several clients, so implementations must be idempotent.
-    await f.onRemove?.({ casterActorUuid, effectUuid });
+    await f.onRemove?.({ casterActorUuid, effectUuid, exceptEffectUuid });
   }
 
   /**

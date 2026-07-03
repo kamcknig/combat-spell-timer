@@ -123,7 +123,11 @@ function featureSubtype(name) {
  * @param {object} ctx        { className, classIdentifier, rules, classId, actions }
  *   (`actions` is ddbData.actions?.class ?? [], for reading a feature's current
  *   `system.uses.spent` via buildFeatureUses — see uses.mjs)
- * @param {object} [overrides] e.g. { name, subtype } for a chosen choice option
+ * @param {object} [overrides] e.g. { name, subtype } for a chosen choice option.
+ *   `imageKey`, when given, is used for the FEATURE_IMAGES lookup INSTEAD of a key
+ *   derived from `name` — for choice items whose name varies per-instance (e.g.
+ *   "Weapon Mastery: Dart Vex" vs "Weapon Mastery: Longbow Slow") but which should
+ *   still share one curated icon per underlying option (per mastery, not per weapon).
  */
 export function buildFeatureItem(def, ctx, overrides = {}) {
   const name = cleanDdbName(overrides.name ?? def.name);
@@ -134,7 +138,7 @@ export function buildFeatureItem(def, ctx, overrides = {}) {
   // "<Class> Features" instead of "Other Features" (dnd5e reads this even though we
   // never ran the real Advancement Manager).
   if (ctx.classId) flags.dnd5e = { advancementOrigin: `${ctx.classId}.ddbImport` };
-  const key = featureKey("feat", name);
+  const key = overrides.imageKey ?? featureKey("feat", name);
   const img = imageFor(key, DEFAULT_FEAT_IMG);
   return {
     _id: foundry.utils.randomID(),

@@ -180,6 +180,14 @@ export default class SystemAdapter {
   registerSecondWindSync() { /* optional */ }
 
   /**
+   * Subscribe to system roll/chat hooks for Weapon Mastery's mechanical
+   * properties (Cleave/Graze/Topple chat-card buttons, Sap/Slow's
+   * apply-effects trays — dnd5e's 2024-rules Fighter feature). Default:
+   * no-op (no such feature).
+   */
+  registerWeaponMasterySync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

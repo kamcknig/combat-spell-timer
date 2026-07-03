@@ -135,6 +135,10 @@ async function doImport(msg) {
       if (parsed.items?.length) {
         created = await createFeatureItems(actor, parsed.items);
       }
+      if (parsed.actorUpdate) {
+        await actor.update(parsed.actorUpdate);
+        dbg("ddb:import", "actor traits updated", { actor: actor.id, update: parsed.actorUpdate });
+      }
       dbg("ddb:import", "features created", { actor: actor.id, created });
       getAdapter().auditEditionMismatches([actor]).catch((err) => dbg("ddb:import", "edition audit failed", { error: err?.message }));
     } catch (featErr) {

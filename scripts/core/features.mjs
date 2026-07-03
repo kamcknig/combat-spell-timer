@@ -13,7 +13,13 @@ import { dbg } from "../utils/debug.mjs";
 /**
  * Adapter detected a feature activation → create its AE and add timers to every
  * combat the actor is in.
- * @param {object} record  { featureId, casterActorUuid, name, img, itemUuid, durationRounds }
+ * @param {object} record  { featureId, casterActorUuid, name, img, itemUuid, durationRounds,
+ *   exceptEffectUuid? }  exceptEffectUuid: for features whose "start" is triggered
+ *   REACTIVELY after their target-side effect already exists (e.g. Weapon Mastery
+ *   Sap/Slow, started from the marker's own createActiveEffect event via the native
+ *   apply-effects tray, unlike e.g. Rage/Path to the Grave whose start precedes any
+ *   applied effect) — excludes that just-created effect from the refresh sweep below,
+ *   so starting the timer doesn't immediately delete the very effect that triggered it.
  * @param {(actor: Actor, featureId: string, opts: object) => Promise<string|null>} applyEffect
  *   Adapter-provided fn that creates the feature AE; returns its UUID or null.
  */
@@ -30,7 +36,9 @@ export async function onFeatureStart(record, applyEffect) {
   for (const combat of game.combats) {
     removeTimers(combat.id, { type: record.featureId, casterActorUuid: record.casterActorUuid });
   }
-  await getAdapter().removeFeatureEffect?.({ featureId: record.featureId, casterActorUuid: record.casterActorUuid });
+  await getAdapter().removeFeatureEffect?.({
+    featureId: record.featureId, casterActorUuid: record.casterActorUuid, exceptEffectUuid: record.exceptEffectUuid,
+  });
 
   const effectUuid = await applyEffect(actor, record.featureId, { img: record.img, itemUuid: record.itemUuid, durationRounds: record.durationRounds });
 

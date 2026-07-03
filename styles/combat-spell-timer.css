@@ -102,6 +102,12 @@ nav#context-menu.cst-timer-menu {
 .cst-uf-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
 .cst-uf-controls .cst-uf-grapple { flex: 1; }
 
+/* Weapon Mastery Cleave/Graze/Topple buttons appended below eligible attack/damage-roll messages. */
+.cst-weapon-mastery-controls { display: flex; justify-content: center; gap: 4px; margin: 4px 0 2px; }
+.cst-weapon-mastery-controls .cst-weapon-mastery-cleave,
+.cst-weapon-mastery-controls .cst-weapon-mastery-graze,
+.cst-weapon-mastery-controls .cst-weapon-mastery-topple { flex: 1; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }
