@@ -231,6 +231,13 @@
       "Prompt": "Take one additional action this turn (not the Magic action). {remaining} use(s) remaining.",
       "NoUses": "{name} has no uses of Action Surge remaining."
     },
+    "TacticalMind": {
+      "Title": "Tactical Mind",
+      "Prompt": "Expend a use of Second Wind to roll 1d10 and add it to a failed ability check. {remaining} Second Wind use(s) remaining.",
+      "NoUses": "{name} has no uses of Second Wind remaining.",
+      "BonusButton": "BONUS",
+      "BonusFlavor": "Tactical Mind — Bonus"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",

@@ -20,11 +20,11 @@ import { FeatureUseDialog } from "../../apps/feature-use-dialog.mjs";
 const SECOND_WIND_FLAG = "secondWind"; // flags[MODULE_ID][SECOND_WIND_FLAG] = {actorUuid, itemUuid, healed?}
 const BTN_CLASS = "cst-second-wind-heal";
 
-const isSecondWindItem = (i) => i?.type === "feat"
+export const isSecondWindItem = (i) => i?.type === "feat"
   && (i.name?.toLowerCase() === "second wind" || i.system?.identifier?.toLowerCase() === "second-wind");
 
 /** An item's usable uses as numbers (mirrors path-to-the-grave.mjs's usesOf — not shared, both tiny/local). */
-function usesOf(item) {
+export function usesOf(item) {
   const max = Number(item?.system?.uses?.max) || 0;
   const spent = Number(item?.system?.uses?.spent) || 0;
   return { max, spent, remaining: Math.max(0, max - spent) };

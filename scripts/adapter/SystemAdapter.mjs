@@ -194,6 +194,13 @@ export default class SystemAdapter {
   registerWeaponMasterySync() { /* optional */ }
 
   /**
+   * Subscribe to system hooks for Tactical Mind's activation flow (dialog,
+   * Second Wind consumption, chat-card BONUS-roll button). Default: no-op
+   * (no such feature).
+   */
+  registerTacticalMindSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

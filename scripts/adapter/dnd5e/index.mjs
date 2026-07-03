@@ -21,6 +21,7 @@ import { registerUnarmedFightingHooks } from "./unarmed-fighting.mjs";
 import { registerVisionSyncHooks } from "./vision-sync.mjs";
 import { registerSecondWindHooks } from "./second-wind.mjs";
 import { registerActionSurgeHooks } from "./action-surge.mjs";
+import { registerTacticalMindHooks } from "./tactical-mind.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -418,6 +419,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerActionSurgeSync() { registerActionSurgeHooks(); }
 
   registerWeaponMasterySync() { registerWeaponMasteryHooks(); }
+
+  registerTacticalMindSync() { registerTacticalMindHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

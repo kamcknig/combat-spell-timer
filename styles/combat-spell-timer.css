@@ -95,6 +95,11 @@ nav#context-menu.cst-timer-menu {
 .cst-second-wind-controls .cst-second-wind-heal { flex: 1; }
 .cst-second-wind-heal i { margin-right: 4px; }
 
+/* Tactical Mind BONUS button appended below its announcement chat card. */
+.cst-tactical-mind-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-tactical-mind-controls .cst-tactical-mind-bonus { flex: 1; }
+.cst-tactical-mind-bonus i { margin-right: 4px; }
+
 /* Unarmed Fighting Grapple Damage button appended below the feat's chat card.
    (The same button is also appended into dnd5e's native .card-buttons on the
    Unarmed Strike attack card — that placement needs no extra CSS, since it

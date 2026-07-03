@@ -10,6 +10,7 @@ export const FEATURE_IMAGES = {
   "class:fighter":                             `${BASE}/fighter.webp`,
   "feat:second-wind":                          `${BASE}/second-wind.webp`,
   "feat:action-surge":                         `${BASE}/action-surge.webp`,
+  "feat:tactical-mind":                        `${BASE}/tactical-mind.webp`,
   "feat:fighting-style-archery":               `${BASE}/fighting-style-archery.webp`,
   "feat:fighting-style-defense":               `${BASE}/fighting-style-defense.webp`,
   "feat:fighting-style-dueling":               `${BASE}/fighting-style-dueling.webp`,
