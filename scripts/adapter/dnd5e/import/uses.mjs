@@ -57,6 +57,7 @@ function numberUsedFrom(actions, name) {
  */
 export const DYNAMIC_USES_CONFIG = {
   "feat:action-surge": { recovery: [{ period: "sr", type: "recoverAll" }] },
+  "feat:indomitable": { recovery: [{ period: "lr", type: "recoverAll" }] },
 };
 
 /** The DDB-resolved max uses for a named feature (already level-scaled), or null. */

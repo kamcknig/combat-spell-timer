@@ -201,6 +201,13 @@ export default class SystemAdapter {
   registerTacticalMindSync() { /* optional */ }
 
   /**
+   * Subscribe to system hooks for Indomitable's reroll button (failed-save
+   * chat message → USE/CHAT dialog → reroll). Default: no-op (no such
+   * feature).
+   */
+  registerIndomitableSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.

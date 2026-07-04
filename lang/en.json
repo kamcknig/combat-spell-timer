@@ -238,6 +238,14 @@
       "BonusButton": "BONUS",
       "BonusFlavor": "Tactical Mind — Bonus"
     },
+    "Indomitable": {
+      "Title": "Indomitable",
+      "Prompt": "Reroll this failed saving throw — you must use the new result. {remaining} use(s) remaining.",
+      "NoUses": "{name} has no uses of Indomitable remaining.",
+      "Button": "INDOMITABLE",
+      "RerollFlavor": "Save (Indomitable Reroll)",
+      "ChatFlavor": "{name} refuses to accept the failure."
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",
