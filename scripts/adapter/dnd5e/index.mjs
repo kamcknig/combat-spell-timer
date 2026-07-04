@@ -12,6 +12,7 @@ import { onMoonlightStepPreRollAttack, onMoonlightStepAttackRolled } from "./fea
 import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
 import { onSapPreRollAttack, onSapAttackRolled, onSapEffectApplied } from "./features/sap.mjs";
 import { onSlowPreCreate, onSlowEffectApplied } from "./features/slow.mjs";
+import { onDistractingStrikeEffectApplied, onDistractingStrikeTargetAttacked } from "./features/distracting-strike.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
@@ -25,6 +26,7 @@ import { registerTacticalMindHooks } from "./tactical-mind.mjs";
 import { registerIndomitableHooks } from "./indomitable.mjs";
 import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
 import { registerDisarmingAttackHooks } from "./disarming-attack.mjs";
+import { registerDistractingStrikeHooks } from "./distracting-strike.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -344,6 +346,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
       // TARGET, not the caster gaining/losing a status.
       onSapEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onSlowEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
+      onDistractingStrikeEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
@@ -360,6 +363,10 @@ export default class Dnd5eAdapter extends SystemAdapter {
       // marker immediately.
       const sapQuery = onSapAttackRolled(subject);
       if (sapQuery) onEarlyEnd(sapQuery);
+      // Distracting Strike: any attack roll AGAINST a distracted target
+      // consumes its marker immediately (checks targets, not the roller).
+      const distractQuery = onDistractingStrikeTargetAttacked(subject);
+      if (distractQuery) onEarlyEnd(distractQuery);
     });
   }
 
@@ -430,6 +437,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerCommandersStrikeSync() { registerCommandersStrikeHooks(); }
 
   registerDisarmingAttackSync() { registerDisarmingAttackHooks(); }
+
+  registerDistractingStrikeSync() { registerDistractingStrikeHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

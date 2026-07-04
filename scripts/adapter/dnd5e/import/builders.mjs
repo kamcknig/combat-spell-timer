@@ -243,7 +243,8 @@ export function buildCombatSuperiorityItem(feature, ddbData, ctx) {
  * prefix and a "maneuver" subtype, and a per-maneuver icon key ("feat:maneuver-<name>",
  * matching the weapon-mastery convention) so each maneuver gets its own curated art
  * instead of sharing one generic icon.
- * All imported cosmetic; only Commander's Strike is wired at runtime (Phase 2).
+ * All imported cosmetic; Commander's Strike, Disarming Attack, and
+ * Distracting Strike are wired at runtime — see their own adapter modules.
  */
 export function buildManeuverFeatureItems(parentDef, ddbData, ctx) {
   const chosen = (ddbData?.options?.class ?? [])

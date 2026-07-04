@@ -5,7 +5,7 @@ import { usesOf } from "./second-wind.mjs";
 import { findFeat } from "./features/shared.mjs";
 import { findCombatSuperiority } from "./commanders-strike.mjs";
 import { canAct, attackAbilityMod } from "./weapon-mastery.mjs";
-import { addDamageButtonSuffix, removeDamageButtonSuffix } from "./maneuver-damage-label.mjs";
+import { addDamageButtonSuffix, removeDamageButtonSuffix, markRefundButton, renderRefundButtonLabels } from "./maneuver-damage-label.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Disarming Attack": unlike Commander's
@@ -130,8 +130,15 @@ export function onDisarmingAttackPreRollDamage(config) {
 /** Replace the DISARMING ATTACK button with REFUND RESOURCE and relabel the Damage button — the visible "armed" state. */
 function decorateArmed(container, message, activity, armed) {
   const existingBtn = container.querySelector(`.${BTN_CLASS}`);
-  if (existingBtn) existingBtn.replaceWith(buildRefundButton(message, container, activity, armed));
-  else if (!container.querySelector(`.${REFUND_BTN_CLASS}`)) container.appendChild(buildRefundButton(message, container, activity, armed));
+  if (existingBtn) {
+    const refundBtn = buildRefundButton(message, container, activity, armed);
+    existingBtn.replaceWith(refundBtn);
+    markRefundButton(container, refundBtn, game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix"));
+  } else if (!container.querySelector(`.${REFUND_BTN_CLASS}`)) {
+    const refundBtn = buildRefundButton(message, container, activity, armed);
+    container.appendChild(refundBtn);
+    markRefundButton(container, refundBtn, game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix"));
+  }
   relabelDamageButton(container);
   if (!armed.consumed) armDamageButton(container, message, activity, armed.dieSize);
 }
@@ -201,7 +208,10 @@ async function onDisarmRefundClick(message, container, activity, armed) {
 
   const maneuver = findDisarmingAttackManeuver(actor);
   const refundBtn = container.querySelector(`.${REFUND_BTN_CLASS}`);
-  if (maneuver && refundBtn) refundBtn.replaceWith(buildFreshDisarmButton(container, message, activity, actor, maneuver));
+  if (maneuver && refundBtn) {
+    refundBtn.replaceWith(buildFreshDisarmButton(container, message, activity, actor, maneuver));
+    renderRefundButtonLabels(container); // any sibling maneuver's refund button reverts to the plain label if it's now the only one armed
+  }
   dbg("dnd5e:disarming-attack:refunded", actor?.name);
 }
 

@@ -218,6 +218,10 @@ export default class SystemAdapter {
    *  dialog, Combat Superiority consumption, card arming). Default: no-op. */
   registerDisarmingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Distracting Strike (weapon-card button, USE/CHAT
+   *  dialog, Combat Superiority consumption, card arming). Default: no-op. */
+  registerDistractingStrikeSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

@@ -264,6 +264,16 @@
       "SaveButton": "Strength Save",
       "NoTargets": "Disarming Attack: no targets selected or controlled — select or control a token and try again."
     },
+    "DistractingStrike": {
+      "Title": "Distracting Strike",
+      "Prompt": "Expend a superiority die to distract your target on a hit. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "DISTRACTING STRIKE",
+      "DamageLabelSuffix": "Distracting",
+      "EffectName": "Distracted",
+      "RoundsLeft": "Until the attacker's next turn",
+      "EndLabel": "End Distracting Strike"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",
