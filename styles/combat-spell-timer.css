@@ -126,6 +126,11 @@ nav#context-menu.cst-timer-menu {
 .cst-weapon-mastery-controls .cst-weapon-mastery-graze,
 .cst-weapon-mastery-controls .cst-weapon-mastery-topple { flex: 1; }
 
+/* Disarming Attack Strength Save button appended below its damage-roll message. */
+.cst-disarming-attack-save-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-disarming-attack-save-controls .cst-disarming-attack-save { flex: 1; }
+.cst-disarming-attack-save i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }

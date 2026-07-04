@@ -254,6 +254,16 @@
       "RollFlavor": "Commander's Strike — Superiority Die",
       "AttackButton": "Commander's Strike"
     },
+    "DisarmingAttack": {
+      "Title": "Disarming Attack",
+      "Prompt": "Expend a superiority die to attempt to disarm your target on a hit. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "AlreadyUsed": "Disarming Attack already declared for this attack.",
+      "Button": "DISARMING ATTACK",
+      "DamageLabelSuffix": "(Disarming)",
+      "SaveButton": "Strength Save",
+      "NoTargets": "Disarming Attack: no targets selected or controlled — select or control a token and try again."
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",
