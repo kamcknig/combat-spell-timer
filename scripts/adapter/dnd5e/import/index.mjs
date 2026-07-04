@@ -42,9 +42,29 @@ export async function parseImportedFeatures(_actor, ddbData) {
       kept: kept.map((f) => f?.definition?.name),
       skipped: skipped.map((f) => f?.definition?.name),
     });
+    // 2014's Extra Attack is represented as multiple classFeatures entries
+    // sharing the exact name "Extra Attack" (one per tier: 5/11/20), each
+    // with its own tier-specific description. Collapse to the single
+    // highest-tier entry applicable at the current level so only one item
+    // (with the correct current description) is created — 2024 names each
+    // tier differently ("Extra Attack" / "Two Extra Attacks" / "Three Extra
+    // Attacks") so this never collapses more than one entry there.
+    const extraAttackTiers = kept.filter((f) => f?.definition?.name === "Extra Attack");
+    if (extraAttackTiers.length) {
+      const best = extraAttackTiers.reduce((a, b) =>
+        (b.definition.requiredLevel ?? 0) > (a.definition.requiredLevel ?? 0) ? b : a
+      );
+      dbg("ddb:parse", "extra attack tiers collapsed", {
+        tiers: extraAttackTiers.map((f) => f.definition.requiredLevel),
+        chosen: best.definition.requiredLevel,
+      });
+      items.push(buildFeatureItem(best.definition, ctx));
+    }
+
     for (const f of kept) {
       const fdef = f?.definition;
       if (!fdef) continue;
+      if (fdef.name === "Extra Attack") continue; // handled above, collapsed to one item
       if (CHOICE_FEATURE_NAMES.has(fdef.name)) {
         const options = buildChoiceFeatureItems(fdef, ddbData, ctx);
         dbg("ddb:parse", "choice feature resolved", {
