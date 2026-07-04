@@ -246,6 +246,14 @@
       "RerollFlavor": "Save (Indomitable Reroll)",
       "ChatFlavor": "{name} refuses to accept the failure."
     },
+    "CommandersStrike": {
+      "Title": "Commander's Strike",
+      "Prompt": "You have {remaining} superiority {die} remaining. Direct an ally to strike?",
+      "NoDice": "No superiority dice remaining.",
+      "RollButton": "Roll Superiority Die",
+      "RollFlavor": "Commander's Strike — Superiority Die",
+      "AttackButton": "Commander's Strike"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",

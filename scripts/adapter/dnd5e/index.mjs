@@ -23,6 +23,7 @@ import { registerSecondWindHooks } from "./second-wind.mjs";
 import { registerActionSurgeHooks } from "./action-surge.mjs";
 import { registerTacticalMindHooks } from "./tactical-mind.mjs";
 import { registerIndomitableHooks } from "./indomitable.mjs";
+import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -424,6 +425,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerTacticalMindSync() { registerTacticalMindHooks(); }
 
   registerIndomitableSync() { registerIndomitableHooks(); }
+
+  registerCommandersStrikeSync() { registerCommandersStrikeHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

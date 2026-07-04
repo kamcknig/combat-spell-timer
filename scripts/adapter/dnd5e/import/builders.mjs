@@ -240,7 +240,9 @@ export function buildCombatSuperiorityItem(feature, ddbData, ctx) {
 /**
  * Maneuvers (2014 Battle Master) → one "Maneuver: <name>" feat per chosen option.
  * Same options.class[] fan-out as buildChoiceFeatureItems, but singular "Maneuver:"
- * prefix and a "maneuver" subtype, and a shared generic icon key (feat:maneuver).
+ * prefix and a "maneuver" subtype, and a per-maneuver icon key ("feat:maneuver-<name>",
+ * matching the weapon-mastery convention) so each maneuver gets its own curated art
+ * instead of sharing one generic icon.
  * All imported cosmetic; only Commander's Strike is wired at runtime (Phase 2).
  */
 export function buildManeuverFeatureItems(parentDef, ddbData, ctx) {
@@ -251,7 +253,7 @@ export function buildManeuverFeatureItems(parentDef, ddbData, ctx) {
   return chosen.map((od) => buildFeatureItem(
     { ...od, requiredLevel: parentDef.requiredLevel, sources: od.sources ?? parentDef.sources },
     ctx,
-    { name: `Maneuver: ${od.name}`, subtype: "maneuver", imageKey: "feat:maneuver" }
+    { name: `Maneuver: ${od.name}`, subtype: "maneuver", imageKey: featureKey("feat", `Maneuver ${od.name}`) }
   ));
 }
 

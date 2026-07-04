@@ -208,6 +208,13 @@ export default class SystemAdapter {
   registerIndomitableSync() { /* optional */ }
 
   /**
+   * Subscribe to system hooks for Commander's Strike's activation flow (USE/CHAT
+   * dialog, Combat Superiority die-pool consumption, chat-card roll button).
+   * Default: no-op (no such feature).
+   */
+  registerCommandersStrikeSync() { /* optional */ }
+
+  /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
    * the effect off the actor's source item, falling back to hard-coded changes.
