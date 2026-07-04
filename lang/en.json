@@ -24,6 +24,7 @@
     "InitiativeHint": "Leave blank to use combatant's rolled initiative",
     "AddTimer": "Add Timer",
     "RemoveConcentration": "Remove Concentration",
+    "RefundResourceButton": "REFUND RESOURCE",
     "Rage": {
       "TimerName": "Rage",
       "Raging": "Raging",
@@ -258,7 +259,6 @@
       "Title": "Disarming Attack",
       "Prompt": "Expend a superiority die to attempt to disarm your target on a hit. {remaining} superiority {die} remaining.",
       "NoDice": "No superiority dice remaining.",
-      "AlreadyUsed": "Disarming Attack already declared for this attack.",
       "Button": "DISARMING ATTACK",
       "DamageLabelSuffix": "(Disarming)",
       "SaveButton": "Strength Save",

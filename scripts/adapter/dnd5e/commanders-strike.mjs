@@ -16,8 +16,9 @@ import { findFeat } from "./features/shared.mjs";
  * may click (Commander's Strike directs an ally, not necessarily the owner).
  */
 
-const CS_FLAG = "commandersStrike"; // flags[MODULE_ID][CS_FLAG] = { actorUuid, dieSize }
+const CS_FLAG = "commandersStrike"; // flags[MODULE_ID][CS_FLAG] = { actorUuid, dieSize, consumed, rolled }
 const BTN_CLASS = "cst-commanders-strike-roll";
+const REFUND_BTN_CLASS = "cst-commanders-strike-refund";
 const ATTACK_BTN_CLASS = "cst-commanders-strike";
 
 /** DDB stores "Commander’s Strike" with a curly apostrophe — normalize before matching. */
@@ -53,6 +54,7 @@ async function handleCommandersStrikeUse(maneuverItem, cardData) {
     canUse: remaining > 0,
   });
   if (!action) return; // dismissed
+  let consumed = false;
   if (action === "use") {
     // Defensive: USE is disabled in the dialog whenever remaining <= 0, so this
     // shouldn't be reachable through normal interaction — kept as a guard.
@@ -61,20 +63,21 @@ async function handleCommandersStrikeUse(maneuverItem, cardData) {
       return;
     }
     await pool.update({ "system.uses.spent": pool.system.uses.spent + 1 });
+    consumed = true;
     dbg("dnd5e:commanders-strike:consumed", actor.name, remaining - 1);
   }
-  await postCommandersStrikeCard(actor, dieSize, cardData);
+  await postCommandersStrikeCard(actor, dieSize, cardData, consumed);
 }
 
 /** Post the announcement card carrying the deferred superiority-die roll button. */
-async function postCommandersStrikeCard(actor, dieSize, cardData) {
+async function postCommandersStrikeCard(actor, dieSize, cardData, consumed) {
   // cardData is dnd5e's fully-rendered item card (from preDisplayCard). Both
   // entry points (item click, Phase 3's attack-dialog button) reach here via
   // the maneuver item's own card, so cardData is always present.
   const message = await ChatMessage.create({
     ...cardData,
     flags: foundry.utils.mergeObject(cardData?.flags ?? {}, {
-      [MODULE_ID]: { [CS_FLAG]: { actorUuid: actor.uuid, dieSize } },
+      [MODULE_ID]: { [CS_FLAG]: { actorUuid: actor.uuid, dieSize, consumed, rolled: false } },
     }),
   });
   dbg("dnd5e:commanders-strike:posted", actor.name, message?.id);
@@ -91,31 +94,23 @@ async function onRollDie(actor, dieSize) {
 }
 
 /**
- * dnd5e.renderChatMessage: append the "Roll Superiority Die" button.
- * DELIBERATELY NOT owner-gated — Commander's Strike directs an ALLY, so any
- * player may press it. Disabled locally after a click (no message.update, so
- * no write-permission issue); repeat rolls are possible by design (see
- * plan's "What We're NOT Doing"). Also disabled up front if the actor has no
- * Combat Superiority uses remaining (e.g. the die was spent by other means
- * since the card was posted).
+ * Build the "Roll Superiority Die" button. DELIBERATELY NOT owner-gated —
+ * Commander's Strike directs an ALLY, so any player may press it. When the
+ * card's use didn't actually consume a die (CHAT action), it's gated on the
+ * pool still having a die available; when it did consume one (`data.consumed`),
+ * the die is already reserved for this card so the button stays enabled
+ * regardless of the pool's remaining count.
  */
-function onRenderCommandersStrikeMessage(message, html) {
-  const data = message.getFlag(MODULE_ID, CS_FLAG);
-  if (!data) return;
+function buildRollButton(message, data) {
   const actor = fromUuidSync(data.actorUuid);
-  const container = html.querySelector(".message-content");
-  if (!container || container.querySelector(`.${BTN_CLASS}`)) return;
-
   const pool = findCombatSuperiority(actor);
   const { remaining } = usesOf(pool);
 
-  const wrap = document.createElement("div");
-  wrap.className = "cst-commanders-strike-controls";
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = BTN_CLASS;
   btn.innerHTML = `<i class="fa-solid fa-dice-d20"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.CommandersStrike.RollButton")}`;
-  if (remaining <= 0) {
+  if (!data.consumed && remaining <= 0) {
     btn.disabled = true;
     btn.title = game.i18n.localize("COMBAT_SPELL_TIMER.CommandersStrike.NoDice");
   }
@@ -124,14 +119,65 @@ function onRenderCommandersStrikeMessage(message, html) {
     btn.disabled = true;
     try {
       await onRollDie(actor, data.dieSize);
+      // Only a card whose use actually spent a die gets the refund toggle —
+      // a CHAT-only roll has nothing to refund, so just leave it disabled.
+      if (data.consumed) {
+        const next = { ...data, rolled: true };
+        await message.setFlag(MODULE_ID, CS_FLAG, next);
+        btn.replaceWith(buildRefundButton(message, next));
+      }
     } catch (err) {
       warn("commander's strike roll failed", err);
       btn.disabled = false;
     }
   });
-  wrap.appendChild(btn);
+  return btn;
+}
+
+/** Build the "REFUND RESOURCE" button: gives the spent superiority die back and swaps back to the roll button. */
+function buildRefundButton(message, data) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = REFUND_BTN_CLASS;
+  btn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.RefundResourceButton")}`;
+  btn.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    btn.disabled = true;
+    try {
+      const actor = fromUuidSync(data.actorUuid);
+      const pool = findCombatSuperiority(actor);
+      if (pool) {
+        const spent = Number(pool.system?.uses?.spent) || 0;
+        await pool.update({ "system.uses.spent": Math.max(0, spent - 1) });
+      }
+      const next = { ...data, rolled: false };
+      await message.setFlag(MODULE_ID, CS_FLAG, next);
+      btn.replaceWith(buildRollButton(message, next));
+      dbg("dnd5e:commanders-strike:refunded", actor?.name);
+    } catch (err) {
+      warn("commander's strike refund failed", err);
+      btn.disabled = false;
+    }
+  });
+  return btn;
+}
+
+/**
+ * dnd5e.renderChatMessage: append either the "Roll Superiority Die" button
+ * or, once that roll has happened for a die-consuming card, the
+ * "REFUND RESOURCE" button in its place.
+ */
+function onRenderCommandersStrikeMessage(message, html) {
+  const data = message.getFlag(MODULE_ID, CS_FLAG);
+  if (!data) return;
+  const container = html.querySelector(".message-content");
+  if (!container || container.querySelector(`.${BTN_CLASS}`) || container.querySelector(`.${REFUND_BTN_CLASS}`)) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "cst-commanders-strike-controls";
+  wrap.appendChild(data.consumed && data.rolled ? buildRefundButton(message, data) : buildRollButton(message, data));
   container.appendChild(wrap);
-  dbg("dnd5e:commanders-strike:button", actor?.name, { remaining });
+  dbg("dnd5e:commanders-strike:button", data);
 }
 
 /**

@@ -21,6 +21,7 @@ import { canAct, attackAbilityMod } from "./weapon-mastery.mjs";
 
 const DISARM_FLAG = "disarmingAttack"; // message flags[MODULE_ID][DISARM_FLAG] = {dieSize, actorUuid, consumed?}
 const BTN_CLASS = "cst-disarming-attack";
+const REFUND_BTN_CLASS = "cst-disarming-attack-refund";
 const DAMAGE_LABEL_MARK = "cstDisarmLabeled"; // dataset marker: guards against re-appending the label suffix
 
 /** The actor's "Maneuver: Disarming Attack" feat, or null. */
@@ -36,6 +37,26 @@ function relabelDamageButton(container) {
   if (label) label.textContent = `${label.textContent} ${game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix")}`;
   btn.dataset[DAMAGE_LABEL_MARK] = "true";
   return btn;
+}
+
+/**
+ * Undo relabelDamageButton and strip our armDamageButton listener (via a
+ * node clone — native delegated click handling lives on an ancestor, not on
+ * this button, so cloning only drops the listener we attached directly).
+ * Only called on refund when the die was never actually rolled into damage.
+ */
+function unrelabelDamageButton(container) {
+  const btn = container.querySelector('button[data-action="rollDamage"]');
+  if (!btn) return;
+  if (btn.dataset[DAMAGE_LABEL_MARK]) {
+    const label = btn.querySelector("span");
+    const suffix = ` ${game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix")}`;
+    if (label?.textContent.endsWith(suffix)) label.textContent = label.textContent.slice(0, -suffix.length);
+  }
+  const fresh = btn.cloneNode(true);
+  delete fresh.dataset[DAMAGE_LABEL_MARK];
+  delete fresh.dataset.cstDisarmArmed;
+  btn.replaceWith(fresh);
 }
 
 /** Prompt USE/CHAT, consume one Combat Superiority die on USE, post a plain announcement either way. */
@@ -110,15 +131,82 @@ export function onDisarmingAttackPreRollDamage(config) {
   dbg("dnd5e:disarming-attack:die-added", activity.item?.name, dieSize);
 }
 
-/** Disable the DISARMING ATTACK button and relabel the Damage button — the visible "armed" state. */
-function decorateArmed(container, message, activity, dieSize) {
-  const btn = container.querySelector(`.${BTN_CLASS}`);
-  if (btn) {
-    btn.disabled = true;
-    btn.title = game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.AlreadyUsed");
-  }
+/** Replace the DISARMING ATTACK button with REFUND RESOURCE and relabel the Damage button — the visible "armed" state. */
+function decorateArmed(container, message, activity, armed) {
+  const existingBtn = container.querySelector(`.${BTN_CLASS}`);
+  if (existingBtn) existingBtn.replaceWith(buildRefundButton(message, container, activity, armed));
+  else if (!container.querySelector(`.${REFUND_BTN_CLASS}`)) container.appendChild(buildRefundButton(message, container, activity, armed));
   relabelDamageButton(container);
-  if (!message.getFlag(MODULE_ID, DISARM_FLAG)?.consumed) armDamageButton(container, message, activity, dieSize);
+  if (!armed.consumed) armDamageButton(container, message, activity, armed.dieSize);
+}
+
+/** Build the fresh (unarmed) DISARMING ATTACK button and wire its use-flow click handler. */
+function buildFreshDisarmButton(container, message, activity, actor, maneuver) {
+  const pool = findCombatSuperiority(actor);
+  const { remaining } = usesOf(pool);
+  const btn = buildDisarmButton(remaining, async () => {
+    btn.disabled = true;
+    try {
+      const result = await handleDisarmingAttackUse(maneuver);
+      if (!result) { btn.disabled = false; return; } // dismissed — leave clickable
+      if (result.action !== "use") { btn.disabled = false; return; } // CHAT — announce only, card stays un-armed
+      const newArmed = { dieSize: result.dieSize, actorUuid: result.actorUuid };
+      await message.setFlag(MODULE_ID, DISARM_FLAG, newArmed);
+      decorateArmed(container, message, activity, newArmed);
+    } catch (err) {
+      warn("disarming attack failed", err);
+      btn.disabled = false;
+    }
+  });
+  return btn;
+}
+
+/** Build the REFUND RESOURCE button that replaces an armed DISARMING ATTACK button. */
+function buildRefundButton(message, container, activity, armed) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = REFUND_BTN_CLASS;
+  btn.innerHTML = `<i class="fa-solid fa-rotate-left" inert></i> <span>${game.i18n.localize("COMBAT_SPELL_TIMER.RefundResourceButton")}</span>`;
+  btn.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    btn.disabled = true;
+    try {
+      await onDisarmRefundClick(message, container, activity, armed);
+    } catch (err) {
+      warn("disarming attack refund failed", err);
+      btn.disabled = false;
+    }
+  });
+  return btn;
+}
+
+/**
+ * Refund the spent Combat Superiority die and swap back to a fresh
+ * DISARMING ATTACK button. If the die was never rolled into damage yet,
+ * also cancels the pending damage-die addition and un-relabels the Damage
+ * button — otherwise (damage already resolved with the die included) only
+ * the resource bookkeeping is undone; the already-posted damage roll and
+ * its label stand as history.
+ */
+async function onDisarmRefundClick(message, container, activity, armed) {
+  const actor = fromUuidSync(armed.actorUuid);
+  const pool = findCombatSuperiority(actor);
+  if (pool) {
+    const spent = Number(pool.system?.uses?.spent) || 0;
+    await pool.update({ "system.uses.spent": Math.max(0, spent - 1) });
+  }
+
+  if (!armed.consumed) {
+    pendingDisarmDamage.delete(activity.uuid);
+    unrelabelDamageButton(container);
+  }
+
+  await message.unsetFlag(MODULE_ID, DISARM_FLAG);
+
+  const maneuver = findDisarmingAttackManeuver(actor);
+  const refundBtn = container.querySelector(`.${REFUND_BTN_CLASS}`);
+  if (maneuver && refundBtn) refundBtn.replaceWith(buildFreshDisarmButton(container, message, activity, actor, maneuver));
+  dbg("dnd5e:disarming-attack:refunded", actor?.name);
 }
 
 /**
@@ -141,11 +229,7 @@ function onRenderWeaponUsageCard(message, html) {
 
   const armed = message.getFlag(MODULE_ID, DISARM_FLAG);
   if (armed) {
-    if (!container.querySelector(`.${BTN_CLASS}`)) {
-      const btn = buildDisarmButton(0, () => {}); // rendered disabled-only; no click behavior once armed
-      container.appendChild(btn);
-    }
-    decorateArmed(container, message, activity, armed.dieSize);
+    decorateArmed(container, message, activity, armed);
     return;
   }
 
@@ -153,23 +237,8 @@ function onRenderWeaponUsageCard(message, html) {
   const maneuver = findDisarmingAttackManeuver(actor);
   if (!maneuver) return;
 
-  const pool = findCombatSuperiority(actor);
-  const { remaining } = usesOf(pool);
-  const btn = buildDisarmButton(remaining, async () => {
-    btn.disabled = true;
-    try {
-      const result = await handleDisarmingAttackUse(maneuver);
-      if (!result) { btn.disabled = false; return; } // dismissed — leave clickable
-      if (result.action !== "use") { btn.disabled = false; return; } // CHAT — announce only, card stays un-armed
-      await message.setFlag(MODULE_ID, DISARM_FLAG, { dieSize: result.dieSize, actorUuid: result.actorUuid });
-      decorateArmed(container, message, activity, result.dieSize);
-    } catch (err) {
-      warn("disarming attack failed", err);
-      btn.disabled = false;
-    }
-  });
-  container.appendChild(btn);
-  dbg("dnd5e:disarming-attack:button", actor.name, { remaining });
+  container.appendChild(buildFreshDisarmButton(container, message, activity, actor, maneuver));
+  dbg("dnd5e:disarming-attack:button", actor.name);
 }
 
 /** Build the DISARMING ATTACK button (native .card-buttons styling — no wrapper/custom CSS needed). */

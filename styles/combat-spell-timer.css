@@ -105,10 +105,12 @@ nav#context-menu.cst-timer-menu {
 .cst-indomitable-controls .cst-indomitable-reroll { flex: 1; }
 .cst-indomitable-reroll i { margin-right: 4px; }
 
-/* Commander's Strike "Roll Superiority Die" button appended below its announcement chat card. */
+/* Commander's Strike "Roll Superiority Die" / "Refund Resource" button appended below its announcement chat card. */
 .cst-commanders-strike-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
-.cst-commanders-strike-controls .cst-commanders-strike-roll { flex: 1; }
-.cst-commanders-strike-roll i { margin-right: 4px; }
+.cst-commanders-strike-controls .cst-commanders-strike-roll,
+.cst-commanders-strike-controls .cst-commanders-strike-refund { flex: 1; }
+.cst-commanders-strike-roll i,
+.cst-commanders-strike-refund i { margin-right: 4px; }
 
 /* Commander's Strike attack-dialog button (wraps onto its own row via inline flex-basis). */
 .dialog-buttons .cst-commanders-strike { margin-top: 4px; }
