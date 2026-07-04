@@ -260,7 +260,7 @@
       "Prompt": "Expend a superiority die to attempt to disarm your target on a hit. {remaining} superiority {die} remaining.",
       "NoDice": "No superiority dice remaining.",
       "Button": "DISARMING ATTACK",
-      "DamageLabelSuffix": "(Disarming)",
+      "DamageLabelSuffix": "Disarming",
       "SaveButton": "Strength Save",
       "NoTargets": "Disarming Attack: no targets selected or controlled — select or control a token and try again."
     },

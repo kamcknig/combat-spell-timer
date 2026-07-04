@@ -5,6 +5,7 @@ import { usesOf } from "./second-wind.mjs";
 import { findFeat } from "./features/shared.mjs";
 import { findCombatSuperiority } from "./commanders-strike.mjs";
 import { canAct, attackAbilityMod } from "./weapon-mastery.mjs";
+import { addDamageButtonSuffix, removeDamageButtonSuffix } from "./maneuver-damage-label.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Disarming Attack": unlike Commander's
@@ -22,41 +23,34 @@ import { canAct, attackAbilityMod } from "./weapon-mastery.mjs";
 const DISARM_FLAG = "disarmingAttack"; // message flags[MODULE_ID][DISARM_FLAG] = {dieSize, actorUuid, consumed?}
 const BTN_CLASS = "cst-disarming-attack";
 const REFUND_BTN_CLASS = "cst-disarming-attack-refund";
-const DAMAGE_LABEL_MARK = "cstDisarmLabeled"; // dataset marker: guards against re-appending the label suffix
+const LABEL_KEY = "disarm";
+const armedDamageHandlers = new WeakMap(); // Damage button -> our click handler, so refund detaches ONLY ours
 
 /** The actor's "Maneuver: Disarming Attack" feat, or null. */
 function findDisarmingAttackManeuver(actor) {
   return findFeat(actor, "maneuver: disarming attack", "maneuver-disarming-attack");
 }
 
-/** Relabel the native Damage button in `container` with a "(Disarming)" suffix, once. */
+/** Add Disarming Attack's suffix to the native Damage button's label (compacted with any other active maneuver). */
 function relabelDamageButton(container) {
-  const btn = container.querySelector('button[data-action="rollDamage"]');
-  if (!btn || btn.dataset[DAMAGE_LABEL_MARK]) return btn;
-  const label = btn.querySelector("span");
-  if (label) label.textContent = `${label.textContent} ${game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix")}`;
-  btn.dataset[DAMAGE_LABEL_MARK] = "true";
-  return btn;
+  addDamageButtonSuffix(container, LABEL_KEY, game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix"));
 }
 
 /**
- * Undo relabelDamageButton and strip our armDamageButton listener (via a
- * node clone — native delegated click handling lives on an ancestor, not on
- * this button, so cloning only drops the listener we attached directly).
- * Only called on refund when the die was never actually rolled into damage.
+ * Undo relabelDamageButton and detach ONLY our own arm-listener (a stored
+ * reference, not a node clone — cloning would also wipe a second maneuver's
+ * independent listener on the same Damage button). Only called on refund
+ * when the die was never actually rolled into damage.
  */
 function unrelabelDamageButton(container) {
+  removeDamageButtonSuffix(container, LABEL_KEY);
   const btn = container.querySelector('button[data-action="rollDamage"]');
-  if (!btn) return;
-  if (btn.dataset[DAMAGE_LABEL_MARK]) {
-    const label = btn.querySelector("span");
-    const suffix = ` ${game.i18n.localize("COMBAT_SPELL_TIMER.DisarmingAttack.DamageLabelSuffix")}`;
-    if (label?.textContent.endsWith(suffix)) label.textContent = label.textContent.slice(0, -suffix.length);
+  const handler = btn && armedDamageHandlers.get(btn);
+  if (btn && handler) {
+    btn.removeEventListener("click", handler);
+    armedDamageHandlers.delete(btn);
+    delete btn.dataset.cstDisarmArmed;
   }
-  const fresh = btn.cloneNode(true);
-  delete fresh.dataset[DAMAGE_LABEL_MARK];
-  delete fresh.dataset.cstDisarmArmed;
-  btn.replaceWith(fresh);
 }
 
 /** Prompt USE/CHAT, consume one Combat Superiority die on USE, post a plain announcement either way. */
@@ -106,10 +100,12 @@ function armDamageButton(container, message, activity, dieSize) {
   const btn = container.querySelector('button[data-action="rollDamage"]');
   if (!btn || btn.dataset.cstDisarmArmed) return;
   btn.dataset.cstDisarmArmed = "true";
-  btn.addEventListener("click", () => {
+  const handler = () => {
     pendingDisarmDamage.set(activity.uuid, { dieSize });
     message.update({ [`flags.${MODULE_ID}.${DISARM_FLAG}.consumed`]: true });
-  }, { once: true });
+  };
+  armedDamageHandlers.set(btn, handler);
+  btn.addEventListener("click", handler, { once: true });
 }
 
 /**

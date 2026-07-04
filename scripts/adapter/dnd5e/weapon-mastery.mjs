@@ -2,6 +2,7 @@ import { MODULE_ID, warn } from "../../module.mjs";
 import { dbg } from "../../utils/debug.mjs";
 import { SAP_FLAG, SAP_STATUS_ID } from "./features/sap.mjs";
 import { SLOW_FLAG, SLOW_STATUS_ID } from "./features/slow.mjs";
+import { ensureEffectTemplate, injectEffectApplicationTray } from "./effect-application-tray.mjs";
 
 /**
  * dnd5e Fighter "Weapon Mastery" (2024 PHB) — Cleave, Graze, and Topple.
@@ -192,92 +193,8 @@ async function onToppleSaveClick(activity, actor) {
 
 // ── Sap: native "Apply Effects" tray ────────────────────────────────────
 
-/**
- * Ensure a persisted, reusable template ActiveEffect for a mastery property
- * exists on the weapon item (Path to the Grave's ensureCurseTemplate
- * pattern — path-to-the-grave.mjs). An earlier version of this function
- * built a never-persisted, in-memory-only doc and registered it into the
- * item's embedded-effects Map with `{modifySource: false}` so
- * EffectApplicationElement#_onApplyEffect's lookup
- * (`chatMessage.getAssociatedItem()?.effects.get(id)`, dnd5e.mjs:63467)
- * could find it — but that Map entry only survives until the NEXT time the
- * item's embedded collection is reinitialized from `_source`, which happens
- * on essentially any subsequent actor/item update (an HP change, a turn
- * advancing, anything). In real play, "click DAMAGE" and "click Apply" are
- * rarely back-to-back, so the entry was routinely gone by the time Apply
- * was clicked, and the click silently no-op'd. A real, persisted template
- * (`transfer: false`, so it never applies to the wielder) survives any
- * reinitialization, exactly like Path to the Grave's "Cursed" template.
- * `casterActorUuid` is kept current in case the weapon changes hands.
- *
- * Coalesced against concurrent callers (dnd5e.renderChatMessage can fire
- * more than once for the same message, e.g. on a chat-log re-render sweep):
- * without this, two overlapping calls could each see no `existing` template
- * yet and both issue a create, leaving a duplicate behind.
- */
-const pendingTemplateCreation = new Map(); // `${item.uuid}:${flagKey}` -> in-flight Promise<ActiveEffect|null>
-
-async function ensureMasteryEffectTemplate(item, actor, { name, img, statusId, flagKey, changes = [] }) {
-  const existing = item.effects.find(e => e.flags?.[MODULE_ID]?.[flagKey]);
-  if (existing) {
-    if (existing.flags[MODULE_ID].casterActorUuid !== actor.uuid) {
-      await existing.update({ [`flags.${MODULE_ID}.casterActorUuid`]: actor.uuid });
-    }
-    return existing;
-  }
-
-  const key = `${item.uuid}:${flagKey}`;
-  if (pendingTemplateCreation.has(key)) return pendingTemplateCreation.get(key);
-
-  const promise = (async () => {
-    const [created] = await item.createEmbeddedDocuments("ActiveEffect", [{
-      name, img: img ?? item.img, statuses: [statusId], changes,
-      transfer: false, disabled: false,
-      duration: { rounds: 1 },
-      flags: { dnd5e: { isTemporary: true }, [MODULE_ID]: { [flagKey]: true, casterActorUuid: actor.uuid } },
-    }]);
-    return created ?? null;
-  })();
-  pendingTemplateCreation.set(key, promise);
-  try {
-    return await promise;
-  } finally {
-    pendingTemplateCreation.delete(key);
-  }
-}
-
-/**
- * Insert a <effect-application> tray offering `effectDoc` into a chat
- * message's HTML, once. Explicitly marks it `visible` right after
- * connecting: dnd5e's ChatLog5e only wires live target-list updates
- * (EffectApplicationElement#shouldBuildTargetList requires both `open` AND
- * `visible`) through a one-shot MutationObserver on `.chat-log` that starts
- * observing a message's own `<li>` for IntersectionObserver visibility the
- * moment that `<li>` is FIRST added to the log (dnd5e.mjs:70089-70094,
- * #onLogMutated -> #intersections.observe(node)) — it does not re-scan for
- * elements injected into an already-observed message later. Because this
- * tray is injected asynchronously (after ensureMasteryEffectTemplate's
- * possible DB round-trip), it reliably misses that window, so `visible`
- * never gets set natively and the target list silently never builds, even
- * after the user opens the tray. Setting `.visible = true` ourselves — the
- * same thing dnd5e's own IntersectionObserver callback would do
- * (dnd5e.mjs:70076-70081) — reproduces that missed step; the tray is
- * genuinely on-screen when this runs, so this isn't a lie.
- */
-function injectEffectApplicationTray(html, effectDoc) {
-  if (!effectDoc) return;
-  const container = html.querySelector(".message-content");
-  if (!container || container.querySelector("effect-application")) return;
-  const el = document.createElement("effect-application");
-  el.effects = [effectDoc];
-  const damageApplication = container.querySelector("damage-application");
-  if (damageApplication) container.insertBefore(el, damageApplication);
-  else container.appendChild(el);
-  el.visible = true;
-}
-
 function ensureSapEffectTemplate(item, actor) {
-  return ensureMasteryEffectTemplate(item, actor, {
+  return ensureEffectTemplate(item, actor, {
     name: game.i18n.localize("COMBAT_SPELL_TIMER.WeaponMastery.SapEffectName"),
     statusId: SAP_STATUS_ID, flagKey: SAP_FLAG,
   });
@@ -290,7 +207,7 @@ function ensureSapEffectTemplate(item, actor) {
  * own prepareMovement() pass (see the doc comment in features/slow.mjs).
  */
 function ensureSlowEffectTemplate(item, actor) {
-  return ensureMasteryEffectTemplate(item, actor, {
+  return ensureEffectTemplate(item, actor, {
     name: game.i18n.localize("COMBAT_SPELL_TIMER.WeaponMastery.SlowEffectName"),
     statusId: SLOW_STATUS_ID, flagKey: SLOW_FLAG,
     changes: [
