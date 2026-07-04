@@ -89,3 +89,28 @@ export function buildFeatureUses(key, rules, { actions, name } = {}) {
   }
   return { spent: 0, max: "", recovery: [] };
 }
+
+/**
+ * The 2014 Battle Master superiority-dice pool for the Combat Superiority feature.
+ * Count + die size come from the feature's resolved `levelScale.dice`
+ * (diceCount / diceValue); current-spent comes from the DDB action named
+ * "Superiority Dice" (NOT "Combat Superiority"). 2014 dice always recover on a
+ * short rest (resetType 1 in DDB, verified in 2014-ddb-character-schema.json).
+ * @param {object} feature  a classFeatures[] entry ({ definition, levelScale })
+ * @param {object[]} actions ddbData.actions?.class ?? []
+ * @returns {{uses:{spent:number,max:string,recovery:object[]}, dieSize:string, count:number}}
+ */
+export function buildSuperiorityDicePool(feature, actions) {
+  const dice = feature?.levelScale?.dice ?? {};
+  const count = Number(dice.diceCount) || maxUsesFrom(actions, "Superiority Dice") || 0;
+  const faces = Number(dice.diceValue) || 8;
+  return {
+    uses: {
+      spent: numberUsedFrom(actions, "Superiority Dice"),
+      max: String(count),
+      recovery: [{ period: "sr", type: "recoverAll" }],
+    },
+    dieSize: `d${faces}`,
+    count,
+  };
+}

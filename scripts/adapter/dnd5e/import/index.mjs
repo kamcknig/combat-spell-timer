@@ -3,6 +3,7 @@ import { filterByLevel } from "./level-check.mjs";
 import {
   buildClassItem, buildSubclassItem, buildFeatureItem,
   buildChoiceFeatureItems, CHOICE_FEATURE_NAMES,
+  buildCombatSuperiorityItem, buildManeuverFeatureItems,
 } from "./builders.mjs";
 import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { slugIdentifier } from "./identifier.mjs";
@@ -82,6 +83,16 @@ export async function parseImportedFeatures(_actor, ddbData) {
         const masteryItems = buildWeaponMasteryFeatureItems(ddbData, ctx);
         dbg("ddb:parse", "weapon mastery choices resolved", { items: masteryItems.map((i) => i.name) });
         items.push(...masteryItems);
+        continue;
+      }
+      if (fdef.name === "Combat Superiority") {
+        items.push(buildCombatSuperiorityItem(f, ddbData, ctx));   // f: needs .levelScale for count/die size
+        continue;
+      }
+      if (fdef.name === "Maneuvers") {
+        const maneuvers = buildManeuverFeatureItems(fdef, ddbData, ctx);
+        dbg("ddb:parse", "maneuvers resolved", { items: maneuvers.map((i) => i.name) });
+        items.push(...maneuvers);   // drop the generic "Maneuvers" container
         continue;
       }
       items.push(buildFeatureItem(fdef, ctx));

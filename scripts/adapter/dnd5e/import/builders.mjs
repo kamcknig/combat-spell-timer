@@ -5,7 +5,7 @@ import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { buildDdbDescription } from "./description.mjs";
 import { imageFor } from "./images.mjs";
 import { buildFeatureEffects } from "./effects.mjs";
-import { buildFeatureUses } from "./uses.mjs";
+import { buildFeatureUses, buildSuperiorityDicePool } from "./uses.mjs";
 
 const DEFAULT_CLASS_IMG = "icons/skills/melee/weapons-crossed-swords-yellow.webp";
 const DEFAULT_FEAT_IMG  = "icons/sundries/books/book-embossed-jewel-gold-purple.webp";
@@ -212,6 +212,47 @@ export function buildChoiceFeatureItems(parentDef, ddbData, ctx) {
       { name: optName, subtype: "fightingStyle" }
     );
   });
+}
+
+/**
+ * Combat Superiority (2014 Battle Master): a normal feat item, but stamped with
+ * the superiority-dice pool (system.uses), a `superiorityDie` flag for runtime
+ * die rolls, and a leading description line naming the dice. Maneuvers spend
+ * from THIS item's uses.
+ * @param {object} feature  the classFeatures[] entry (needs .definition + .levelScale)
+ */
+export function buildCombatSuperiorityItem(feature, ddbData, ctx) {
+  const item = buildFeatureItem(feature?.definition ?? {}, ctx);   // key: feat:combat-superiority
+  const { uses, dieSize, count } = buildSuperiorityDicePool(feature, ctx.actions);
+  item.system.uses = uses;
+  item.flags[MODULE_ID] = {
+    ...(item.flags[MODULE_ID] ?? {}),
+    superiorityDie: dieSize,
+    superiorityDiceCount: count,
+  };
+  // Guarantee the dice are visible on the sheet even if DDB token substitution didn't resolve.
+  const line = `<p><strong>Superiority Dice:</strong> ${count}${dieSize} (recover on a short rest)</p>`;
+  item.system.description.value = line + (item.system.description.value ?? "");
+  dbg("ddb:battle-master", "combat superiority", { count, dieSize, spent: uses.spent });
+  return item;
+}
+
+/**
+ * Maneuvers (2014 Battle Master) → one "Maneuver: <name>" feat per chosen option.
+ * Same options.class[] fan-out as buildChoiceFeatureItems, but singular "Maneuver:"
+ * prefix and a "maneuver" subtype, and a shared generic icon key (feat:maneuver).
+ * All imported cosmetic; only Commander's Strike is wired at runtime (Phase 2).
+ */
+export function buildManeuverFeatureItems(parentDef, ddbData, ctx) {
+  const chosen = (ddbData?.options?.class ?? [])
+    .filter((o) => o?.componentId === parentDef?.id && o?.definition)
+    .map((o) => o.definition);
+  dbg("ddb:battle-master", "maneuvers chosen", { names: chosen.map((d) => d.name) });
+  return chosen.map((od) => buildFeatureItem(
+    { ...od, requiredLevel: parentDef.requiredLevel, sources: od.sources ?? parentDef.sources },
+    ctx,
+    { name: `Maneuver: ${od.name}`, subtype: "maneuver", imageKey: "feat:maneuver" }
+  ));
 }
 
 /** Names whose granted feature is a pure choice container — emit the chosen options, drop the parent. */

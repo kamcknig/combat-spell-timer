@@ -30,6 +30,9 @@ export const FEATURE_IMAGES = {
   "feat:weapon-mastery-slow":                  `${BASE}/weapon-mastery-slow.webp`,
   "feat:weapon-mastery-topple":                `${BASE}/weapon-mastery-topple.webp`,
   "feat:weapon-mastery-vex":                   `${BASE}/weapon-mastery-vex.webp`,
+  "feat:combat-superiority":                   `${BASE}/combat-superiority.webp`,
+  "feat:maneuver":                             `${BASE}/maneuver.webp`,
+  "subclass:battle-master":                    `${BASE}/battle-master.webp`,
 };
 
 /** Curated path for a key, else the provided dnd5e fallback icon. */
