@@ -73,9 +73,13 @@ async function postRallyCard(actor, dieSize, cardData, consumed) {
   dbg("dnd5e:rally:posted", actor.name, message?.id);
 }
 
-/** Roll one superiority die and post it. Speaker is the maneuver's actor. */
+/**
+ * Roll one superiority die + the actor's Charisma modifier (RAW: "temporary
+ * hit points equal to the superiority die roll + your Charisma modifier")
+ * and post it. Speaker is the maneuver's actor.
+ */
 async function onRollDie(actor, dieSize) {
-  const roll = await new Roll(`1${dieSize}`).evaluate();
+  const roll = await new Roll(`1${dieSize} + @abilities.cha.mod`, actor.getRollData()).evaluate();
   await roll.toMessage({
     flavor: game.i18n.localize("COMBAT_SPELL_TIMER.Rally.RollFlavor"),
     speaker: ChatMessage.getSpeaker({ actor }),
