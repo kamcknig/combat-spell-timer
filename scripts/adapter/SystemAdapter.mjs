@@ -255,6 +255,10 @@ export default class SystemAdapter {
    *  Superiority consumption, damage-die stacking, Wisdom-save prompt). Default: no-op. */
   registerMenacingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Precision Attack (usage-card button, Combat
+   *  Superiority consumption, attack-roll die stacking). Default: no-op. */
+  registerPrecisionAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

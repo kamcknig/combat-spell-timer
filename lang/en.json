@@ -322,6 +322,12 @@
       "SaveButton": "Wisdom Save",
       "NoTargets": "Menacing Attack: no targets selected or controlled — select or control a token and try again."
     },
+    "PrecisionAttack": {
+      "Title": "Precision Attack",
+      "Prompt": "Expend a superiority die to add it to your next attack roll with this weapon. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "PRECISION ATTACK"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",
