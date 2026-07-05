@@ -112,9 +112,6 @@ nav#context-menu.cst-timer-menu {
 .cst-commanders-strike-roll i,
 .cst-commanders-strike-refund i { margin-right: 4px; }
 
-/* Commander's Strike attack-dialog button (wraps onto its own row via inline flex-basis). */
-.dialog-buttons .cst-commanders-strike { margin-top: 4px; }
-
 /* Unarmed Fighting Grapple Damage button appended below the feat's chat card.
    (The same button is also appended into dnd5e's native .card-buttons on the
    Unarmed Strike attack card — that placement needs no extra CSS, since it

@@ -4,6 +4,7 @@ import { FeatureUseDialog } from "../../apps/feature-use-dialog.mjs";
 import { usesOf } from "./second-wind.mjs";
 import { findFeat } from "./features/shared.mjs";
 import { insertBeforeTrailingCardElements } from "./effect-application-tray.mjs";
+import { canAct } from "./weapon-mastery.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Commander's Strike": the imported
@@ -73,7 +74,7 @@ async function handleCommandersStrikeUse(maneuverItem, cardData) {
 /** Post the announcement card carrying the deferred superiority-die roll button. */
 async function postCommandersStrikeCard(actor, dieSize, cardData, consumed) {
   // cardData is dnd5e's fully-rendered item card (from preDisplayCard). Both
-  // entry points (item click, Phase 3's attack-dialog button) reach here via
+  // entry points (item click, the weapon usage-card button) reach here via
   // the maneuver item's own card, so cardData is always present.
   const message = await ChatMessage.create({
     ...cardData,
@@ -185,36 +186,41 @@ function onRenderCommandersStrikeMessage(message, html) {
 }
 
 /**
- * renderAttackRollConfigurationDialog (dnd5e 5.3.3, ApplicationV2): inject a
- * COMMANDER'S STRIKE button below the roll buttons when the rolling actor owns
- * the maneuver and has a superiority die. Clicking closes the attack dialog and
- * fires the maneuver's own use flow (converges on preDisplayCard).
+ * dnd5e.renderChatMessage: append a COMMANDER'S STRIKE button directly into a
+ * weapon's own pre-roll usage card (Activity#use()'s _createUsageMessage,
+ * template chat/activity-card.hbs) — inserted into dnd5e's own .card-buttons
+ * flex column alongside the native Attack/Damage buttons, same placement
+ * Weapon Mastery's Graze/Topple buttons use (see weapon-mastery.mjs). Fires
+ * when the actor owns the maneuver and has a superiority die available.
+ * Clicking it leaves this card untouched — forgoing the attack just means not
+ * clicking Attack — and fires the maneuver's own use flow (converges on
+ * preDisplayCard).
  */
-function onRenderAttackDialog(app, element) {
-  if (element.querySelector(`.${ATTACK_BTN_CLASS}`)) return; // dialog re-renders on form change
+function onRenderUsageCard(message, html) {
+  const activity = message.getAssociatedActivity?.();
+  const actor = message.getAssociatedActor?.();
+  const item = message.getAssociatedItem?.();
+  if (!activity || !actor || !item) return;
+  if (item.type !== "weapon") return;
+  if (!canAct(actor)) return;
 
-  const activity = app.config?.subject;          // AttackActivity
-  const actor = activity?.actor;
-  if (!actor) return;
+  const container = html.querySelector(".card-buttons");
+  if (!container || container.querySelector(`.${ATTACK_BTN_CLASS}`)) return;
 
   const maneuver = actor.items.find(isCommandersStrikeItem);
   if (!maneuver) return;
   const pool = findCombatSuperiority(actor);
   if ((pool?.system?.uses?.value ?? 0) <= 0) return; // no die available
 
-  const nav = element.querySelector(".dialog-buttons");
-  if (!nav) return;
-
   const btn = document.createElement("button");
-  btn.type = "button";                            // never submit
+  btn.type = "button";
   btn.className = ATTACK_BTN_CLASS;
-  btn.style.flexBasis = "100%";                   // wrap onto its own row below the flexrow
   btn.innerHTML = `<i class="fa-solid fa-people-arrows"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.CommandersStrike.AttackButton")}`;
-  btn.addEventListener("click", () => {
-    app.close();                                  // forgo this attack roll
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
     maneuver.use();                               // → dnd5e.preDisplayCard → our flow
   });
-  nav.insertAdjacentElement("afterend", btn);
+  container.appendChild(btn);
   dbg("dnd5e:commanders-strike:attack-button", actor.name);
 }
 
@@ -222,5 +228,5 @@ function onRenderAttackDialog(app, element) {
 export function registerCommandersStrikeHooks() {
   Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayCommandersStrikeCard(item, messageConfig));
   Hooks.on("dnd5e.renderChatMessage", onRenderCommandersStrikeMessage);
-  Hooks.on("renderAttackRollConfigurationDialog", onRenderAttackDialog);
+  Hooks.on("dnd5e.renderChatMessage", onRenderUsageCard);
 }
