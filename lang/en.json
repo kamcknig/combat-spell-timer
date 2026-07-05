@@ -260,7 +260,6 @@
       "Prompt": "Expend a superiority die to attempt to disarm your target on a hit. {remaining} superiority {die} remaining.",
       "NoDice": "No superiority dice remaining.",
       "Button": "DISARMING ATTACK",
-      "DamageLabelSuffix": "Disarming",
       "SaveButton": "Strength Save",
       "NoTargets": "Disarming Attack: no targets selected or controlled — select or control a token and try again."
     },
@@ -269,7 +268,6 @@
       "Prompt": "Expend a superiority die to distract your target on a hit. {remaining} superiority {die} remaining.",
       "NoDice": "No superiority dice remaining.",
       "Button": "DISTRACTING STRIKE",
-      "DamageLabelSuffix": "Distracting",
       "EffectName": "Distracted",
       "RoundsLeft": "Until the attacker's next turn",
       "EndLabel": "End Distracting Strike"

@@ -128,10 +128,24 @@ nav#context-menu.cst-timer-menu {
 .cst-weapon-mastery-controls .cst-weapon-mastery-graze,
 .cst-weapon-mastery-controls .cst-weapon-mastery-topple { flex: 1; }
 
+/* Disarming Attack "Disarming Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-disarming-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-disarming-attack-controls .cst-disarming-attack,
+.cst-disarming-attack-controls .cst-disarming-attack-refund { flex: 1; }
+.cst-disarming-attack i,
+.cst-disarming-attack-refund i { margin-right: 4px; }
+
 /* Disarming Attack Strength Save button appended below its damage-roll message. */
 .cst-disarming-attack-save-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
 .cst-disarming-attack-save-controls .cst-disarming-attack-save { flex: 1; }
 .cst-disarming-attack-save i { margin-right: 4px; }
+
+/* Distracting Strike "Distracting Strike" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-distracting-strike-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-distracting-strike-controls .cst-distracting-strike,
+.cst-distracting-strike-controls .cst-distracting-strike-refund { flex: 1; }
+.cst-distracting-strike i,
+.cst-distracting-strike-refund i { margin-right: 4px; }
 
 /* Evasive Footwork "Roll Superiority Die" button / rolled readout, inserted above its announcement card's property tags. */
 .cst-evasive-footwork-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
