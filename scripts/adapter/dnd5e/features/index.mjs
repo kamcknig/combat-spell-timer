@@ -9,9 +9,10 @@ import sap from "./sap.mjs";
 import slow from "./slow.mjs";
 import distractingStrike from "./distracting-strike.mjs";
 import feintingAttack from "./feinting-attack.mjs";
+import goadingAttack from "./goading-attack.mjs";
 
 /** All registered features, keyed by id. Add new features here. */
-const FEATURES = new Map([rage, zealousPresence, pathToTheGrave, symbioticEntity, wrathOfTheSea, moonlightStep, giantsMight, sap, slow, distractingStrike, feintingAttack].map(f => [f.id, f]));
+const FEATURES = new Map([rage, zealousPresence, pathToTheGrave, symbioticEntity, wrathOfTheSea, moonlightStep, giantsMight, sap, slow, distractingStrike, feintingAttack, goadingAttack].map(f => [f.id, f]));
 
 export function getFeature(id) { return id ? FEATURES.get(id) ?? null : null; }
 export function listFeatures() { return [...FEATURES.values()]; }

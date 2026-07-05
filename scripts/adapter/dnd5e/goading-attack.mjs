@@ -5,8 +5,9 @@ import { usesOf } from "./second-wind.mjs";
 import { findFeat } from "./features/shared.mjs";
 import { findCombatSuperiority } from "./commanders-strike.mjs";
 import { canAct } from "./weapon-mastery.mjs";
-import { insertBeforeTrailingCardElements } from "./effect-application-tray.mjs";
+import { ensureEffectTemplate, injectEffectApplicationTray, insertBeforeTrailingCardElements } from "./effect-application-tray.mjs";
 import { armManeuverDie, disarmManeuverDie } from "./maneuver-damage-dice.mjs";
+import { GOADED_FLAG, GOADED_STATUS_ID } from "./features/goading-attack.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Goading Attack" has two independent
@@ -52,6 +53,8 @@ const CONTROLS_CLASS = "cst-goading-attack-controls";
 function findGoadingAttackManeuver(actor) {
   return findFeat(actor, "maneuver: goading attack", "maneuver-goading-attack");
 }
+
+const pendingGoadApplied = new Map(); // activity.uuid -> { actorUuid } — consumed by onRenderGoadDamageMessage
 
 /** Prompt USE/CHAT, consume one Combat Superiority die on USE, post a plain announcement either way. */
 async function handleGoadingAttackUse(maneuverItem) {
@@ -119,7 +122,10 @@ function buildFreshGoadButton(container, message, activity, actor, maneuver) {
       const armed = { dieSize: result.dieSize, actorUuid: result.actorUuid, consumed: false };
       armManeuverDie(activity, "goad", {
         dieSize: armed.dieSize,
-        onApplied: () => message.setFlag(MODULE_ID, `${GOAD_FLAG}.consumed`, true),
+        onApplied: () => {
+          pendingGoadApplied.set(activity.uuid, { actorUuid: armed.actorUuid });
+          message.setFlag(MODULE_ID, `${GOAD_FLAG}.consumed`, true);
+        },
       });
       await message.setFlag(MODULE_ID, GOAD_FLAG, armed);
       btn.replaceWith(buildRefundButton(message, container, activity, armed));
@@ -197,7 +203,10 @@ function onRenderAttackRollMessage(message, html) {
     if (!armed.consumed) {
       armManeuverDie(activity, "goad", {
         dieSize: armed.dieSize,
-        onApplied: () => message.setFlag(MODULE_ID, `${GOAD_FLAG}.consumed`, true),
+        onApplied: () => {
+          pendingGoadApplied.set(activity.uuid, { actorUuid: armed.actorUuid });
+          message.setFlag(MODULE_ID, `${GOAD_FLAG}.consumed`, true);
+        },
       });
     }
     const wrap = document.createElement("div");
@@ -215,6 +224,52 @@ function onRenderAttackRollMessage(message, html) {
   wrap.appendChild(buildFreshGoadButton(container, message, activity, actor, maneuver));
   insertBeforeTrailingCardElements(container, wrap);
   dbg("dnd5e:goading-attack:button", actor.name);
+}
+
+/**
+ * dnd5e.renderChatMessage: offer the Goaded apply-effects tray on the damage
+ * message for the attack an armed Goading Attack die was just added to
+ * (mirrors Sap/Slow's own placement, and Disarming Attack's
+ * pendingDisarmApplied -> message-flags transfer shape, so a later
+ * re-render — scroll, reload — still shows the tray after the in-memory map
+ * entry is gone). The GM decides whether to apply it — this module doesn't
+ * automate the target's Wisdom saving throw.
+ *
+ * The persisted template effect is hosted on the WEAPON item, not the
+ * maneuver item: dnd5e's native Apply handler
+ * (EffectApplicationElement#_onApplyEffect) ignores the tray's own
+ * `.effects` property and re-resolves the clicked effect via
+ * `chatMessage.getAssociatedItem()?.effects.get(id)` — for a damage
+ * message, getAssociatedItem() resolves `flags.dnd5e.item.uuid`, which is
+ * the weapon that produced the roll, not the maneuver feat. Hosting on the
+ * maneuver item (the way Distracting Strike's tray does today) means Apply
+ * silently finds nothing. Weapon Mastery's Sap/Slow trays already get this
+ * right by hosting on the weapon (weapon-mastery.mjs#ensureMasteryEffectTemplate)
+ * — same fix here.
+ */
+async function onRenderGoadDamageMessage(message, html) {
+  if (message.flags?.dnd5e?.roll?.type !== "damage") return;
+  const activity = message.getAssociatedActivity?.();
+  const item = message.getAssociatedItem?.();
+  if (!activity || !item) return;
+
+  let applied = message.getFlag(MODULE_ID, "goadingAttackApplied");
+  if (!applied) {
+    const pending = pendingGoadApplied.get(activity.uuid);
+    if (!pending) return;
+    applied = pending;
+    pendingGoadApplied.delete(activity.uuid);
+    message.setFlag(MODULE_ID, "goadingAttackApplied", applied);
+  }
+
+  const actor = fromUuidSync(applied.actorUuid);
+  if (!actor) return;
+  const effectDoc = await ensureEffectTemplate(item, actor, {
+    name: game.i18n.localize("COMBAT_SPELL_TIMER.GoadingAttack.EffectName"),
+    statusId: GOADED_STATUS_ID, flagKey: GOADED_FLAG,
+  });
+  injectEffectApplicationTray(html, effectDoc);
+  dbg("dnd5e:goading-attack:tray", actor.name);
 }
 
 const GOAD_ANNOUNCE_FLAG = "goadingAttackAnnounce"; // bare-item message flags[MODULE_ID][GOAD_ANNOUNCE_FLAG] = {actorUuid, dieSize, consumed, rolled}
@@ -386,6 +441,7 @@ async function onRenderGoadingAttackAnnounceMessage(message, html) {
 /** Register Goading Attack's activation flow. Call once during setup. */
 export function registerGoadingAttackHooks() {
   Hooks.on("dnd5e.renderChatMessage", onRenderAttackRollMessage);
+  Hooks.on("dnd5e.renderChatMessage", onRenderGoadDamageMessage);
   Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayGoadingAttackCard(item, messageConfig));
   Hooks.on("dnd5e.renderChatMessage", onRenderGoadingAttackAnnounceMessage);
 }

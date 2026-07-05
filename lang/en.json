@@ -297,7 +297,10 @@
       "NoDice": "No superiority dice remaining.",
       "Button": "GOADING ATTACK",
       "RollButton": "Roll Superiority Die",
-      "RollFlavor": "Goading Attack — Superiority Die"
+      "RollFlavor": "Goading Attack — Superiority Die",
+      "EffectName": "Goaded",
+      "RoundsLeft": "Until the attacker's next turn",
+      "EndLabel": "End Goading Attack"
     },
     "LungingAttack": {
       "Title": "Lunging Attack",

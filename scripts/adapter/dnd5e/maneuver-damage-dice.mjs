@@ -9,12 +9,12 @@ import { dbg } from "../../utils/debug.mjs";
  * so a refund only removes its own entry. Appending and committing are split
  * across two hooks: `dnd5e.preRollDamageV2` (append every armed die to the
  * roll, non-destructively — the config dialog hasn't even shown yet, so the
- * roll can still be cancelled or retried) and `dnd5e.rollDamageV2` (the real
- * post-roll commit point — only fires once a roll actually completes, so
- * this is where entries are removed from `pending` and `onApplied` runs).
- * This makes stacking correct by construction, and makes cancel/retry safe,
- * instead of relying on N independently-registered listeners to each mutate
- * the same shared roll config without interfering with one another.
+ * roll can still be cancelled or retried) and `dnd5e.postDamageRollConfiguration`
+ * (the real commit point — see onManeuverRollDamage's own doc comment for why
+ * this hook, specifically, and not dnd5e.rollDamageV2). This makes stacking
+ * correct by construction, and makes cancel/retry safe, instead of relying on
+ * N independently-registered listeners to each mutate the same shared roll
+ * config without interfering with one another.
  */
 const pending = new Map(); // activity.uuid -> Map<sourceTag, {dieSize, onApplied}>
 
@@ -65,19 +65,25 @@ export function onManeuverPreRollDamage(config) {
 }
 
 /**
- * dnd5e.rollDamageV2: the real post-roll commit point. dnd5e fires this
- * (`Hooks.callAll("dnd5e.rollDamageV2", rolls, { subject: this })`) only
- * after the damage roll has actually been evaluated and posted — a
- * cancelled/undismissed configuration dialog means `rolls` ends up empty and
- * `Activity#rollDamage` returns before ever reaching this call, so this hook
- * simply never fires for a roll that didn't complete. That makes it the
- * right place to finalize "this maneuver's die was rolled": look up the
- * activity's pending entries, delete them from `pending`, and run each
- * entry's own `onApplied` callback (flips the originating message's
- * `consumed` flag, stashes follow-up bookkeeping, etc.).
+ * dnd5e.postDamageRollConfiguration: the real commit point. Fires inside
+ * `BasicRoll.buildConfigure`, right after the damage roll configuration
+ * dialog resolves (confirmed or fast-forwarded) — `rolls` is empty if the
+ * dialog was cancelled, so nothing commits then. Deliberately NOT
+ * dnd5e.rollDamageV2: that hook fires only after `Activity#rollDamage`'s
+ * whole `DamageRoll.build()` call returns, which is AFTER `buildPost` has
+ * already created (and the chat log has already rendered once) the damage
+ * message — too late for onApplied's stashed data (Disarming Attack's
+ * Strength Save button, Distracting Strike's tray, Goading Attack's tray)
+ * to be present for that message's first render. This hook fires before the
+ * roll is even evaluated or the message created, which is early enough.
+ * Looks up the activity's pending entries, deletes them from `pending`, and
+ * runs each entry's own `onApplied` callback.
+ * @param {Roll[]} rolls   The rolls that are about to be evaluated (empty if cancelled).
+ * @param {object} config  The damage roll process configuration (same object preRollDamageV2 received).
  */
-export function onManeuverRollDamage(rolls, data) {
-  const activity = data?.subject;
+export function onManeuverRollDamage(rolls, config) {
+  if (!rolls?.length) return; // dialog was cancelled — nothing to commit
+  const activity = config?.subject;
   const forActivity = activity && pending.get(activity.uuid);
   if (!forActivity?.size) return;
   pending.delete(activity.uuid);
@@ -91,5 +97,5 @@ export function onManeuverRollDamage(rolls, data) {
 /** Register the shared drain listeners. Call once during setup. */
 export function registerManeuverDamageDiceHooks() {
   Hooks.on("dnd5e.preRollDamageV2", onManeuverPreRollDamage);
-  Hooks.on("dnd5e.rollDamageV2", onManeuverRollDamage);
+  Hooks.on("dnd5e.postDamageRollConfiguration", onManeuverRollDamage);
 }

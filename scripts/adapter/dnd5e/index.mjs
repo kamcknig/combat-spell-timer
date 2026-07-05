@@ -14,6 +14,7 @@ import { onSapPreRollAttack, onSapAttackRolled, onSapEffectApplied } from "./fea
 import { onSlowPreCreate, onSlowEffectApplied } from "./features/slow.mjs";
 import { onDistractingStrikeEffectApplied, onDistractingStrikeTargetAttacked } from "./features/distracting-strike.mjs";
 import { onFeintingAttackEffectApplied } from "./features/feinting-attack.mjs";
+import { onGoadingAttackEffectApplied, onGoadedPreRollAttack } from "./features/goading-attack.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
@@ -291,6 +292,10 @@ export default class Dnd5eAdapter extends SystemAdapter {
     // Weapon Mastery Sap imposes Disadvantage on a sapped actor's next attack
     // roll. Same pre-roll timing as Moonlight Step, above.
     Hooks.on("dnd5e.preRollAttackV2", (config) => onSapPreRollAttack(config));
+    // Goading Attack imposes Disadvantage on a goaded actor's attack rolls
+    // against anyone other than the caster, for the whole marker duration
+    // (not just the next attack). Same pre-roll timing as Sap, above.
+    Hooks.on("dnd5e.preRollAttackV2", (config) => onGoadedPreRollAttack(config));
     // Path to the Grave use flow: a no-activity item posts a bare card via
     // displayCard — intercept that once to fix the item up (no-op curse
     // template effect + consumption activity linking it), after which dnd5e's
@@ -354,6 +359,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
       onSlowEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onDistractingStrikeEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onFeintingAttackEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
+      onGoadingAttackEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
