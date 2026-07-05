@@ -251,6 +251,10 @@ export default class SystemAdapter {
    *  Default: no-op. */
   registerManeuveringAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Menacing Attack (weapon-card button, Combat
+   *  Superiority consumption, damage-die stacking, Wisdom-save prompt). Default: no-op. */
+  registerMenacingAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

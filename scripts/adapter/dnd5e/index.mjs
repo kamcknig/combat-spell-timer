@@ -35,6 +35,7 @@ import { registerFeintingAttackHooks } from "./feinting-attack.mjs";
 import { registerGoadingAttackHooks } from "./goading-attack.mjs";
 import { registerLungingAttackHooks } from "./lunging-attack.mjs";
 import { registerManeuveringAttackHooks } from "./maneuvering-attack.mjs";
+import { registerMenacingAttackHooks } from "./menacing-attack.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -465,6 +466,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerLungingAttackSync() { registerLungingAttackHooks(); }
 
   registerManeuveringAttackSync() { registerManeuveringAttackHooks(); }
+
+  registerMenacingAttackSync() { registerMenacingAttackHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

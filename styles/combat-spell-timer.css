@@ -174,6 +174,18 @@ nav#context-menu.cst-timer-menu {
 .cst-maneuvering-attack i,
 .cst-maneuvering-attack-refund i { margin-right: 4px; }
 
+/* Menacing Attack "Menacing Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-menacing-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-menacing-attack-controls .cst-menacing-attack,
+.cst-menacing-attack-controls .cst-menacing-attack-refund { flex: 1; }
+.cst-menacing-attack i,
+.cst-menacing-attack-refund i { margin-right: 4px; }
+
+/* Menacing Attack Wisdom Save button appended below its damage-roll message. */
+.cst-menacing-attack-save-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-menacing-attack-save-controls .cst-menacing-attack-save { flex: 1; }
+.cst-menacing-attack-save i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }
