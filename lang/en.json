@@ -299,6 +299,12 @@
       "RollButton": "Roll Superiority Die",
       "RollFlavor": "Goading Attack — Superiority Die"
     },
+    "LungingAttack": {
+      "Title": "Lunging Attack",
+      "Prompt": "Expend a superiority die to increase your reach by 5 feet for this attack, adding the die to the attack's damage roll on a hit. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "LUNGING ATTACK"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",

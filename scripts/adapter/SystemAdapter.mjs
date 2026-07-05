@@ -241,6 +241,11 @@ export default class SystemAdapter {
    *  USE/CHAT dialog, Combat Superiority consumption, card arming). Default: no-op. */
   registerGoadingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Lunging Attack (weapon usage-card button,
+   *  USE/CHAT dialog, Combat Superiority consumption, card arming).
+   *  Default: no-op. */
+  registerLungingAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
