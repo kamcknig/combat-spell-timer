@@ -27,6 +27,7 @@ import { registerIndomitableHooks } from "./indomitable.mjs";
 import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
 import { registerDisarmingAttackHooks } from "./disarming-attack.mjs";
 import { registerDistractingStrikeHooks } from "./distracting-strike.mjs";
+import { registerEvasiveFootworkHooks } from "./evasive-footwork.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -439,6 +440,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerDisarmingAttackSync() { registerDisarmingAttackHooks(); }
 
   registerDistractingStrikeSync() { registerDistractingStrikeHooks(); }
+
+  registerEvasiveFootworkSync() { registerEvasiveFootworkHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

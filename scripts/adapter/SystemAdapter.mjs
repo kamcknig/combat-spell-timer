@@ -222,6 +222,11 @@ export default class SystemAdapter {
    *  dialog, Combat Superiority consumption, card arming). Default: no-op. */
   registerDistractingStrikeSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Evasive Footwork (bare-item USE/CHAT
+   *  dialog, Combat Superiority consumption, roll button, apply-effects
+   *  tray). Default: no-op. */
+  registerEvasiveFootworkSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

@@ -91,8 +91,14 @@ export function injectEffectApplicationTray(html, effectDoc) {
   if (!container || container.querySelector("effect-application")) return;
   const el = document.createElement("effect-application");
   el.effects = [effectDoc];
-  const damageApplication = container.querySelector("damage-application");
-  if (damageApplication) container.insertBefore(el, damageApplication);
+  // Anchor before whichever trailing card element is present: a damage
+  // roll's own <damage-application> (a direct child of .message-content),
+  // or — for a bare item card (item-card.hbs) — its property-tags row
+  // (.card-footer.pills, nested inside .chat-card, not .message-content
+  // itself), so the tray lands above the tags rather than below the whole
+  // card. Falls back to appending when neither is present.
+  const anchor = container.querySelector("damage-application") ?? container.querySelector(".card-footer.pills");
+  if (anchor) anchor.parentElement.insertBefore(el, anchor);
   else container.appendChild(el);
   el.visible = true;
 }

@@ -274,6 +274,15 @@
       "RoundsLeft": "Until the attacker's next turn",
       "EndLabel": "End Distracting Strike"
     },
+    "EvasiveFootwork": {
+      "Title": "Evasive Footwork",
+      "Prompt": "Expend a superiority die to add it to your AC while you're moving. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "RollButton": "Roll Superiority Die",
+      "RollFlavor": "Evasive Footwork — Superiority Die",
+      "RolledLabel": "Rolled {total} — apply the AC bonus below.",
+      "EffectName": "Evasive Footwork"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",
