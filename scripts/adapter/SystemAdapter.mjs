@@ -271,6 +271,10 @@ export default class SystemAdapter {
    *  button, Combat Superiority consumption, damage-die stacking). Default: no-op. */
   registerRiposteSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Sweeping Attack (melee-only attack-roll-message
+   *  button, Combat Superiority consumption, immediate typed damage roll). Default: no-op. */
+  registerSweepingAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

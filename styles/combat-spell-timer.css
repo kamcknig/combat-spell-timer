@@ -205,6 +205,13 @@ nav#context-menu.cst-timer-menu {
 .cst-rally-roll i,
 .cst-rally-refund i { margin-right: 4px; }
 
+/* Sweeping Attack "Sweeping Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-sweeping-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-sweeping-attack-controls .cst-sweeping-attack,
+.cst-sweeping-attack-controls .cst-sweeping-attack-refund { flex: 1; }
+.cst-sweeping-attack i,
+.cst-sweeping-attack-refund i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }
