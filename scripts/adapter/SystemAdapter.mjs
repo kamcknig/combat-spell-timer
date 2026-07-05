@@ -227,6 +227,11 @@ export default class SystemAdapter {
    *  tray). Default: no-op. */
   registerEvasiveFootworkSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Feinting Attack (bare-item USE/CHAT
+   *  dialog, Combat Superiority consumption, roll button, apply-effects
+   *  tray, marker automation). Default: no-op. */
+  registerFeintingAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

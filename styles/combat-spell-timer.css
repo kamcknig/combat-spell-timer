@@ -138,6 +138,11 @@ nav#context-menu.cst-timer-menu {
 .cst-evasive-footwork-controls .cst-evasive-footwork-roll { flex: 1; }
 .cst-evasive-footwork-controls i { margin-right: 4px; }
 
+/* Feinting Attack "Roll Superiority Die" button, inserted above its announcement card's property tags. */
+.cst-feinting-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-feinting-attack-controls .cst-feinting-attack-roll { flex: 1; }
+.cst-feinting-attack-controls i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }

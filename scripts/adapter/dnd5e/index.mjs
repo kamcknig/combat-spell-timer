@@ -13,6 +13,7 @@ import { onGiantsMightRenderUsageDialog } from "./features/giants-might.mjs";
 import { onSapPreRollAttack, onSapAttackRolled, onSapEffectApplied } from "./features/sap.mjs";
 import { onSlowPreCreate, onSlowEffectApplied } from "./features/slow.mjs";
 import { onDistractingStrikeEffectApplied, onDistractingStrikeTargetAttacked } from "./features/distracting-strike.mjs";
+import { onFeintingAttackEffectApplied } from "./features/feinting-attack.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
@@ -28,6 +29,7 @@ import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
 import { registerDisarmingAttackHooks } from "./disarming-attack.mjs";
 import { registerDistractingStrikeHooks } from "./distracting-strike.mjs";
 import { registerEvasiveFootworkHooks } from "./evasive-footwork.mjs";
+import { registerFeintingAttackHooks } from "./feinting-attack.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -348,6 +350,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
       onSapEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onSlowEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onDistractingStrikeEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
+      onFeintingAttackEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
@@ -442,6 +445,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerDistractingStrikeSync() { registerDistractingStrikeHooks(); }
 
   registerEvasiveFootworkSync() { registerEvasiveFootworkHooks(); }
+
+  registerFeintingAttackSync() { registerFeintingAttackHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

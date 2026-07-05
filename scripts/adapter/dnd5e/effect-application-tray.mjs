@@ -79,6 +79,26 @@ export async function ensureEffectTemplate(hostItem, actor, { name, img, statusI
 }
 
 /**
+ * Insert `el` into a chat message's `.message-content`, anchored before
+ * whichever trailing card element is present: a damage roll's own
+ * <damage-application> (a direct child of .message-content), an
+ * already-injected <effect-application> tray, or — for a bare item card
+ * (item-card.hbs) — its property-tags row (.card-footer.pills, nested
+ * inside .chat-card, not .message-content itself) — so injected content
+ * lands above the tags/tray rather than at the very end of the card. Falls
+ * back to appending when none of those are present. A bare
+ * `container.appendChild(el)` is WRONG for anything meant to render as part
+ * of the card body (a roll button, a readout, a tray): it lands after the
+ * property tags, which reads as visually misplaced. Use this for any new
+ * chat-card control, not just apply-effects trays.
+ */
+export function insertBeforeTrailingCardElements(container, el) {
+  const anchor = container.querySelector("damage-application") ?? container.querySelector("effect-application") ?? container.querySelector(".card-footer.pills");
+  if (anchor) anchor.parentElement.insertBefore(el, anchor);
+  else container.appendChild(el);
+}
+
+/**
  * Insert a <effect-application> tray offering `effectDoc` into a chat
  * message's HTML, once. Explicitly marks it `visible` right after
  * connecting: dnd5e's ChatLog5e only wires live target-list updates
@@ -102,14 +122,6 @@ export function injectEffectApplicationTray(html, effectDoc) {
   if (!container || container.querySelector("effect-application")) return;
   const el = document.createElement("effect-application");
   el.effects = [effectDoc];
-  // Anchor before whichever trailing card element is present: a damage
-  // roll's own <damage-application> (a direct child of .message-content),
-  // or — for a bare item card (item-card.hbs) — its property-tags row
-  // (.card-footer.pills, nested inside .chat-card, not .message-content
-  // itself), so the tray lands above the tags rather than below the whole
-  // card. Falls back to appending when neither is present.
-  const anchor = container.querySelector("damage-application") ?? container.querySelector(".card-footer.pills");
-  if (anchor) anchor.parentElement.insertBefore(el, anchor);
-  else container.appendChild(el);
+  insertBeforeTrailingCardElements(container, el);
   el.visible = true;
 }
