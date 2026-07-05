@@ -34,15 +34,26 @@ import { MODULE_ID } from "../../module.mjs";
  * no-op for them — but a feature whose bonus varies per use (Evasive
  * Footwork's AC bonus, resolved from that use's die roll) needs the
  * template brought current on every call, not just at creation.
+ *
+ * `extraFlags` covers the same "varies per use" need for data that isn't an
+ * AE `changes` entry at all — e.g. Feinting Attack's rolled superiority-die
+ * total, which the marker carries as plain flag data for a later
+ * `dnd5e.preRollDamageV2` hook to read, not something dnd5e's active-effect
+ * pipeline applies itself. Each key is refreshed on reuse exactly like
+ * `changes` above, and stamped onto the effect at creation alongside the
+ * existing flag keys.
  */
 const pendingTemplateCreation = new Map(); // `${hostItem.uuid}:${flagKey}` -> in-flight Promise<ActiveEffect|null>
 
-export async function ensureEffectTemplate(hostItem, actor, { name, img, statusId, flagKey, changes = [], duration = { rounds: 1 } }) {
+export async function ensureEffectTemplate(hostItem, actor, { name, img, statusId, flagKey, changes = [], duration = { rounds: 1 }, extraFlags = {} }) {
   const existing = hostItem.effects.find(e => e.flags?.[MODULE_ID]?.[flagKey]);
   if (existing) {
     const updates = {};
     if (existing.flags[MODULE_ID].casterActorUuid !== actor.uuid) updates[`flags.${MODULE_ID}.casterActorUuid`] = actor.uuid;
     if (!foundry.utils.objectsEqual(existing.changes, changes)) updates.changes = changes;
+    for (const [key, value] of Object.entries(extraFlags)) {
+      if (existing.flags[MODULE_ID][key] !== value) updates[`flags.${MODULE_ID}.${key}`] = value;
+    }
     if (Object.keys(updates).length) await existing.update(updates);
     return existing;
   }
@@ -55,7 +66,7 @@ export async function ensureEffectTemplate(hostItem, actor, { name, img, statusI
       name, img: img ?? hostItem.img, statuses: [statusId], changes,
       transfer: false, disabled: false,
       duration,
-      flags: { dnd5e: { isTemporary: true }, [MODULE_ID]: { [flagKey]: true, casterActorUuid: actor.uuid } },
+      flags: { dnd5e: { isTemporary: true }, [MODULE_ID]: { [flagKey]: true, casterActorUuid: actor.uuid, ...extraFlags } },
     }]);
     return created ?? null;
   })();
