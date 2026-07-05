@@ -232,6 +232,10 @@ export default class SystemAdapter {
    *  tray, marker automation). Default: no-op. */
   registerFeintingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Goading Attack (weapon-card button, bare-item
+   *  USE/CHAT dialog, Combat Superiority consumption, card arming). Default: no-op. */
+  registerGoadingAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

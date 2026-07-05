@@ -143,6 +143,13 @@ nav#context-menu.cst-timer-menu {
 .cst-feinting-attack-controls .cst-feinting-attack-roll { flex: 1; }
 .cst-feinting-attack-controls i { margin-right: 4px; }
 
+/* Goading Attack "Goading Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-goading-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-goading-attack-controls .cst-goading-attack,
+.cst-goading-attack-controls .cst-goading-attack-refund { flex: 1; }
+.cst-goading-attack i,
+.cst-goading-attack-refund i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }
