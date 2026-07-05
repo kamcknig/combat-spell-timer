@@ -3,6 +3,7 @@ import { dbg } from "../../utils/debug.mjs";
 import { FeatureUseDialog } from "../../apps/feature-use-dialog.mjs";
 import { usesOf } from "./second-wind.mjs";
 import { findFeat } from "./features/shared.mjs";
+import { insertBeforeTrailingCardElements } from "./effect-application-tray.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Commander's Strike": the imported
@@ -165,7 +166,10 @@ function buildRefundButton(message, data) {
 /**
  * dnd5e.renderChatMessage: append either the "Roll Superiority Die" button
  * or, once that roll has happened for a die-consuming card, the
- * "REFUND RESOURCE" button in its place.
+ * "REFUND RESOURCE" button in its place. Inserted via
+ * insertBeforeTrailingCardElements so it lands above the card's
+ * property-tags footer rather than after it (a bare appendChild would put
+ * it below the tags — see effect-application-tray.mjs's doc comment).
  */
 function onRenderCommandersStrikeMessage(message, html) {
   const data = message.getFlag(MODULE_ID, CS_FLAG);
@@ -176,7 +180,7 @@ function onRenderCommandersStrikeMessage(message, html) {
   const wrap = document.createElement("div");
   wrap.className = "cst-commanders-strike-controls";
   wrap.appendChild(data.consumed && data.rolled ? buildRefundButton(message, data) : buildRollButton(message, data));
-  container.appendChild(wrap);
+  insertBeforeTrailingCardElements(container, wrap);
   dbg("dnd5e:commanders-strike:button", data);
 }
 
