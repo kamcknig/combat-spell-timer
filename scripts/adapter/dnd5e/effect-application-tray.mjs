@@ -22,15 +22,28 @@ import { MODULE_ID } from "../../module.mjs";
  * more than once for the same message, e.g. on a chat-log re-render sweep):
  * without this, two overlapping calls could each see no `existing` template
  * yet and both issue a create, leaving a duplicate behind.
+ *
+ * `duration` defaults to `{ rounds: 1 }` (today's behavior for Sap/Slow/
+ * Distracting Strike). Pass `{}` for a feature whose applied effect has no
+ * rules-defined expiry (e.g. Evasive Footwork's AC bonus, which lasts
+ * "until you stop moving" — something this module can't detect).
+ *
+ * The "existing" branch also refreshes `changes` (in addition to
+ * `casterActorUuid`) whenever they differ from what's stored. Sap/Slow/
+ * Distracting Strike's `changes` are constant on every call, so this is a
+ * no-op for them — but a feature whose bonus varies per use (Evasive
+ * Footwork's AC bonus, resolved from that use's die roll) needs the
+ * template brought current on every call, not just at creation.
  */
 const pendingTemplateCreation = new Map(); // `${hostItem.uuid}:${flagKey}` -> in-flight Promise<ActiveEffect|null>
 
-export async function ensureEffectTemplate(hostItem, actor, { name, img, statusId, flagKey, changes = [] }) {
+export async function ensureEffectTemplate(hostItem, actor, { name, img, statusId, flagKey, changes = [], duration = { rounds: 1 } }) {
   const existing = hostItem.effects.find(e => e.flags?.[MODULE_ID]?.[flagKey]);
   if (existing) {
-    if (existing.flags[MODULE_ID].casterActorUuid !== actor.uuid) {
-      await existing.update({ [`flags.${MODULE_ID}.casterActorUuid`]: actor.uuid });
-    }
+    const updates = {};
+    if (existing.flags[MODULE_ID].casterActorUuid !== actor.uuid) updates[`flags.${MODULE_ID}.casterActorUuid`] = actor.uuid;
+    if (!foundry.utils.objectsEqual(existing.changes, changes)) updates.changes = changes;
+    if (Object.keys(updates).length) await existing.update(updates);
     return existing;
   }
 
@@ -41,7 +54,7 @@ export async function ensureEffectTemplate(hostItem, actor, { name, img, statusI
     const [created] = await hostItem.createEmbeddedDocuments("ActiveEffect", [{
       name, img: img ?? hostItem.img, statuses: [statusId], changes,
       transfer: false, disabled: false,
-      duration: { rounds: 1 },
+      duration,
       flags: { dnd5e: { isTemporary: true }, [MODULE_ID]: { [flagKey]: true, casterActorUuid: actor.uuid } },
     }]);
     return created ?? null;
