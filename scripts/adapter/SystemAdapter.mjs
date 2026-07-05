@@ -246,6 +246,11 @@ export default class SystemAdapter {
    *  Default: no-op. */
   registerLungingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Maneuvering Attack (attack-roll-message
+   *  button, USE/CHAT dialog, Combat Superiority consumption, card arming).
+   *  Default: no-op. */
+  registerManeuveringAttackSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
