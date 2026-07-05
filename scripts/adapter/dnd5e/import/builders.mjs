@@ -244,8 +244,8 @@ export function buildCombatSuperiorityItem(feature, ddbData, ctx) {
  * matching the weapon-mastery convention) so each maneuver gets its own curated art
  * instead of sharing one generic icon.
  * All imported cosmetic; Commander's Strike, Disarming Attack, Distracting
- * Strike, Evasive Footwork, and Feinting Attack are wired at runtime — see
- * their own adapter modules.
+ * Strike, Evasive Footwork, Feinting Attack, and Goading Attack are wired at
+ * runtime — see their own adapter modules.
  */
 export function buildManeuverFeatureItems(parentDef, ddbData, ctx) {
   const chosen = (ddbData?.options?.class ?? [])

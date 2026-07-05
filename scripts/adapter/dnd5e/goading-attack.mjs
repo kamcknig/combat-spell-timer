@@ -75,7 +75,12 @@ async function handleGoadingAttackUse(maneuverItem) {
     dbg("dnd5e:goading-attack:consumed", actor.name, remaining - 1);
   }
 
-  await maneuverItem.displayCard(); // plain native item card; entry 2's own preDisplayCard interception is a separate item click, not this one
+  // Item#displayCard() fires the SAME dnd5e.preDisplayCard hook entry 2 listens
+  // on for a real bare-item click — without this flag, entry 2's own handler
+  // would intercept THIS call too and pop a second FeatureUseDialog. Stamping
+  // SUPPRESS_ANNOUNCE_FLAG lets onPreDisplayGoadingAttackCard recognize "this
+  // is entry 1's own plain announcement" and let it through untouched.
+  await maneuverItem.displayCard({ flags: { [MODULE_ID]: { [SUPPRESS_ANNOUNCE_FLAG]: true } } });
   dbg("dnd5e:goading-attack:announced", actor.name, action);
   return { dieSize, actorUuid: actor.uuid, action };
 }
@@ -223,8 +228,176 @@ function onRenderAttackRollMessage(message, html) {
   dbg("dnd5e:goading-attack:button", actor.name);
 }
 
-/** Register Goading Attack's activation flow. Call once during setup. Phase 2 extends this. */
+const GOAD_ANNOUNCE_FLAG = "goadingAttackAnnounce"; // bare-item message flags[MODULE_ID][GOAD_ANNOUNCE_FLAG] = {actorUuid, dieSize, consumed, rolled}
+const SUPPRESS_ANNOUNCE_FLAG = "goadingAttackSuppressAnnounce"; // set on entry 1's own displayCard() call so entry 2 doesn't re-intercept it
+const ANNOUNCE_CONTROLS_CLASS = "cst-goading-attack-announce-controls";
+const ANNOUNCE_BTN_CLASS = "cst-goading-attack-announce-roll";
+const ANNOUNCE_REFUND_BTN_CLASS = "cst-goading-attack-announce-refund";
+
+export const isGoadingAttackItem = (i) => i?.type === "feat" && i?.name?.toLowerCase() === "maneuver: goading attack";
+
+/** True when the current user may act on this message's actor (owner or GM). */
+function canActAnnounce(actor) {
+  return !!game.user?.isGM || (actor?.isOwner ?? false);
+}
+
+/**
+ * dnd5e.preDisplayCard: intercept the bare maneuver item's own card, run our
+ * standalone flow instead — UNLESS this call originated from entry 1's own
+ * handleGoadingAttackUse() posting its plain announcement (that also goes
+ * through Item#displayCard(), which fires this same hook); see
+ * SUPPRESS_ANNOUNCE_FLAG.
+ */
+export function onPreDisplayGoadingAttackCard(item, messageConfig) {
+  if (!isGoadingAttackItem(item)) return true;
+  if (messageConfig?.data?.flags?.[MODULE_ID]?.[SUPPRESS_ANNOUNCE_FLAG]) return true;
+  handleGoadingAttackItemUse(item, messageConfig?.data)
+    .catch((err) => console.error("combat-spell-timer | goading attack failed", err));
+  return false;
+}
+
+/** Prompt USE/CHAT, consume one Combat Superiority die on USE, post the card either way. */
+async function handleGoadingAttackItemUse(maneuverItem, cardData) {
+  const actor = maneuverItem.actor;
+  if (!actor) return;
+  const pool = findCombatSuperiority(actor);
+  const { remaining } = usesOf(pool);
+  const dieSize = pool?.getFlag(MODULE_ID, "superiorityDie") ?? "d8";
+
+  const action = await FeatureUseDialog.prompt({
+    title: game.i18n.localize("COMBAT_SPELL_TIMER.GoadingAttack.Title"),
+    message: game.i18n.format("COMBAT_SPELL_TIMER.GoadingAttack.Prompt", { remaining, die: dieSize }),
+    icon: "fa-solid fa-bullhorn",
+    canUse: remaining > 0,
+  });
+  if (!action) return; // dismissed
+  let consumed = false;
+  if (action === "use") {
+    if (!pool || remaining <= 0) {
+      ui.notifications?.warn(game.i18n.localize("COMBAT_SPELL_TIMER.GoadingAttack.NoDice"));
+      return;
+    }
+    await pool.update({ "system.uses.spent": pool.system.uses.spent + 1 });
+    consumed = true;
+    dbg("dnd5e:goading-attack:item-consumed", actor.name, remaining - 1);
+  }
+
+  const message = await ChatMessage.create({
+    ...cardData,
+    flags: foundry.utils.mergeObject(cardData?.flags ?? {}, {
+      [MODULE_ID]: { [GOAD_ANNOUNCE_FLAG]: { actorUuid: actor.uuid, dieSize, consumed, rolled: false } },
+    }),
+  });
+  dbg("dnd5e:goading-attack:item-announced", actor.name, message?.id, consumed);
+}
+
+/**
+ * Roll the superiority die, persist the result onto the announcement
+ * message, post the roll as its own chat message, and swap the roll button
+ * for REFUND RESOURCE (same toggle shape as Commander's Strike's own
+ * roll-or-refund card) — no apply-effects tray, since no target marker was
+ * requested for this maneuver.
+ */
+async function onAnnounceRollClick(message, container, actor, data) {
+  const roll = await new Roll(`1${data.dieSize}`).evaluate();
+  await roll.toMessage({
+    flavor: game.i18n.localize("COMBAT_SPELL_TIMER.GoadingAttack.RollFlavor"),
+    speaker: ChatMessage.getSpeaker({ actor }),
+  });
+  const next = { ...data, rolled: true, total: roll.total };
+  await message.setFlag(MODULE_ID, GOAD_ANNOUNCE_FLAG, next);
+  const btn = container.querySelector(`.${ANNOUNCE_BTN_CLASS}`);
+  if (btn) btn.replaceWith(buildAnnounceRefundButton(message, container, actor, next));
+  dbg("dnd5e:goading-attack:item-rolled", actor.name, roll.total);
+}
+
+/** Build the "ROLL SUPERIORITY DIE" icon button for entry 2's announcement card. */
+function buildAnnounceRollButton(message, container, actor, data) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = ANNOUNCE_BTN_CLASS;
+  btn.innerHTML = `<i class="fa-solid fa-dice-d20"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.GoadingAttack.RollButton")}`;
+  btn.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    btn.disabled = true;
+    try {
+      await onAnnounceRollClick(message, container, actor, data);
+    } catch (err) {
+      warn("goading attack roll failed", err);
+      btn.disabled = false;
+    }
+  });
+  return btn;
+}
+
+/** Build the REFUND RESOURCE button that replaces a rolled ROLL SUPERIORITY DIE button. */
+function buildAnnounceRefundButton(message, container, actor, data) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = ANNOUNCE_REFUND_BTN_CLASS;
+  btn.innerHTML = `<i class="fa-solid fa-rotate-left" inert></i> <span>${game.i18n.localize("COMBAT_SPELL_TIMER.RefundResourceButton")}</span>`;
+  btn.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    btn.disabled = true;
+    try {
+      await onAnnounceRefundClick(message, container, actor, data);
+    } catch (err) {
+      warn("goading attack refund failed", err);
+      btn.disabled = false;
+    }
+  });
+  return btn;
+}
+
+/**
+ * Refund the spent Combat Superiority die and swap back to a fresh ROLL
+ * SUPERIORITY DIE button — only `rolled` flips back to false; `consumed`
+ * stays true (this card DID spend a die at USE time — a permanent fact
+ * about it), same as Commander's Strike's own refund shape. Nothing about
+ * the already-posted roll message is retracted.
+ */
+async function onAnnounceRefundClick(message, container, actor, data) {
+  const pool = findCombatSuperiority(actor);
+  if (pool) {
+    const spent = Number(pool.system?.uses?.spent) || 0;
+    await pool.update({ "system.uses.spent": Math.max(0, spent - 1) });
+  }
+  const next = { ...data, rolled: false };
+  await message.setFlag(MODULE_ID, GOAD_ANNOUNCE_FLAG, next);
+  const btn = container.querySelector(`.${ANNOUNCE_REFUND_BTN_CLASS}`);
+  if (btn) btn.replaceWith(buildAnnounceRollButton(message, container, actor, next));
+  dbg("dnd5e:goading-attack:item-refunded", actor?.name);
+}
+
+/**
+ * dnd5e.renderChatMessage: on Goading Attack's own bare-item announcement
+ * card, show the roll button (not yet rolled) or the REFUND RESOURCE button
+ * (already rolled) for any card that actually spent a die. A CHAT-only card
+ * (no die spent) gets neither.
+ */
+async function onRenderGoadingAttackAnnounceMessage(message, html) {
+  const data = message.getFlag(MODULE_ID, GOAD_ANNOUNCE_FLAG);
+  if (!data || !data.consumed) return;
+  const actor = fromUuidSync(data.actorUuid);
+  if (!actor || !canActAnnounce(actor)) return;
+  if (!findGoadingAttackManeuver(actor)) return;
+
+  const container = html.querySelector(".message-content");
+  if (!container || container.querySelector(`.${ANNOUNCE_CONTROLS_CLASS}`)) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = ANNOUNCE_CONTROLS_CLASS;
+  wrap.appendChild(data.rolled
+    ? buildAnnounceRefundButton(message, container, actor, data)
+    : buildAnnounceRollButton(message, container, actor, data));
+  insertBeforeTrailingCardElements(container, wrap);
+  dbg("dnd5e:goading-attack:item-card", actor.name, data.rolled);
+}
+
+/** Register Goading Attack's activation flow. Call once during setup. */
 export function registerGoadingAttackHooks() {
   Hooks.on("dnd5e.renderChatMessage", onRenderAttackRollMessage);
   Hooks.on("dnd5e.preRollDamageV2", onGoadingAttackPreRollDamage);
+  Hooks.on("dnd5e.preDisplayCard", (item, messageConfig) => onPreDisplayGoadingAttackCard(item, messageConfig));
+  Hooks.on("dnd5e.renderChatMessage", onRenderGoadingAttackAnnounceMessage);
 }

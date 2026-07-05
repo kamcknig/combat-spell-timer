@@ -150,6 +150,12 @@ nav#context-menu.cst-timer-menu {
 .cst-goading-attack i,
 .cst-goading-attack-refund i { margin-right: 4px; }
 
+/* Goading Attack "Roll Superiority Die" / "Refund Resource" button, inserted above the bare-item announcement card's property tags. */
+.cst-goading-attack-announce-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-goading-attack-announce-controls .cst-goading-attack-announce-roll,
+.cst-goading-attack-announce-controls .cst-goading-attack-announce-refund { flex: 1; }
+.cst-goading-attack-announce-controls i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }

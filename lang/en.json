@@ -297,7 +297,9 @@
       "Title": "Goading Attack",
       "Prompt": "Expend a superiority die to attempt to goad your target on a hit. {remaining} superiority {die} remaining.",
       "NoDice": "No superiority dice remaining.",
-      "Button": "GOADING ATTACK"
+      "Button": "GOADING ATTACK",
+      "RollButton": "Roll Superiority Die",
+      "RollFlavor": "Goading Attack — Superiority Die"
     },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
