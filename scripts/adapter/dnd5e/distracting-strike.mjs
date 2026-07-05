@@ -15,15 +15,17 @@ import { DISTRACTED_FLAG, DISTRACTED_STATUS_ID } from "./features/distracting-st
  * weapon attack, not standalone — so its entry point is a button injected
  * into that weapon's own usage card. Spends from the same Combat
  * Superiority pool. Unlike Disarming Attack, there is no follow-up save;
- * instead the maneuver's own announcement card carries an apply-effects
- * tray for a pure marker "Distracted" effect (see features/distracting-strike.mjs).
+ * instead the attack's own damage message carries an apply-effects tray for
+ * a pure marker "Distracted" effect (see features/distracting-strike.mjs) —
+ * placed there rather than on the maneuver's announcement card because the
+ * target isn't confirmed until the damage roll, same reasoning as Sap/Slow's
+ * own tray placement (weapon-mastery.mjs).
  */
 
 const DISTRACT_FLAG = "distractingStrike"; // weapon-card message flags[MODULE_ID][DISTRACT_FLAG] = {dieSize, actorUuid, consumed?}
 const BTN_CLASS = "cst-distracting-strike";
 const REFUND_BTN_CLASS = "cst-distracting-strike-refund";
 const LABEL_KEY = "distract";
-const ANNOUNCE_FLAG = "distractingStrikeAnnounce"; // maneuver-card message flags[MODULE_ID][ANNOUNCE_FLAG] = {actorUuid}
 
 /** The actor's "Maneuver: Distracting Strike" feat, or null. */
 function findDistractingStrikeManeuver(actor) {
@@ -31,6 +33,7 @@ function findDistractingStrikeManeuver(actor) {
 }
 
 const pendingDistractDamage = new Map(); // activity.uuid -> { dieSize }
+const pendingDistractApplied = new Map(); // activity.uuid -> { actorUuid } — consumed by onRenderDistractDamageMessage
 const armedDamageHandlers = new WeakMap(); // Damage button -> our click handler, so refund detaches ONLY ours
 
 function relabelDamageButton(container) {
@@ -65,7 +68,11 @@ function armDamageButton(container, message, activity, dieSize) {
  * independently of Disarming Attack's own handler for the same hook — both
  * mutate the same shared `config`/`roll` object in sequence (Hooks.call,
  * not callAll, but neither handler returns `false`, so both run), so both
- * dice compose correctly when both maneuvers are armed on one card.
+ * dice compose correctly when both maneuvers are armed on one card. Also
+ * stashes the caster for onRenderDistractDamageMessage below — the
+ * apply-effects tray now lives on this activity's damage message (the
+ * target isn't confirmed until the damage roll — same reasoning as Sap/
+ * Slow's own tray placement), not the maneuver's announcement card.
  */
 export function onDistractingStrikePreRollDamage(config) {
   const activity = config?.subject;
@@ -75,6 +82,7 @@ export function onDistractingStrikePreRollDamage(config) {
   const roll = config.rolls?.[0];
   if (!roll) return;
   roll.parts = [...(roll.parts ?? []), `1${dieSize}`];
+  pendingDistractApplied.set(activity.uuid, { actorUuid: activity.actor?.uuid });
   dbg("dnd5e:distracting-strike:die-added", activity.item?.name, dieSize);
 }
 
@@ -102,9 +110,7 @@ async function handleDistractingStrikeUse(maneuverItem) {
     dbg("dnd5e:distracting-strike:consumed", actor.name, remaining - 1);
   }
 
-  const flags = { [MODULE_ID]: {} };
-  if (action === "use") flags[MODULE_ID][ANNOUNCE_FLAG] = { actorUuid: actor.uuid };
-  await maneuverItem.displayCard({ flags });
+  await maneuverItem.displayCard(); // plain native item card; the apply-effects tray now lives on the damage message instead
   dbg("dnd5e:distracting-strike:announced", actor.name, action);
   return { dieSize, actorUuid: actor.uuid, action };
 }
@@ -230,11 +236,29 @@ function buildDistractButton(remaining, onClick) {
   return btn;
 }
 
-/** dnd5e.renderChatMessage: offer the Distracted apply-effects tray on the maneuver's own announcement card. */
-async function onRenderAnnounceMessage(message, html) {
-  const data = message.getFlag(MODULE_ID, ANNOUNCE_FLAG);
-  if (!data) return;
-  const actor = fromUuidSync(data.actorUuid);
+/**
+ * dnd5e.renderChatMessage: offer the Distracted apply-effects tray on the
+ * damage message for the attack an armed Distracting Strike die was just
+ * added to (mirrors Sap/Slow's own placement, and Disarming Attack's
+ * pendingDisarmApplied -> message-flags transfer shape, so a later
+ * re-render — scroll, reload — still shows the tray after the in-memory map
+ * entry is gone).
+ */
+async function onRenderDistractDamageMessage(message, html) {
+  if (message.flags?.dnd5e?.roll?.type !== "damage") return;
+  const activity = message.getAssociatedActivity?.();
+  if (!activity) return;
+
+  let applied = message.getFlag(MODULE_ID, "distractingStrikeApplied");
+  if (!applied) {
+    const pending = pendingDistractApplied.get(activity.uuid);
+    if (!pending) return;
+    applied = pending;
+    pendingDistractApplied.delete(activity.uuid);
+    message.setFlag(MODULE_ID, "distractingStrikeApplied", applied);
+  }
+
+  const actor = fromUuidSync(applied.actorUuid);
   if (!actor) return;
   const maneuver = findDistractingStrikeManeuver(actor);
   if (!maneuver) return;
@@ -249,6 +273,6 @@ async function onRenderAnnounceMessage(message, html) {
 /** Register Distracting Strike's usage-card button + activation flow. Call once during setup. */
 export function registerDistractingStrikeHooks() {
   Hooks.on("dnd5e.renderChatMessage", onRenderWeaponUsageCard);
-  Hooks.on("dnd5e.renderChatMessage", onRenderAnnounceMessage);
+  Hooks.on("dnd5e.renderChatMessage", onRenderDistractDamageMessage);
   Hooks.on("dnd5e.preRollDamageV2", onDistractingStrikePreRollDamage);
 }
