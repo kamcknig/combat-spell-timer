@@ -198,6 +198,13 @@ nav#context-menu.cst-timer-menu {
 .cst-pushing-attack-save-controls .cst-pushing-attack-save { flex: 1; }
 .cst-pushing-attack-save i { margin-right: 4px; }
 
+/* Rally "Roll Superiority Die" / "Refund Resource" button appended below its announcement chat card. */
+.cst-rally-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-rally-controls .cst-rally-roll,
+.cst-rally-controls .cst-rally-refund { flex: 1; }
+.cst-rally-roll i,
+.cst-rally-refund i { margin-right: 4px; }
+
 /* Beyond20 spell-name mapping editor */
 .cst-spell-map .cst-map-rows { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
 .cst-spell-map .cst-map-row { display: flex; align-items: center; gap: 6px; }

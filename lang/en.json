@@ -336,6 +336,13 @@
       "SaveButton": "Strength Save",
       "NoTargets": "Pushing Attack: no targets selected or controlled — select or control a token and try again."
     },
+    "Rally": {
+      "Title": "Rally",
+      "Prompt": "You have {remaining} superiority {die} remaining. Bolster a companion's resolve?",
+      "NoDice": "No superiority dice remaining.",
+      "RollButton": "Roll Superiority Die",
+      "RollFlavor": "Rally — Superiority Die"
+    },
     "WeaponMastery": {
       "CleaveButton": "Cleave Attack",
       "CleaveDescription": "This is the extra attack granted by the Cleave weapon mastery property: if the original attack hit, you can make this attack against a second creature within 5 feet of the first and also within your reach. If it hits, its damage doesn't include your ability modifier unless that modifier is negative.",

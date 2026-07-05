@@ -263,6 +263,10 @@ export default class SystemAdapter {
    *  Superiority consumption, damage-die stacking, Strength-save prompt). Default: no-op. */
   registerPushingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Rally (bare-item USE/CHAT dialog, Combat
+   *  Superiority consumption, roll/refund toggle). Default: no-op. */
+  registerRallySync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
