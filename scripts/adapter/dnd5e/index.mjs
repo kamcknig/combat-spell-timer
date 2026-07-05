@@ -39,6 +39,7 @@ import { registerMenacingAttackHooks } from "./menacing-attack.mjs";
 import { registerPrecisionAttackHooks } from "./precision-attack.mjs";
 import { registerPushingAttackHooks } from "./pushing-attack.mjs";
 import { registerRallyHooks } from "./rally.mjs";
+import { registerRiposteHooks } from "./riposte.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -477,6 +478,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerPushingAttackSync() { registerPushingAttackHooks(); }
 
   registerRallySync() { registerRallyHooks(); }
+
+  registerRiposteSync() { registerRiposteHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

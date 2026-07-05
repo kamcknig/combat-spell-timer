@@ -43,6 +43,7 @@ export const FEATURE_IMAGES = {
   "feat:maneuver-precision-attack":            `${BASE}/maneuver-precision-attack.webp`,
   "feat:maneuver-pushing-attack":              `${BASE}/maneuver-pushing-attack.webp`,
   "feat:maneuver-rally":                       `${BASE}/maneuver-rally.webp`,
+  "feat:maneuver-riposte":                     `${BASE}/maneuver-riposte.webp`,
   "subclass:battle-master":                    `${BASE}/battle-master.webp`,
 };
 

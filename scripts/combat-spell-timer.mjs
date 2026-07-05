@@ -135,6 +135,7 @@ Hooks.once("ready", async () => {
   adapter.registerPrecisionAttackSync();
   adapter.registerPushingAttackSync();
   adapter.registerRallySync();
+  adapter.registerRiposteSync();
   Hooks.on("combatTurnChange", (combat, previous, _current) => onFeatureTurnEnd(combat, previous));
   Hooks.on("renderCombatTracker", onRenderTracker);
   Hooks.on("renderActorSheetV2", onRenderActorSheetEffects);

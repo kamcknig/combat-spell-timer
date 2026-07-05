@@ -267,6 +267,10 @@ export default class SystemAdapter {
    *  Superiority consumption, roll/refund toggle). Default: no-op. */
   registerRallySync() { /* optional */ }
 
+  /** Subscribe to system hooks for Riposte (melee-only weapon usage-card
+   *  button, Combat Superiority consumption, damage-die stacking). Default: no-op. */
+  registerRiposteSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone
