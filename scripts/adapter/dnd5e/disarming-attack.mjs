@@ -6,6 +6,7 @@ import { findFeat } from "./features/shared.mjs";
 import { findCombatSuperiority } from "./commanders-strike.mjs";
 import { canAct, attackAbilityMod } from "./weapon-mastery.mjs";
 import { insertBeforeTrailingCardElements } from "./effect-application-tray.mjs";
+import { armManeuverDie, disarmManeuverDie } from "./maneuver-damage-dice.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Disarming Attack": unlike Commander's
@@ -20,15 +21,16 @@ import { insertBeforeTrailingCardElements } from "./effect-application-tray.mjs"
  * (confirmed against the installed dnd5e 5.x source: AttackActivity#rollAttack
  * always creates a new ChatMessage via D20Roll.buildPost). Because the native
  * Damage button lives only on that OTHER, earlier message, this maneuver
- * does NOT attach a listener to it — instead, USE arms a pending-damage map
- * entry for the activity immediately, and onDisarmingAttackPreRollDamage (a
- * dnd5e.preRollDamageV2 hook) adds the die whenever Damage is next rolled for
- * that activity, from wherever the Damage button actually is. No
- * Damage-button relabeling — goading-attack.mjs established this exact
- * shape first; see its own doc comment for the full reasoning. Spends from
- * the same Combat Superiority pool as Commander's Strike. The "Maneuver:
- * Disarming Attack" item itself is NOT intercepted — clicking it directly
- * stays inert/cosmetic; all mechanics live behind this button.
+ * does NOT attach a listener to it — instead, USE arms this attack's die
+ * against the shared maneuver-damage-dice registry (maneuver-damage-dice.mjs)
+ * immediately, and that registry's single dnd5e.preRollDamageV2 listener adds
+ * the die (and any other maneuver's die armed on the same activity) whenever
+ * Damage is next rolled for that activity, from wherever the Damage button
+ * actually is. No Damage-button relabeling — goading-attack.mjs established
+ * this exact shape first; see its own doc comment for the full reasoning.
+ * Spends from the same Combat Superiority pool as Commander's Strike. The
+ * "Maneuver: Disarming Attack" item itself is NOT intercepted — clicking it
+ * directly stays inert/cosmetic; all mechanics live behind this button.
  */
 
 const DISARM_FLAG = "disarmingAttack"; // attack-roll message flags[MODULE_ID][DISARM_FLAG] = {dieSize, actorUuid, consumed?}
@@ -71,29 +73,7 @@ async function handleDisarmingAttackUse(maneuverItem) {
   return { dieSize, actorUuid: actor.uuid, action };
 }
 
-const pendingDisarmDamage = new Map(); // activity.uuid -> { dieSize, messageId } — armed immediately on USE, no Damage-button listener needed
-export const pendingDisarmApplied = new Map(); // activity.uuid -> { dieSize, actorUuid } — consumed by Phase 3
-
-/**
- * dnd5e.preRollDamageV2: if this activity has a pending Disarming Attack die,
- * append it to the first damage roll's parts and stash the die/actor for the
- * Strength Save button to pick up off the resulting damage message. Also
- * flips the originating attack-roll message's `consumed` flag
- * (fire-and-forget) so a later reload doesn't re-arm an already-spent die —
- * see onRenderAttackRollMessage's re-arm branch.
- */
-export function onDisarmingAttackPreRollDamage(config) {
-  const activity = config?.subject;
-  if (!activity || !pendingDisarmDamage.has(activity.uuid)) return;
-  const { dieSize, messageId } = pendingDisarmDamage.get(activity.uuid);
-  pendingDisarmDamage.delete(activity.uuid);
-  const roll = config.rolls?.[0];
-  if (roll) roll.parts = [...(roll.parts ?? []), `1${dieSize}`];
-  pendingDisarmApplied.set(activity.uuid, { dieSize, actorUuid: activity.actor?.uuid });
-  const message = messageId ? game.messages.get(messageId) : null;
-  message?.setFlag(MODULE_ID, `${DISARM_FLAG}.consumed`, true);
-  dbg("dnd5e:disarming-attack:die-added", activity.item?.name, dieSize);
-}
+export const pendingDisarmApplied = new Map(); // activity.uuid -> { dieSize, actorUuid } — consumed by onRenderDisarmDamageMessage
 
 /** Build the REFUND RESOURCE button that replaces an armed DISARMING ATTACK button. */
 function buildRefundButton(message, container, activity, armed) {
@@ -125,7 +105,13 @@ function buildFreshDisarmButton(container, message, activity, actor, maneuver) {
       if (!result) { btn.disabled = false; return; } // dismissed — leave clickable
       if (result.action !== "use") { btn.disabled = false; return; } // CHAT — announce only, card stays un-armed
       const armed = { dieSize: result.dieSize, actorUuid: result.actorUuid, consumed: false };
-      pendingDisarmDamage.set(activity.uuid, { dieSize: armed.dieSize, messageId: message.id });
+      armManeuverDie(activity, "disarm", {
+        dieSize: armed.dieSize,
+        onApplied: () => {
+          pendingDisarmApplied.set(activity.uuid, { dieSize: armed.dieSize, actorUuid: armed.actorUuid });
+          message.setFlag(MODULE_ID, `${DISARM_FLAG}.consumed`, true);
+        },
+      });
       await message.setFlag(MODULE_ID, DISARM_FLAG, armed);
       btn.replaceWith(buildRefundButton(message, container, activity, armed));
     } catch (err) {
@@ -139,9 +125,9 @@ function buildFreshDisarmButton(container, message, activity, actor, maneuver) {
 /**
  * Refund the spent Combat Superiority die and swap back to a fresh
  * DISARMING ATTACK button. Cancels the pending damage-die addition too (a
- * no-op if Damage was already rolled — onDisarmingAttackPreRollDamage
- * already consumed it by then, so only the resource bookkeeping happens in
- * that case).
+ * no-op if Damage was already rolled — the shared maneuver-damage-dice
+ * registry already drained and cleared this tag's entry by then, so only the
+ * resource bookkeeping happens in that case).
  */
 async function onDisarmRefundClick(message, container, activity, armed) {
   const actor = fromUuidSync(armed.actorUuid);
@@ -151,7 +137,7 @@ async function onDisarmRefundClick(message, container, activity, armed) {
     await pool.update({ "system.uses.spent": Math.max(0, spent - 1) });
   }
 
-  pendingDisarmDamage.delete(activity.uuid);
+  disarmManeuverDie(activity, "disarm");
   await message.unsetFlag(MODULE_ID, DISARM_FLAG);
 
   const maneuver = findDisarmingAttackManeuver(actor);
@@ -182,8 +168,8 @@ function buildDisarmButton(remaining, onClick) {
  * action buttons" convention) since this message has no native
  * `.card-buttons` row to inherit styling from. If this specific roll
  * message is already armed (e.g. after a reload), re-decorate instead of
- * re-prompting — and only re-arm the in-memory pending-damage map if the
- * die hasn't already been consumed into a damage roll.
+ * re-prompting — and only re-arm the shared maneuver-damage-dice registry
+ * if the die hasn't already been consumed into a damage roll.
  */
 function onRenderAttackRollMessage(message, html) {
   if (message.getFlag("dnd5e", "roll")?.type !== "attack") return;
@@ -199,7 +185,15 @@ function onRenderAttackRollMessage(message, html) {
 
   const armed = message.getFlag(MODULE_ID, DISARM_FLAG);
   if (armed) {
-    if (!armed.consumed) pendingDisarmDamage.set(activity.uuid, { dieSize: armed.dieSize, messageId: message.id });
+    if (!armed.consumed) {
+      armManeuverDie(activity, "disarm", {
+        dieSize: armed.dieSize,
+        onApplied: () => {
+          pendingDisarmApplied.set(activity.uuid, { dieSize: armed.dieSize, actorUuid: armed.actorUuid });
+          message.setFlag(MODULE_ID, `${DISARM_FLAG}.consumed`, true);
+        },
+      });
+    }
     const wrap = document.createElement("div");
     wrap.className = CONTROLS_CLASS;
     wrap.appendChild(buildRefundButton(message, container, activity, armed));
@@ -248,10 +242,11 @@ async function onStrengthSaveClick(activity, actorUuid) {
 /**
  * dnd5e.renderChatMessage: append a Strength Save button to the damage
  * message an armed Disarming Attack die was just added to. The pending
- * activity->die/actor mapping (pendingDisarmApplied, set in
- * onDisarmingAttackPreRollDamage above) is transferred onto the message's
- * own flags on first render so later re-renders (scroll, reload) still show
- * the button after the in-memory map entry is gone.
+ * activity->die/actor mapping (pendingDisarmApplied, set by the arm step's
+ * onApplied callback once the shared maneuver-damage-dice registry drains
+ * the die into a damage roll) is transferred onto the message's own flags on
+ * first render so later re-renders (scroll, reload) still show the button
+ * after the in-memory map entry is gone.
  */
 function onRenderDisarmDamageMessage(message, html) {
   if (message.flags?.dnd5e?.roll?.type !== "damage") return;
@@ -297,6 +292,5 @@ function onRenderDisarmDamageMessage(message, html) {
 /** Register Disarming Attack's activation flow. Call once during setup. */
 export function registerDisarmingAttackHooks() {
   Hooks.on("dnd5e.renderChatMessage", onRenderAttackRollMessage);
-  Hooks.on("dnd5e.preRollDamageV2", onDisarmingAttackPreRollDamage);
   Hooks.on("dnd5e.renderChatMessage", onRenderDisarmDamageMessage);
 }

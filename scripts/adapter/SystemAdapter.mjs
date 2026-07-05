@@ -214,6 +214,11 @@ export default class SystemAdapter {
    */
   registerCommandersStrikeSync() { /* optional */ }
 
+  /** Subscribe to the shared maneuver damage-die drain (Disarming Attack /
+   *  Distracting Strike / Goading Attack / Lunging Attack all arm dice
+   *  through it). Default: no-op. */
+  registerManeuverDamageDiceSync() { /* optional */ }
+
   /** Subscribe to system hooks for Disarming Attack (weapon-card button, USE/CHAT
    *  dialog, Combat Superiority consumption, card arming). Default: no-op. */
   registerDisarmingAttackSync() { /* optional */ }

@@ -26,6 +26,7 @@ import { registerActionSurgeHooks } from "./action-surge.mjs";
 import { registerTacticalMindHooks } from "./tactical-mind.mjs";
 import { registerIndomitableHooks } from "./indomitable.mjs";
 import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
+import { registerManeuverDamageDiceHooks } from "./maneuver-damage-dice.mjs";
 import { registerDisarmingAttackHooks } from "./disarming-attack.mjs";
 import { registerDistractingStrikeHooks } from "./distracting-strike.mjs";
 import { registerEvasiveFootworkHooks } from "./evasive-footwork.mjs";
@@ -440,6 +441,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerIndomitableSync() { registerIndomitableHooks(); }
 
   registerCommandersStrikeSync() { registerCommandersStrikeHooks(); }
+
+  registerManeuverDamageDiceSync() { registerManeuverDamageDiceHooks(); }
 
   registerDisarmingAttackSync() { registerDisarmingAttackHooks(); }
 

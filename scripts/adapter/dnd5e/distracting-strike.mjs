@@ -7,6 +7,7 @@ import { findCombatSuperiority } from "./commanders-strike.mjs";
 import { canAct } from "./weapon-mastery.mjs";
 import { ensureEffectTemplate, injectEffectApplicationTray, insertBeforeTrailingCardElements } from "./effect-application-tray.mjs";
 import { DISTRACTED_FLAG, DISTRACTED_STATUS_ID } from "./features/distracting-strike.mjs";
+import { armManeuverDie, disarmManeuverDie } from "./maneuver-damage-dice.mjs";
 
 /**
  * dnd5e Fighter (Battle Master, 2014) "Distracting Strike": same shape as
@@ -15,10 +16,11 @@ import { DISTRACTED_FLAG, DISTRACTED_STATUS_ID } from "./features/distracting-st
  * ATTACK ROLL result message (flags.dnd5e.roll.type === "attack"), NOT the
  * pre-roll usage/activity card (see disarming-attack.mjs's own doc comment
  * for the full reasoning: dnd5e posts these as two separate chat messages,
- * and the native Damage button lives only on the earlier one, so USE arms a
- * pending-damage map entry immediately rather than via a Damage-button
- * listener — no Damage-button relabeling). Spends from the same Combat
- * Superiority pool. Unlike Disarming Attack, there is no follow-up save;
+ * and the native Damage button lives only on the earlier one, so USE arms
+ * this attack's die against the shared maneuver-damage-dice registry
+ * immediately rather than via a Damage-button listener — no Damage-button
+ * relabeling). Spends from the same Combat Superiority pool. Unlike
+ * Disarming Attack, there is no follow-up save;
  * instead the attack's own damage message carries an apply-effects tray for
  * a pure marker "Distracted" effect (see features/distracting-strike.mjs) —
  * placed there rather than on the maneuver's announcement card because the
@@ -36,34 +38,7 @@ function findDistractingStrikeManeuver(actor) {
   return findFeat(actor, "maneuver: distracting strike", "maneuver-distracting-strike");
 }
 
-const pendingDistractDamage = new Map(); // activity.uuid -> { dieSize, messageId } — armed immediately on USE, no Damage-button listener needed
 const pendingDistractApplied = new Map(); // activity.uuid -> { actorUuid } — consumed by onRenderDistractDamageMessage
-
-/**
- * dnd5e.preRollDamageV2: append the pending Distracting Strike die. Fires
- * independently of Disarming Attack's own handler for the same hook — both
- * mutate the same shared `config`/`roll` object in sequence (Hooks.call,
- * not callAll, but neither handler returns `false`, so both run), so both
- * dice compose correctly when both maneuvers are armed on one card. Also
- * stashes the caster for onRenderDistractDamageMessage below — the
- * apply-effects tray lives on this activity's damage message (the target
- * isn't confirmed until the damage roll — same reasoning as Sap/Slow's own
- * tray placement), not the maneuver's announcement card. Also flips the
- * originating attack-roll message's `consumed` flag (fire-and-forget) so a
- * later reload doesn't re-arm an already-spent die.
- */
-export function onDistractingStrikePreRollDamage(config) {
-  const activity = config?.subject;
-  if (!activity || !pendingDistractDamage.has(activity.uuid)) return;
-  const { dieSize, messageId } = pendingDistractDamage.get(activity.uuid);
-  pendingDistractDamage.delete(activity.uuid);
-  const roll = config.rolls?.[0];
-  if (roll) roll.parts = [...(roll.parts ?? []), `1${dieSize}`];
-  pendingDistractApplied.set(activity.uuid, { actorUuid: activity.actor?.uuid });
-  const message = messageId ? game.messages.get(messageId) : null;
-  message?.setFlag(MODULE_ID, `${DISTRACT_FLAG}.consumed`, true);
-  dbg("dnd5e:distracting-strike:die-added", activity.item?.name, dieSize);
-}
 
 /** Prompt USE/CHAT, consume one Combat Superiority die on USE, post the maneuver's own announcement card. */
 async function handleDistractingStrikeUse(maneuverItem) {
@@ -124,7 +99,13 @@ function buildFreshDistractButton(container, message, activity, actor, maneuver)
       if (!result) { btn.disabled = false; return; }
       if (result.action !== "use") { btn.disabled = false; return; }
       const armed = { dieSize: result.dieSize, actorUuid: result.actorUuid, consumed: false };
-      pendingDistractDamage.set(activity.uuid, { dieSize: armed.dieSize, messageId: message.id });
+      armManeuverDie(activity, "distract", {
+        dieSize: armed.dieSize,
+        onApplied: () => {
+          pendingDistractApplied.set(activity.uuid, { actorUuid: armed.actorUuid });
+          message.setFlag(MODULE_ID, `${DISTRACT_FLAG}.consumed`, true);
+        },
+      });
       await message.setFlag(MODULE_ID, DISTRACT_FLAG, armed);
       btn.replaceWith(buildRefundButton(message, container, activity, armed));
     } catch (err) {
@@ -138,9 +119,9 @@ function buildFreshDistractButton(container, message, activity, actor, maneuver)
 /**
  * Refund the spent Combat Superiority die and swap back to a fresh
  * DISTRACTING STRIKE button. Cancels the pending damage-die addition too (a
- * no-op if Damage was already rolled — onDistractingStrikePreRollDamage
- * already consumed it by then, so only the resource bookkeeping happens in
- * that case).
+ * no-op if Damage was already rolled — the shared maneuver-damage-dice
+ * registry already drained and cleared this tag's entry by then, so only the
+ * resource bookkeeping happens in that case).
  */
 async function onDistractRefundClick(message, container, activity, armed) {
   const actor = fromUuidSync(armed.actorUuid);
@@ -150,7 +131,7 @@ async function onDistractRefundClick(message, container, activity, armed) {
     await pool.update({ "system.uses.spent": Math.max(0, spent - 1) });
   }
 
-  pendingDistractDamage.delete(activity.uuid);
+  disarmManeuverDie(activity, "distract");
   await message.unsetFlag(MODULE_ID, DISTRACT_FLAG);
 
   const maneuver = findDistractingStrikeManeuver(actor);
@@ -181,8 +162,8 @@ function buildDistractButton(remaining, onClick) {
  * action buttons" convention) since this message has no native
  * `.card-buttons` row to inherit styling from. If this specific roll
  * message is already armed (e.g. after a reload), re-decorate instead of
- * re-prompting — and only re-arm the in-memory pending-damage map if the
- * die hasn't already been consumed into a damage roll.
+ * re-prompting — and only re-arm the shared maneuver-damage-dice registry if
+ * the die hasn't already been consumed into a damage roll.
  */
 function onRenderAttackRollMessage(message, html) {
   if (message.getFlag("dnd5e", "roll")?.type !== "attack") return;
@@ -198,7 +179,15 @@ function onRenderAttackRollMessage(message, html) {
 
   const armed = message.getFlag(MODULE_ID, DISTRACT_FLAG);
   if (armed) {
-    if (!armed.consumed) pendingDistractDamage.set(activity.uuid, { dieSize: armed.dieSize, messageId: message.id });
+    if (!armed.consumed) {
+      armManeuverDie(activity, "distract", {
+        dieSize: armed.dieSize,
+        onApplied: () => {
+          pendingDistractApplied.set(activity.uuid, { actorUuid: armed.actorUuid });
+          message.setFlag(MODULE_ID, `${DISTRACT_FLAG}.consumed`, true);
+        },
+      });
+    }
     const wrap = document.createElement("div");
     wrap.className = CONTROLS_CLASS;
     wrap.appendChild(buildRefundButton(message, container, activity, armed));
@@ -254,5 +243,4 @@ async function onRenderDistractDamageMessage(message, html) {
 export function registerDistractingStrikeHooks() {
   Hooks.on("dnd5e.renderChatMessage", onRenderAttackRollMessage);
   Hooks.on("dnd5e.renderChatMessage", onRenderDistractDamageMessage);
-  Hooks.on("dnd5e.preRollDamageV2", onDistractingStrikePreRollDamage);
 }
