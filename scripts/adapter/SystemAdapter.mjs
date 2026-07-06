@@ -271,6 +271,10 @@ export default class SystemAdapter {
    *  Superiority consumption, roll/refund toggle). Default: no-op. */
   registerRallySync() { /* optional */ }
 
+  /** Subscribe to system hooks for Bait and Switch (bare-item USE/CHAT dialog,
+   *  roll-then-apply-effects-tray flow, Combat Superiority consumption). Default: no-op. */
+  registerBaitAndSwitchSync() { /* optional */ }
+
   /** Subscribe to system hooks for Riposte (melee-only weapon usage-card
    *  button, Combat Superiority consumption, damage-die stacking). Default: no-op. */
   registerRiposteSync() { /* optional */ }

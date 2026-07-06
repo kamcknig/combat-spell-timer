@@ -15,6 +15,7 @@ import { onSlowPreCreate, onSlowEffectApplied } from "./features/slow.mjs";
 import { onDistractingStrikeEffectApplied, onDistractingStrikeTargetAttacked } from "./features/distracting-strike.mjs";
 import { onFeintingAttackEffectApplied } from "./features/feinting-attack.mjs";
 import { onGoadingAttackEffectApplied, onGoadedPreRollAttack } from "./features/goading-attack.mjs";
+import { onBaitAndSwitchEffectApplied } from "./features/bait-and-switch.mjs";
 import { registerDuelingHooks } from "./dueling.mjs";
 import { registerDefenseHooks } from "./defense.mjs";
 import { registerArcheryHooks } from "./archery.mjs";
@@ -40,6 +41,7 @@ import { registerMenacingAttackHooks } from "./menacing-attack.mjs";
 import { registerPrecisionAttackHooks } from "./precision-attack.mjs";
 import { registerPushingAttackHooks } from "./pushing-attack.mjs";
 import { registerRallyHooks } from "./rally.mjs";
+import { registerBaitAndSwitchHooks } from "./bait-and-switch.mjs";
 import { registerRiposteHooks } from "./riposte.mjs";
 import { registerSweepingAttackHooks } from "./sweeping-attack.mjs";
 import { registerTripAttackHooks } from "./trip-attack.mjs";
@@ -369,6 +371,7 @@ export default class Dnd5eAdapter extends SystemAdapter {
       onDistractingStrikeEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onFeintingAttackEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       onGoadingAttackEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
+      onBaitAndSwitchEffectApplied(effect, userId, this.applyFeatureEffect.bind(this));
       for (const f of listFeatures()) {
         if (!f.endsEarlyOnEffect?.(effect, actor)) continue;
         dbg("dnd5e:feature-early-end", f.id, actor.name);
@@ -483,6 +486,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerPushingAttackSync() { registerPushingAttackHooks(); }
 
   registerRallySync() { registerRallyHooks(); }
+
+  registerBaitAndSwitchSync() { registerBaitAndSwitchHooks(); }
 
   registerRiposteSync() { registerRiposteHooks(); }
 

@@ -32,6 +32,7 @@ export const FEATURE_IMAGES = {
   "feat:weapon-mastery-vex":                   `${BASE}/weapon-mastery-vex.webp`,
   "feat:combat-superiority":                   `${BASE}/combat-superiority.webp`,
   "feat:maneuver-ambush":                      `${BASE}/maneuver-ambush.webp`,
+  "feat:maneuver-bait-and-switch":             `${BASE}/maneuver-bait-and-switch.webp`,
   "feat:maneuver-commander-s-strike":          `${BASE}/maneuver-commander-s-strike.webp`,
   "feat:maneuver-disarming-attack":            `${BASE}/maneuver-disarming-attack.webp`,
   "feat:maneuver-distracting-strike":          `${BASE}/maneuver-distracting-strike.webp`,

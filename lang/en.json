@@ -254,6 +254,16 @@
       "Button": "AMBUSH",
       "AutoRefunded": "Ambush: roll was cancelled — the superiority die has been refunded."
     },
+    "BaitAndSwitch": {
+      "Title": "Bait and Switch",
+      "Prompt": "Expend a superiority die to switch places with a nearby creature. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "RollButton": "Roll Superiority Die",
+      "RollFlavor": "Bait and Switch — Superiority Die",
+      "EffectName": "Bait and Switch",
+      "RoundsLeft": "Until the caster's next turn",
+      "EndLabel": "End Bait and Switch"
+    },
     "CommandersStrike": {
       "Title": "Commander's Strike",
       "Prompt": "You have {remaining} superiority {die} remaining. Direct an ally to strike?",
