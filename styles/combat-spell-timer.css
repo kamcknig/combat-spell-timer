@@ -198,6 +198,18 @@ nav#context-menu.cst-timer-menu {
 .cst-pushing-attack-save-controls .cst-pushing-attack-save { flex: 1; }
 .cst-pushing-attack-save i { margin-right: 4px; }
 
+/* Trip Attack "Trip Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-trip-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-trip-attack-controls .cst-trip-attack,
+.cst-trip-attack-controls .cst-trip-attack-refund { flex: 1; }
+.cst-trip-attack i,
+.cst-trip-attack-refund i { margin-right: 4px; }
+
+/* Trip Attack Strength Save button appended below its damage-roll message. */
+.cst-trip-attack-save-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
+.cst-trip-attack-save-controls .cst-trip-attack-save { flex: 1; }
+.cst-trip-attack-save i { margin-right: 4px; }
+
 /* Rally "Roll Superiority Die" / "Refund Resource" button appended below its announcement chat card. */
 .cst-rally-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
 .cst-rally-controls .cst-rally-roll,
