@@ -26,6 +26,7 @@ import { registerSecondWindHooks } from "./second-wind.mjs";
 import { registerActionSurgeHooks } from "./action-surge.mjs";
 import { registerTacticalMindHooks } from "./tactical-mind.mjs";
 import { registerIndomitableHooks } from "./indomitable.mjs";
+import { registerAmbushHooks } from "./ambush.mjs";
 import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
 import { registerManeuverDamageDiceHooks } from "./maneuver-damage-dice.mjs";
 import { registerDisarmingAttackHooks } from "./disarming-attack.mjs";
@@ -454,6 +455,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerTacticalMindSync() { registerTacticalMindHooks(); }
 
   registerIndomitableSync() { registerIndomitableHooks(); }
+
+  registerAmbushSync() { registerAmbushHooks(); }
 
   registerCommandersStrikeSync() { registerCommandersStrikeHooks(); }
 

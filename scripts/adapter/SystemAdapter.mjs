@@ -207,6 +207,10 @@ export default class SystemAdapter {
    */
   registerIndomitableSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Ambush (roll-dialog button on initiative/Dex
+   *  (Stealth) checks, Combat Superiority consumption, refundable). Default: no-op. */
+  registerAmbushSync() { /* optional */ }
+
   /**
    * Subscribe to system hooks for Commander's Strike's activation flow (USE/CHAT
    * dialog, Combat Superiority die-pool consumption, chat-card roll button).

@@ -247,6 +247,13 @@
       "RerollFlavor": "Save (Indomitable Reroll)",
       "ChatFlavor": "{name} refuses to accept the failure."
     },
+    "Ambush": {
+      "Title": "Ambush",
+      "Prompt": "Expend a superiority die to add it to this roll. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "AMBUSH",
+      "AutoRefunded": "Ambush: roll was cancelled — the superiority die has been refunded."
+    },
     "CommandersStrike": {
       "Title": "Commander's Strike",
       "Prompt": "You have {remaining} superiority {die} remaining. Direct an ally to strike?",

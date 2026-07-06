@@ -105,6 +105,13 @@ nav#context-menu.cst-timer-menu {
 .cst-indomitable-controls .cst-indomitable-reroll { flex: 1; }
 .cst-indomitable-reroll i { margin-right: 4px; }
 
+/* Ambush AMBUSH / Refund Resource button, inserted as its own full-width row below the roll-configuration dialog's native Advantage/Normal/Disadvantage buttons. */
+.cst-ambush-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; width: 100%; }
+.cst-ambush-controls .cst-ambush,
+.cst-ambush-controls .cst-ambush-refund { flex: 1; }
+.cst-ambush i,
+.cst-ambush-refund i { margin-right: 4px; }
+
 /* Commander's Strike "Roll Superiority Die" / "Refund Resource" button appended below its announcement chat card. */
 .cst-commanders-strike-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
 .cst-commanders-strike-controls .cst-commanders-strike-roll,
