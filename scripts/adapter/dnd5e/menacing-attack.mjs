@@ -227,7 +227,7 @@ async function onWisdomSaveClick(activity, actorUuid) {
     return;
   }
   for (const target of targets) {
-    await target.rollSavingThrow({ ability: "wis", target: dc }, {}, {});
+    await target.rollSavingThrow({ ability: "wis", target: dc }, { configure: true }, {});
   }
   dbg("dnd5e:menacing-attack:saves", targets.map((t) => t.name), dc);
 }

@@ -234,7 +234,7 @@ async function onStrengthSaveClick(activity, actorUuid) {
     return;
   }
   for (const target of targets) {
-    await target.rollSavingThrow({ ability: "str", target: dc }, {}, {});
+    await target.rollSavingThrow({ ability: "str", target: dc }, { configure: true }, {});
   }
   dbg("dnd5e:disarming-attack:saves", targets.map((t) => t.name), dc);
 }

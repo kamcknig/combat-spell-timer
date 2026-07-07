@@ -185,7 +185,7 @@ async function onToppleSaveClick(activity, actor) {
     return;
   }
   const dc = toppleDc(activity, actor);
-  const rolls = await target.rollSavingThrow({ ability: "con", target: dc }, {}, {});
+  const rolls = await target.rollSavingThrow({ ability: "con", target: dc }, { configure: true }, {});
   const failed = rolls?.[0] && rolls[0].isSuccess === false;
   dbg("dnd5e:weapon-mastery:topple-save", target.name, dc, failed ? "failed" : "saved");
   if (failed) await target.toggleStatusEffect("prone", { active: true });

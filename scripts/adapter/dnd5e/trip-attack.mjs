@@ -229,7 +229,7 @@ async function onStrengthSaveClick(activity, actorUuid) {
     return;
   }
   for (const target of targets) {
-    const rolls = await target.rollSavingThrow({ ability: "str", target: dc }, {}, {});
+    const rolls = await target.rollSavingThrow({ ability: "str", target: dc }, { configure: true }, {});
     const failed = rolls?.[0] && rolls[0].isSuccess === false;
     dbg("dnd5e:trip-attack:save", target.name, dc, failed ? "failed" : "saved");
     if (failed) await target.toggleStatusEffect("prone", { active: true });
