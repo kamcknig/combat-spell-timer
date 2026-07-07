@@ -13,6 +13,7 @@ export const FEATURE_IMAGES = {
   "feat:tactical-mind":                        `${BASE}/tactical-mind.webp`,
   "feat:indomitable":                          `${BASE}/indomitable.webp`,
   "feat:extra-attack":                         `${BASE}/extra-attack.webp`,
+  "feat:know-your-enemy":                      `${BASE}/know-your-enemy.webp`,
   "feat:fighting-style-archery":               `${BASE}/fighting-style-archery.webp`,
   "feat:fighting-style-defense":               `${BASE}/fighting-style-defense.webp`,
   "feat:fighting-style-dueling":               `${BASE}/fighting-style-dueling.webp`,
