@@ -164,10 +164,16 @@ function buildSweepButton(remaining, onClick) {
 /**
  * dnd5e.renderChatMessage handler: inject the SWEEPING ATTACK button into
  * the ATTACK ROLL result message (flags.dnd5e.roll.type === "attack"), not
- * the pre-roll usage/activity card. Melee-only per RAW — activity.getActionType()
- * is already resolved at this point, so the gate here is exact. Wrapped in
- * the shared `.cst-<feature>-controls` flex-row shape since this message has
- * no native `.card-buttons` row to inherit styling from.
+ * the pre-roll usage/activity card. Melee-only per RAW. `getActionType()`
+ * only reclassifies "mwak" to "rwak" when given the attack mode actually
+ * used (dnd5e.mjs:12524) — called with no argument it returns the weapon's
+ * base type, which for a Thrown-property weapon stays "mwak" even when that
+ * specific attack was thrown at range. The real per-roll mode is read off
+ * this ATTACK message's own flag (`roll.attackMode`, the same one dnd5e's
+ * own native Damage-button handler reads — see quick-toss.mjs's doc comment)
+ * so a thrown dagger/handaxe correctly excludes this melee-only button.
+ * Wrapped in the shared `.cst-<feature>-controls` flex-row shape since this
+ * message has no native `.card-buttons` row to inherit styling from.
  */
 function onRenderAttackRollMessage(message, html) {
   if (message.getFlag("dnd5e", "roll")?.type !== "attack") return;
@@ -176,7 +182,8 @@ function onRenderAttackRollMessage(message, html) {
   const item = message.getAssociatedItem?.();
   if (!activity || !actor || !item) return;
   if (item.type !== "weapon") return;
-  if (activity.getActionType?.() !== "mwak") return; // melee only, per RAW
+  const attackMode = message.getFlag("dnd5e", "roll")?.attackMode;
+  if (activity.getActionType?.(attackMode) !== "mwak") return; // melee only, per RAW
   if (!canAct(actor)) return;
 
   const container = html.querySelector(".message-content");

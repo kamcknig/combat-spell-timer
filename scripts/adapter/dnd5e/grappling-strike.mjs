@@ -13,10 +13,19 @@ import { insertBeforeTrailingCardElements } from "./effect-application-tray.mjs"
  * superiority die and then try to grapple the target as a bonus action...
  * Add the superiority die to your Strength (Athletics) check." Melee-only
  * per RAW's own wording ("melee attack") — gated the same way Brace/Riposte
- * gate their melee-only maneuvers (`activity.getActionType?.() === "mwak"`),
- * unlike Trip/Pushing/Menacing/Maneuvering Attack's unrestricted "weapon
- * attack" siblings. Its entry point is a button on the ATTACK ROLL result
- * message (flags.dnd5e.roll.type === "attack"), same as those siblings.
+ * gate their melee-only maneuvers, unlike Trip/Pushing/Menacing/Maneuvering
+ * Attack's unrestricted "weapon attack" siblings. Its entry point is a
+ * button on the ATTACK ROLL result message (flags.dnd5e.roll.type ===
+ * "attack"), same as those siblings — which means, unlike Brace/Riposte's
+ * pre-roll usage-card gate, the attack has already happened by render time.
+ * `getActionType()` only reclassifies "mwak" to "rwak" when given the
+ * attack mode actually used (dnd5e.mjs:12524) — called with no argument it
+ * returns the weapon's base type, which for a Thrown-property weapon stays
+ * "mwak" even when that specific attack was thrown at range. The real
+ * per-roll mode is read off this ATTACK message's own flag (`roll.attackMode`,
+ * the same one dnd5e's own native Damage-button handler reads — see
+ * quick-toss.mjs's doc comment) so a thrown dagger/handaxe correctly
+ * excludes this melee-only button.
  *
  * Unlike every damage-die maneuver, this one never touches the attack's own
  * damage roll or the shared maneuver-damage-dice registry — using it
@@ -167,7 +176,8 @@ function onRenderAttackRollMessage(message, html) {
   const item = message.getAssociatedItem?.();
   if (!activity || !actor || !item) return;
   if (item.type !== "weapon") return;
-  if (activity.getActionType?.() !== "mwak") return; // melee only, per RAW
+  const attackMode = message.getFlag("dnd5e", "roll")?.attackMode;
+  if (activity.getActionType?.(attackMode) !== "mwak") return; // melee only, per RAW
   if (!canAct(actor)) return;
 
   const container = html.querySelector(".message-content");
