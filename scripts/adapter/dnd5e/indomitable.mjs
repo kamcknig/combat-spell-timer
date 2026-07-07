@@ -148,12 +148,17 @@ function onRenderSaveMessage(message, html) {
   if (!container || container.querySelector(`.${BTN_CLASS}`)) return;
 
   const ability = message.getFlag("dnd5e", "roll")?.ability;
+  const { remaining } = usesOf(item);
   const wrap = document.createElement("div");
   wrap.className = "cst-indomitable-controls";
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = BTN_CLASS;
   btn.innerHTML = `<i class="fa-solid fa-dice-d20"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.Indomitable.Button")}`;
+  if (remaining <= 0) {
+    btn.disabled = true;
+    btn.title = game.i18n.format("COMBAT_SPELL_TIMER.Indomitable.NoUses", { name: item.name });
+  }
   btn.addEventListener("click", async (event) => {
     event.stopPropagation();
     btn.disabled = true;
