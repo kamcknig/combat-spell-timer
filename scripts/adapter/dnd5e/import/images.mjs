@@ -47,6 +47,7 @@ export const FEATURE_IMAGES = {
   "feat:maneuver-menacing-attack":             `${BASE}/maneuver-menacing-attack.webp`,
   "feat:maneuver-precision-attack":            `${BASE}/maneuver-precision-attack.webp`,
   "feat:maneuver-pushing-attack":              `${BASE}/maneuver-pushing-attack.webp`,
+  "feat:maneuver-quick-toss":                  `${BASE}/maneuver-quick-toss.webp`,
   "feat:maneuver-rally":                       `${BASE}/maneuver-rally.webp`,
   "feat:maneuver-riposte":                     `${BASE}/maneuver-riposte.webp`,
   "feat:maneuver-sweeping-attack":             `${BASE}/maneuver-sweeping-attack.webp`,
