@@ -42,6 +42,7 @@ import { registerPrecisionAttackHooks } from "./precision-attack.mjs";
 import { registerPushingAttackHooks } from "./pushing-attack.mjs";
 import { registerRallyHooks } from "./rally.mjs";
 import { registerBaitAndSwitchHooks } from "./bait-and-switch.mjs";
+import { registerBraceHooks } from "./brace.mjs";
 import { registerRiposteHooks } from "./riposte.mjs";
 import { registerSweepingAttackHooks } from "./sweeping-attack.mjs";
 import { registerTripAttackHooks } from "./trip-attack.mjs";
@@ -488,6 +489,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerRallySync() { registerRallyHooks(); }
 
   registerBaitAndSwitchSync() { registerBaitAndSwitchHooks(); }
+
+  registerBraceSync() { registerBraceHooks(); }
 
   registerRiposteSync() { registerRiposteHooks(); }
 

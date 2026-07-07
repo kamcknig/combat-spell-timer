@@ -264,6 +264,12 @@
       "RoundsLeft": "Until the caster's next turn",
       "EndLabel": "End Bait and Switch"
     },
+    "Brace": {
+      "Title": "Brace",
+      "Prompt": "Expend a superiority die to make an attack against a creature that moved into your reach. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "BRACE"
+    },
     "CommandersStrike": {
       "Title": "Commander's Strike",
       "Prompt": "You have {remaining} superiority {die} remaining. Direct an ally to strike?",

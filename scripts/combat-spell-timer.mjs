@@ -137,6 +137,7 @@ Hooks.once("ready", async () => {
   adapter.registerPushingAttackSync();
   adapter.registerRallySync();
   adapter.registerBaitAndSwitchSync();
+  adapter.registerBraceSync();
   adapter.registerRiposteSync();
   adapter.registerSweepingAttackSync();
   adapter.registerTripAttackSync();

@@ -275,6 +275,11 @@ export default class SystemAdapter {
    *  roll-then-apply-effects-tray flow, Combat Superiority consumption). Default: no-op. */
   registerBaitAndSwitchSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Brace (melee-only weapon usage-card
+   *  BRACE/REFUND toggle button adds the die to that attack's damage roll on
+   *  a hit, refundable). Default: no-op. */
+  registerBraceSync() { /* optional */ }
+
   /** Subscribe to system hooks for Riposte (melee-only weapon usage-card
    *  button, Combat Superiority consumption, damage-die stacking). Default: no-op. */
   registerRiposteSync() { /* optional */ }
