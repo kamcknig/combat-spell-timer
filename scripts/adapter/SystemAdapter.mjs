@@ -250,6 +250,11 @@ export default class SystemAdapter {
    *  USE/CHAT dialog, Combat Superiority consumption, card arming). Default: no-op. */
   registerGoadingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Grappling Strike (attack-roll-message button
+   *  triggers a Strength (Athletics) check with the die pre-seeded, refundable).
+   *  Default: no-op. */
+  registerGrapplingStrikeSync() { /* optional */ }
+
   /** Subscribe to system hooks for Lunging Attack (weapon usage-card button,
    *  USE/CHAT dialog, Combat Superiority consumption, card arming).
    *  Default: no-op. */

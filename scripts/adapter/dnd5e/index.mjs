@@ -36,6 +36,7 @@ import { registerDistractingStrikeHooks } from "./distracting-strike.mjs";
 import { registerEvasiveFootworkHooks } from "./evasive-footwork.mjs";
 import { registerFeintingAttackHooks } from "./feinting-attack.mjs";
 import { registerGoadingAttackHooks } from "./goading-attack.mjs";
+import { registerGrapplingStrikeHooks } from "./grappling-strike.mjs";
 import { registerLungingAttackHooks } from "./lunging-attack.mjs";
 import { registerManeuveringAttackHooks } from "./maneuvering-attack.mjs";
 import { registerMenacingAttackHooks } from "./menacing-attack.mjs";
@@ -478,6 +479,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerFeintingAttackSync() { registerFeintingAttackHooks(); }
 
   registerGoadingAttackSync() { registerGoadingAttackHooks(); }
+
+  registerGrapplingStrikeSync() { registerGrapplingStrikeHooks(); }
 
   registerLungingAttackSync() { registerLungingAttackHooks(); }
 

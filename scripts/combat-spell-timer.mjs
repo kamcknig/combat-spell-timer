@@ -131,6 +131,7 @@ Hooks.once("ready", async () => {
   adapter.registerEvasiveFootworkSync();
   adapter.registerFeintingAttackSync();
   adapter.registerGoadingAttackSync();
+  adapter.registerGrapplingStrikeSync();
   adapter.registerLungingAttackSync();
   adapter.registerManeuveringAttackSync();
   adapter.registerMenacingAttackSync();

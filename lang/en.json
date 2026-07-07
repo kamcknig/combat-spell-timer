@@ -332,6 +332,12 @@
       "RoundsLeft": "Until the attacker's next turn",
       "EndLabel": "End Goading Attack"
     },
+    "GrapplingStrike": {
+      "Title": "Grappling Strike",
+      "Prompt": "Expend a superiority die to attempt to grapple your target on a hit, adding the die to your Strength (Athletics) check. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "GRAPPLING STRIKE"
+    },
     "LungingAttack": {
       "Title": "Lunging Attack",
       "Prompt": "Expend a superiority die to increase your reach by 5 feet for this attack, adding the die to the attack's damage roll on a hit. {remaining} superiority {die} remaining.",

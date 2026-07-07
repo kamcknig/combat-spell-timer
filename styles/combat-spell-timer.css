@@ -186,6 +186,13 @@ nav#context-menu.cst-timer-menu {
 .cst-goading-attack-announce-controls .cst-goading-attack-announce-refund { flex: 1; }
 .cst-goading-attack-announce-controls i { margin-right: 4px; }
 
+/* Grappling Strike "Grappling Strike" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-grappling-strike-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-grappling-strike-controls .cst-grappling-strike,
+.cst-grappling-strike-controls .cst-grappling-strike-refund { flex: 1; }
+.cst-grappling-strike i,
+.cst-grappling-strike-refund i { margin-right: 4px; }
+
 /* Maneuvering Attack "Maneuvering Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
 .cst-maneuvering-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
 .cst-maneuvering-attack-controls .cst-maneuvering-attack,
