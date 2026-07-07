@@ -4,7 +4,7 @@ import {
   buildClassItem, buildSubclassItem, buildFeatureItem,
   buildChoiceFeatureItems, CHOICE_FEATURE_NAMES,
   buildCombatSuperiorityItem, buildManeuverFeatureItems,
-  buildStudentOfWarItem,
+  buildStudentOfWarItem, isExcludedFeatureName,
 } from "./builders.mjs";
 import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { slugIdentifier } from "./identifier.mjs";
@@ -38,12 +38,19 @@ export async function parseImportedFeatures(_actor, ddbData) {
     const sub = buildSubclassItem(ddbClass);
     if (sub) items.push(sub);
 
-    const { kept, skipped } = filterByLevel(ddbClass.classFeatures, ddbClass.level);
+    const { kept: leveledFeatures, skipped } = filterByLevel(ddbClass.classFeatures, ddbClass.level);
     dbg("ddb:parse", "class features by level", {
       class: ctx.className, level: ddbClass.level,
-      kept: kept.map((f) => f?.definition?.name),
+      kept: leveledFeatures.map((f) => f?.definition?.name),
       skipped: skipped.map((f) => f?.definition?.name),
     });
+    const kept = leveledFeatures.filter((f) => !isExcludedFeatureName(f?.definition?.name));
+    const excludedByName = leveledFeatures.filter((f) => isExcludedFeatureName(f?.definition?.name));
+    if (excludedByName.length) {
+      dbg("ddb:parse", "class features excluded by name", {
+        class: ctx.className, excluded: excludedByName.map((f) => f?.definition?.name),
+      });
+    }
     // 2014's Extra Attack is represented as multiple classFeatures entries
     // sharing the exact name "Extra Attack" (one per tier: 5/11/20), each
     // with its own tier-specific description. Collapse to the single

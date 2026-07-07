@@ -294,3 +294,18 @@ export function buildStudentOfWarItem(def, ddbData, ctx) {
 
 /** Names whose granted feature is a pure choice container — emit the chosen options, drop the parent. */
 export const CHOICE_FEATURE_NAMES = new Set(["Fighting Style"]);
+
+/**
+ * Class features that are pure narrative/bookkeeping entries with no
+ * mechanical automation in this module — dropped entirely rather than
+ * imported as inert feat items. "Ability Score Improvement" is matched by
+ * suffix because 2024 data prefixes it with the granting level (e.g. "6:
+ * Ability Score Improvement").
+ */
+const EXCLUDED_FEATURE_NAMES = new Set(["Proficiencies", "Equipment", "Hit Points", "Martial Archetype"]);
+
+export function isExcludedFeatureName(name) {
+  if (!name) return false;
+  if (EXCLUDED_FEATURE_NAMES.has(name)) return true;
+  return name.endsWith("Ability Score Improvement");
+}
