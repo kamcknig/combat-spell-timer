@@ -100,10 +100,12 @@ nav#context-menu.cst-timer-menu {
 .cst-tactical-mind-controls .cst-tactical-mind-bonus { flex: 1; }
 .cst-tactical-mind-bonus i { margin-right: 4px; }
 
-/* INDOMITABLE reroll button appended below eligible saving-throw messages. */
+/* INDOMITABLE reroll / Refund Resource button appended below eligible saving-throw messages. */
 .cst-indomitable-controls { display: flex; justify-content: center; margin: 4px 0 2px; }
-.cst-indomitable-controls .cst-indomitable-reroll { flex: 1; }
-.cst-indomitable-reroll i { margin-right: 4px; }
+.cst-indomitable-controls .cst-indomitable-reroll,
+.cst-indomitable-controls .cst-indomitable-refund { flex: 1; }
+.cst-indomitable-reroll i,
+.cst-indomitable-refund i { margin-right: 4px; }
 
 /* Ambush AMBUSH / Refund Resource button, inserted as its own full-width row below the roll-configuration dialog's native Advantage/Normal/Disadvantage buttons. */
 .cst-ambush-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; width: 100%; }

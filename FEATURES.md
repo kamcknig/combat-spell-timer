@@ -37,7 +37,7 @@ Brief inventory of what this module does — one line per feature, grouped by ar
 - **Wrath of the Sea (Druid, Circle of the Sea)** — tracked aura activation.
 - **Moonlight Step (Druid, Circle of the Moon, 2024)** — advantage marker on the caster's next attack this turn.
 - **Action Surge (Fighter)** — grants an extra action on your turn (not the Magic action); tracked uses (1, or 2 at level 17+) recovered on a short or long rest, imported with the actual resolved count from D&D Beyond.
-- **Indomitable (Fighter, 2014)** — reroll a failed saving throw via an INDOMITABLE chat-card button and a USE/CHAT announcement; tracked uses (1/2/3 at level 9/13/17) recovered on a long rest, imported with the actual resolved count from D&D Beyond.
+- **Indomitable (Fighter, 2014)** — reroll a failed saving throw via a refundable INDOMITABLE chat-card button (disabled when no uses remain) and a USE/CHAT announcement; tracked uses (1/2/3 at level 9/13/17) recovered on a long rest, imported with the actual resolved count from D&D Beyond.
 - **Extra Attack (Fighter, 2014)** — cosmetic descriptive item only; collapsed to the single tier (twice/three times/four times) applicable at the character's current level.
 - **Tactical Mind (Fighter, 2024)** — expend a Second Wind use for a 1d10 bonus to a failed ability check, via a USE/CHAT announcement and a chat-card BONUS-roll button.
 - **Giant's Might (Fighter, Rune Knight)** — size increase + advantage on STR saves for 1 minute.

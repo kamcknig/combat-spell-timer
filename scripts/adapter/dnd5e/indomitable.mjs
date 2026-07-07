@@ -23,8 +23,10 @@ import { usesOf } from "./second-wind.mjs";
  * convention).
  */
 
-const INDOMITABLE_FLAG = "indomitableApplied";
+const INDOMITABLE_USED_FLAG = "indomitableUsed"; // original save message: true once a charge has been spent on it
+const INDOMITABLE_REROLL_FLAG = "indomitableReroll"; // posted reroll message: excludes it from ever growing its own button
 const BTN_CLASS = "cst-indomitable-reroll";
+const REFUND_BTN_CLASS = "cst-indomitable-refund";
 
 /** The actor's Indomitable feat item, or null. */
 function indomitableFeat(actor) {
@@ -77,10 +79,10 @@ async function postRerollMessage(message, actor, roll, ability) {
     speaker: ChatMessage.getSpeaker({ actor }),
     flags: {
       dnd5e: { messageType: "roll", roll: { ability, type: "save" }, originatingMessage: message.id },
-      [MODULE_ID]: { [INDOMITABLE_FLAG]: true },
+      [MODULE_ID]: { [INDOMITABLE_REROLL_FLAG]: true },
     },
   });
-  await message.update({ flags: { [MODULE_ID]: { [INDOMITABLE_FLAG]: true } } });
+  await message.setFlag(MODULE_ID, INDOMITABLE_USED_FLAG, true);
   dbg("dnd5e:indomitable:rerolled", actor.name, clone.total);
 }
 
@@ -92,9 +94,8 @@ async function postAnnounceMessage(actor) {
 }
 
 /**
- * Prompt USE/CHAT. Returns true once a decision was made (USE or CHAT —
- * button should be removed), false when dismissed or blocked (button
- * should stay clickable).
+ * Prompt USE/CHAT. Returns "use" or "chat" once a decision was made, null
+ * when dismissed or blocked (button should stay clickable).
  */
 async function handleIndomitableUse(message, actor, item, roll, ability) {
   const { remaining } = usesOf(item);
@@ -104,53 +105,25 @@ async function handleIndomitableUse(message, actor, item, roll, ability) {
     icon: "fa-solid fa-shield-halved",
     canUse: remaining > 0,
   });
-  if (!action) return false; // dismissed
+  if (!action) return null; // dismissed — button stays fresh
   if (action === "use") {
     // Defensive: USE is disabled in the dialog whenever remaining <= 0.
     if (remaining <= 0) {
       ui.notifications?.warn(game.i18n.format("COMBAT_SPELL_TIMER.Indomitable.NoUses", { name: item.name }));
-      return false;
+      return null;
     }
     await item.update({ "system.uses.spent": item.system.uses.spent + 1 });
     dbg("dnd5e:indomitable:consumed", actor.name, remaining - 1);
     await postRerollMessage(message, actor, roll, ability);
-  } else {
-    await postAnnounceMessage(actor);
+    return "use";
   }
-  return true;
+  await postAnnounceMessage(actor);
+  return "chat";
 }
 
-/**
- * dnd5e.renderChatMessage handler: append the INDOMITABLE button to any
- * eligible saving-throw message. Fires AFTER dnd5e's own card enrichment
- * (see great-weapon-fighting.mjs's identical hook choice). Excludes death
- * saves (flags.dnd5e.roll.type === "death") — see the plan's "What We're
- * NOT Doing". NOT gated on roll.isFailure — that signal reads `false`
- * whenever no DC was recorded on the roll (common in practice, e.g. a save
- * made with nothing properly targeted/selected), so it's unreliable as a
- * gate. The button is always enabled on an eligible save; the player/GM
- * decides whether the save actually failed and whether to use it.
- */
-function onRenderSaveMessage(message, html) {
-  if (message.getFlag(MODULE_ID, INDOMITABLE_FLAG)) return;
-  if (message.flags?.dnd5e?.roll?.type !== "save") return;
-
-  const actor = message.getAssociatedActor?.();
-  if (!actor) return;
-  const item = indomitableFeat(actor);
-  if (!item) return;
-  if (!canReroll(actor)) return;
-
-  const roll = message.rolls?.[0];
-  if (!roll) return;
-
-  const container = html.querySelector(".message-content");
-  if (!container || container.querySelector(`.${BTN_CLASS}`)) return;
-
-  const ability = message.getFlag("dnd5e", "roll")?.ability;
+/** Build the fresh (unused) INDOMITABLE button, disabled when no uses remain. */
+function buildFreshButton(message, actor, item, roll, ability) {
   const { remaining } = usesOf(item);
-  const wrap = document.createElement("div");
-  wrap.className = "cst-indomitable-controls";
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = BTN_CLASS;
@@ -163,17 +136,87 @@ function onRenderSaveMessage(message, html) {
     event.stopPropagation();
     btn.disabled = true;
     try {
-      const resolved = await handleIndomitableUse(message, actor, item, roll, ability);
-      if (resolved) wrap.remove();
-      else btn.disabled = false;
+      const action = await handleIndomitableUse(message, actor, item, roll, ability);
+      if (!action) { btn.disabled = false; return; } // dismissed — leave clickable
+      if (action === "use") { btn.replaceWith(buildRefundButton(message, actor, item, roll, ability)); return; }
+      btn.disabled = false; // CHAT — announce only, nothing spent, stays clickable
     } catch (err) {
       warn("indomitable reroll failed", err);
       btn.disabled = false;
     }
   });
-  wrap.appendChild(btn);
+  return btn;
+}
+
+/** Build the REFUND RESOURCE button that replaces a spent INDOMITABLE button. */
+function buildRefundButton(message, actor, item, roll, ability) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = REFUND_BTN_CLASS;
+  btn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> ${game.i18n.localize("COMBAT_SPELL_TIMER.RefundResourceButton")}`;
+  btn.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    btn.disabled = true;
+    try {
+      await onIndomitableRefundClick(message, actor, item);
+      btn.replaceWith(buildFreshButton(message, actor, item, roll, ability));
+    } catch (err) {
+      warn("indomitable refund failed", err);
+      btn.disabled = false;
+    }
+  });
+  return btn;
+}
+
+/** Refund the spent Indomitable charge and clear the "used" flag so a fresh button renders again. */
+async function onIndomitableRefundClick(message, actor, item) {
+  const spent = Number(item.system?.uses?.spent) || 0;
+  await item.update({ "system.uses.spent": Math.max(0, spent - 1) });
+  await message.unsetFlag(MODULE_ID, INDOMITABLE_USED_FLAG);
+  dbg("dnd5e:indomitable:refunded", actor.name);
+}
+
+/**
+ * dnd5e.renderChatMessage handler: append the INDOMITABLE (or, once spent,
+ * REFUND RESOURCE) button to any eligible saving-throw message. Fires AFTER
+ * dnd5e's own card enrichment (see great-weapon-fighting.mjs's identical
+ * hook choice). Excludes death saves (flags.dnd5e.roll.type === "death") and
+ * the posted reroll message itself (INDOMITABLE_REROLL_FLAG) — see the
+ * plan's "What We're NOT Doing". NOT gated on roll.isFailure — that signal
+ * reads `false` whenever no DC was recorded on the roll (common in practice,
+ * e.g. a save made with nothing properly targeted/selected), so it's
+ * unreliable as a gate. The button is always enabled (uses permitting) on
+ * an eligible save; the player/GM decides whether the save actually failed
+ * and whether to use it.
+ */
+function onRenderSaveMessage(message, html) {
+  if (message.getFlag(MODULE_ID, INDOMITABLE_REROLL_FLAG)) return;
+  if (message.flags?.dnd5e?.roll?.type !== "save") return;
+
+  const actor = message.getAssociatedActor?.();
+  if (!actor) return;
+  const item = indomitableFeat(actor);
+  if (!item) return;
+  if (!canReroll(actor)) return;
+
+  const roll = message.rolls?.[0];
+  if (!roll) return;
+
+  const container = html.querySelector(".message-content");
+  if (!container || container.querySelector(`.${BTN_CLASS}, .${REFUND_BTN_CLASS}`)) return;
+
+  const ability = message.getFlag("dnd5e", "roll")?.ability;
+  const used = message.getFlag(MODULE_ID, INDOMITABLE_USED_FLAG);
+
+  const wrap = document.createElement("div");
+  wrap.className = "cst-indomitable-controls";
+  wrap.appendChild(
+    used
+      ? buildRefundButton(message, actor, item, roll, ability)
+      : buildFreshButton(message, actor, item, roll, ability)
+  );
   container.appendChild(wrap);
-  dbg("dnd5e:indomitable:button", actor.name);
+  dbg("dnd5e:indomitable:button", actor.name, { used: !!used });
 }
 
 /** Register Indomitable's reroll-button hook. Call once during setup. */
