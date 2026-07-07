@@ -259,5 +259,38 @@ export function buildManeuverFeatureItems(parentDef, ddbData, ctx) {
   ));
 }
 
+/**
+ * Resolve a `ddbData.choices.class[]` selection's chosen option label. Unlike
+ * Fighting Style/Maneuvers (a full granted sub-feature in `options.class[]`),
+ * a plain "pick one from a list" choice (e.g. Student of War's artisan's
+ * tool) is recorded as a lightweight `{componentId, optionValue}` pair, whose
+ * `optionValue` is an id resolved against `choices.choiceDefinitions[].options[]`.
+ * Returns null if no choice was made or it can't be resolved (name falls
+ * back to the plain feature name).
+ */
+function resolveChosenOptionLabel(ddbData, componentId) {
+  const choice = (ddbData?.choices?.class ?? []).find((c) => c?.componentId === componentId);
+  if (!choice || choice.optionValue == null) return null;
+  for (const def of ddbData?.choices?.choiceDefinitions ?? []) {
+    const opt = def?.options?.find((o) => o?.id === choice.optionValue);
+    if (opt) return opt.label ?? null;
+  }
+  return null;
+}
+
+/**
+ * Student of War (2014 Battle Master): "you gain proficiency with one type of
+ * artisan's tools of your choice" — a normal feat item, but named
+ * "Student of War: <chosen tool>" when the choice is resolvable. All
+ * instances share one icon key regardless of the chosen tool (same rationale
+ * as Weapon Mastery's shared per-option icon).
+ */
+export function buildStudentOfWarItem(def, ddbData, ctx) {
+  const toolName = resolveChosenOptionLabel(ddbData, def.id);
+  const name = toolName ? `${def.name}: ${toolName}` : def.name;
+  dbg("ddb:battle-master", "student of war resolved", { toolName, name });
+  return buildFeatureItem(def, ctx, { name, imageKey: featureKey("feat", def.name) });
+}
+
 /** Names whose granted feature is a pure choice container — emit the chosen options, drop the parent. */
 export const CHOICE_FEATURE_NAMES = new Set(["Fighting Style"]);

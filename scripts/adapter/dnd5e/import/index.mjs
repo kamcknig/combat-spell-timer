@@ -4,6 +4,7 @@ import {
   buildClassItem, buildSubclassItem, buildFeatureItem,
   buildChoiceFeatureItems, CHOICE_FEATURE_NAMES,
   buildCombatSuperiorityItem, buildManeuverFeatureItems,
+  buildStudentOfWarItem,
 } from "./builders.mjs";
 import { classEditionRules, cleanDdbName } from "./edition.mjs";
 import { slugIdentifier } from "./identifier.mjs";
@@ -93,6 +94,10 @@ export async function parseImportedFeatures(_actor, ddbData) {
         const maneuvers = buildManeuverFeatureItems(fdef, ddbData, ctx);
         dbg("ddb:parse", "maneuvers resolved", { items: maneuvers.map((i) => i.name) });
         items.push(...maneuvers);   // drop the generic "Maneuvers" container
+        continue;
+      }
+      if (fdef.name === "Student of War") {
+        items.push(buildStudentOfWarItem(fdef, ddbData, ctx));
         continue;
       }
       items.push(buildFeatureItem(fdef, ctx));
