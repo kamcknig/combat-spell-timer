@@ -308,6 +308,11 @@ export default class SystemAdapter {
    *  automated prone on a failed save). Default: no-op. */
   registerTripAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Tactical Assessment (roll-configuration-dialog
+   *  button on an Intelligence (Investigation/History) or Wisdom (Insight)
+   *  check adds the die directly to that roll, refundable). Default: no-op. */
+  registerTacticalAssessmentSync() { /* optional */ }
+
   /**
    * Create the module-owned ActiveEffect for a feature on the actor so its
    * bonuses apply and the token shows the feature icon. Implementations may clone

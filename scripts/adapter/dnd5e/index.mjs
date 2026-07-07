@@ -49,6 +49,7 @@ import { registerBraceHooks } from "./brace.mjs";
 import { registerRiposteHooks } from "./riposte.mjs";
 import { registerSweepingAttackHooks } from "./sweeping-attack.mjs";
 import { registerTripAttackHooks } from "./trip-attack.mjs";
+import { registerTacticalAssessmentHooks } from "./tactical-assessment.mjs";
 import { runEditionMismatchAudit, registerEditionMismatchWatchHooks } from "./edition-mismatch.mjs";
 import { registerWeaponMasteryHooks } from "./weapon-mastery.mjs";
 
@@ -506,6 +507,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerSweepingAttackSync() { registerSweepingAttackHooks(); }
 
   registerTripAttackSync() { registerTripAttackHooks(); }
+
+  registerTacticalAssessmentSync() { registerTacticalAssessmentHooks(); }
 
   /**
    * Create the module-owned ActiveEffect for a feature on the actor (tiered:

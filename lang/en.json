@@ -398,6 +398,13 @@
       "Button": "SWEEPING ATTACK",
       "RollFlavor": "Sweeping Attack — Superiority Die"
     },
+    "TacticalAssessment": {
+      "Title": "Tactical Assessment",
+      "Prompt": "Expend a superiority die to add it to this check. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "TACTICAL ASSESSMENT",
+      "AutoRefunded": "Tactical Assessment: roll was cancelled — the superiority die has been refunded."
+    },
     "TripAttack": {
       "Title": "Trip Attack",
       "Prompt": "Expend a superiority die to attempt to knock your target down on a hit. {remaining} superiority {die} remaining.",
