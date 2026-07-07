@@ -278,6 +278,13 @@
       "RollFlavor": "Commander's Strike — Superiority Die",
       "AttackButton": "Commander's Strike"
     },
+    "CommandingPresence": {
+      "Title": "Commanding Presence",
+      "Prompt": "Expend a superiority die to add it to this check. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "COMMANDING PRESENCE",
+      "AutoRefunded": "Commanding Presence: roll was cancelled — the superiority die has been refunded."
+    },
     "DisarmingAttack": {
       "Title": "Disarming Attack",
       "Prompt": "Expend a superiority die to attempt to disarm your target on a hit. {remaining} superiority {die} remaining.",

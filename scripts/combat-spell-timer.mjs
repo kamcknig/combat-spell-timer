@@ -125,6 +125,7 @@ Hooks.once("ready", async () => {
   adapter.registerManeuverDamageDiceSync();
   adapter.registerAmbushSync();
   adapter.registerCommandersStrikeSync();
+  adapter.registerCommandingPresenceSync();
   adapter.registerDisarmingAttackSync();
   adapter.registerDistractingStrikeSync();
   adapter.registerEvasiveFootworkSync();

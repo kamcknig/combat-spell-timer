@@ -35,6 +35,7 @@ export const FEATURE_IMAGES = {
   "feat:maneuver-bait-and-switch":             `${BASE}/maneuver-bait-and-switch.webp`,
   "feat:maneuver-brace":                       `${BASE}/maneuver-brace.webp`,
   "feat:maneuver-commander-s-strike":          `${BASE}/maneuver-commander-s-strike.webp`,
+  "feat:maneuver-commanding-presence":         `${BASE}/maneuver-commanding-presence.webp`,
   "feat:maneuver-disarming-attack":            `${BASE}/maneuver-disarming-attack.webp`,
   "feat:maneuver-distracting-strike":          `${BASE}/maneuver-distracting-strike.webp`,
   "feat:maneuver-evasive-footwork":            `${BASE}/maneuver-evasive-footwork.webp`,

@@ -29,6 +29,7 @@ import { registerTacticalMindHooks } from "./tactical-mind.mjs";
 import { registerIndomitableHooks } from "./indomitable.mjs";
 import { registerAmbushHooks } from "./ambush.mjs";
 import { registerCommandersStrikeHooks } from "./commanders-strike.mjs";
+import { registerCommandingPresenceHooks } from "./commanding-presence.mjs";
 import { registerManeuverDamageDiceHooks } from "./maneuver-damage-dice.mjs";
 import { registerDisarmingAttackHooks } from "./disarming-attack.mjs";
 import { registerDistractingStrikeHooks } from "./distracting-strike.mjs";
@@ -463,6 +464,8 @@ export default class Dnd5eAdapter extends SystemAdapter {
   registerAmbushSync() { registerAmbushHooks(); }
 
   registerCommandersStrikeSync() { registerCommandersStrikeHooks(); }
+
+  registerCommandingPresenceSync() { registerCommandingPresenceHooks(); }
 
   registerManeuverDamageDiceSync() { registerManeuverDamageDiceHooks(); }
 

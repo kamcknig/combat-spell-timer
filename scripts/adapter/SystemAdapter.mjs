@@ -218,6 +218,11 @@ export default class SystemAdapter {
    */
   registerCommandersStrikeSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Commanding Presence (roll-configuration-dialog
+   *  button on a Charisma (Intimidation/Performance/Persuasion) check adds the
+   *  die directly to that roll, refundable). Default: no-op. */
+  registerCommandingPresenceSync() { /* optional */ }
+
   /** Subscribe to the shared maneuver damage-die drain (Disarming Attack /
    *  Distracting Strike / Goading Attack / Lunging Attack all arm dice
    *  through it). Default: no-op. */
