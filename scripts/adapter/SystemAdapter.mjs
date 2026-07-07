@@ -277,6 +277,11 @@ export default class SystemAdapter {
    *  Superiority consumption, damage-die stacking, Strength-save prompt). Default: no-op. */
   registerPushingAttackSync() { /* optional */ }
 
+  /** Subscribe to system hooks for Quick Toss (attack-roll-message button,
+   *  ranged + Thrown-property gate, adds the die to that attack's damage roll,
+   *  refundable). Default: no-op. */
+  registerQuickTossSync() { /* optional */ }
+
   /** Subscribe to system hooks for Rally (bare-item USE/CHAT dialog, Combat
    *  Superiority consumption, roll/refund toggle). Default: no-op. */
   registerRallySync() { /* optional */ }

@@ -372,6 +372,12 @@
       "SaveButton": "Strength Save",
       "NoTargets": "Pushing Attack: no targets selected or controlled — select or control a token and try again."
     },
+    "QuickToss": {
+      "Title": "Quick Toss",
+      "Prompt": "Expend a superiority die to make a ranged attack with a thrown weapon, adding the die to the attack's damage roll on a hit. {remaining} superiority {die} remaining.",
+      "NoDice": "No superiority dice remaining.",
+      "Button": "QUICK TOSS"
+    },
     "Rally": {
       "Title": "Rally",
       "Prompt": "You have {remaining} superiority {die} remaining. Bolster a companion's resolve?",

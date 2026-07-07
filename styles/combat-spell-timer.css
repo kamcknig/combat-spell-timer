@@ -224,6 +224,13 @@ nav#context-menu.cst-timer-menu {
 .cst-pushing-attack-save-controls .cst-pushing-attack-save { flex: 1; }
 .cst-pushing-attack-save i { margin-right: 4px; }
 
+/* Quick Toss "Quick Toss" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
+.cst-quick-toss-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
+.cst-quick-toss-controls .cst-quick-toss,
+.cst-quick-toss-controls .cst-quick-toss-refund { flex: 1; }
+.cst-quick-toss i,
+.cst-quick-toss-refund i { margin-right: 4px; }
+
 /* Trip Attack "Trip Attack" / "Refund Resource" button, inserted above the attack-roll message's property tags. */
 .cst-trip-attack-controls { display: flex; justify-content: center; align-items: center; margin: 4px 0 2px; }
 .cst-trip-attack-controls .cst-trip-attack,

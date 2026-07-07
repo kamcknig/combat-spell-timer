@@ -21,12 +21,18 @@ import { armManeuverDie, disarmManeuverDie } from "./maneuver-damage-dice.mjs";
  * with an equipped-or-not weapon carrying the Thrown property
  * (`item.system.properties.has("thr")`, confirmed in
  * thrown-weapon-fighting.mjs) — not required to be equipped, since RAW's own
- * "draw as part of the attack" clause covers a stowed weapon. Gating on
- * `activity.getActionType()` with NO attackMode argument at attack-roll-
- * message time (not the pre-roll usage-card stage) resolves the exact mode
- * actually used for that specific roll — same precedent Sweeping Attack's
- * own doc comment already established, so a thrown melee weapon (handaxe)
- * actually thrown at range correctly reads "rwak" here.
+ * "draw as part of the attack" clause covers a stowed weapon.
+ *
+ * `Activity#getActionType(attackMode="")` (dnd5e.mjs:12524) only reclassifies
+ * "mwak" to "rwak" when the passed-in `attackMode` string starts with
+ * "thrown" or equals "ranged" — called with no argument it just returns the
+ * item's base `actionType` ("mwak" for a dagger, always, whether or not that
+ * specific attack was actually thrown). The real per-roll attack mode has to
+ * be read off the ATTACK message's own flag instead:
+ * `message.getFlag("dnd5e", "roll")?.attackMode` — the same flag dnd5e's own
+ * native Damage-button handler reads (`AttackActivity.#rollDamage`,
+ * dnd5e.mjs:28654: `lastAttack?.getFlag("dnd5e", "roll.attackMode")`) to
+ * resolve which mode the just-completed attack used before rolling damage.
  */
 
 const QUICK_TOSS_FLAG = "quickToss"; // attack-roll message flags[MODULE_ID][QUICK_TOSS_FLAG] = {dieSize, actorUuid, consumed?}
@@ -40,11 +46,11 @@ function findQuickTossManeuver(actor) {
   return findFeat(actor, "maneuver: quick toss", "maneuver-quick-toss");
 }
 
-/** True when `item` has the Thrown property and this activity's attack was actually made at range. */
-function isThrownRangedAttack(activity, item) {
+/** True when `item` has the Thrown property and this specific roll's attack mode resolves to ranged. */
+function isThrownRangedAttack(activity, item, attackMode) {
   if (item?.type !== "weapon") return false;
   if (!item.system?.properties?.has("thr")) return false;
-  return activity?.getActionType?.() === "rwak";
+  return activity?.getActionType?.(attackMode) === "rwak";
 }
 
 /** Prompt USE/CHAT, consume one Combat Superiority die on USE, post the maneuver's own announcement card. */
@@ -170,7 +176,8 @@ function onRenderAttackRollMessage(message, html) {
   const actor = message.getAssociatedActor?.();
   const item = message.getAssociatedItem?.();
   if (!activity || !actor || !item) return;
-  if (!isThrownRangedAttack(activity, item)) return;
+  const attackMode = message.getFlag("dnd5e", "roll")?.attackMode;
+  if (!isThrownRangedAttack(activity, item, attackMode)) return;
   if (!canAct(actor)) return;
 
   const container = html.querySelector(".message-content");
