@@ -41,6 +41,7 @@ export const FEATURE_IMAGES = {
   "feat:maneuver-evasive-footwork":            `${BASE}/maneuver-evasive-footwork.webp`,
   "feat:maneuver-feinting-attack":             `${BASE}/maneuver-feinting-attack.webp`,
   "feat:maneuver-goading-attack":              `${BASE}/maneuver-goading-attack.webp`,
+  "feat:maneuver-grappling-strike":            `${BASE}/maneuver-grappling-strike.webp`,
   "feat:maneuver-lunging-attack":              `${BASE}/maneuver-lunging-attack.webp`,
   "feat:maneuver-maneuvering-attack":          `${BASE}/maneuver-maneuvering-attack.webp`,
   "feat:maneuver-menacing-attack":             `${BASE}/maneuver-menacing-attack.webp`,
